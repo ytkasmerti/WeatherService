@@ -7,15 +7,11 @@ import java.util.List;
 
 @Data
 public class VisualCrossingResponse {
-
     @JsonProperty("resolvedAddress")
     private String resolvedAddress;
-
     private Double latitude;
     private Double longitude;
-
     private List<Day> days;
-
     @JsonProperty("currentConditions")
     private CurrentConditions currentConditions;
 }

@@ -7,7 +7,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 @Configuration
 public class WeatherApiConfig {
-
     @Value("${weather.api.url}")
     private String baseUrl;
 

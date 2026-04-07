@@ -23,7 +23,14 @@ public class ForecastResponse {
         private Double tempMax;
         private Double tempMin;
         private Double tempAvg;
+        private Double feelsLike;
         private Integer humidityAvg;
+        private Double windSpeed;
+        private Double windDirection;
+        private Double pressure;
         private String conditions;
+        private Integer uvIndex;
+        private String sunrise;
+        private String sunset;
     }
 }

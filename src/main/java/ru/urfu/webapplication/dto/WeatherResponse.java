@@ -12,8 +12,10 @@ import lombok.NoArgsConstructor;
 public class WeatherResponse {
     private String location;
     private Double temperature;
+    private Double feelsLike;
     private Integer humidity;
     private Double windSpeed;
+    private Double windDirection;
     private Double pressure;
     private String conditions;
     private String timestamp;

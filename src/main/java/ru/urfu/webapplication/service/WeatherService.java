@@ -4,8 +4,10 @@ import org.springframework.stereotype.Service;
 import ru.urfu.webapplication.client.VisualCrossingClient;
 import ru.urfu.webapplication.dto.ForecastResponse;
 import ru.urfu.webapplication.dto.HistoricalResponse;
+import ru.urfu.webapplication.dto.HourlyForecastResponse;
 import ru.urfu.webapplication.dto.WeatherResponse;
 import ru.urfu.webapplication.dto.visualcrossingapi.Day;
+import ru.urfu.webapplication.dto.visualcrossingapi.Hour;
 import ru.urfu.webapplication.dto.visualcrossingapi.VisualCrossingResponse;
 
 import java.time.LocalDateTime;
@@ -45,9 +47,11 @@ public class WeatherService {
         return new WeatherResponse(
                 response.getResolvedAddress(),
                 response.getCurrentConditions().getTemp(),
+                response.getCurrentConditions().getFeelsLike(),
                 response.getCurrentConditions().getHumidity() != null ?
                         response.getCurrentConditions().getHumidity().intValue() : null,
                 response.getCurrentConditions().getWindSpeed(),
+                response.getCurrentConditions().getWindDirection(),
                 response.getCurrentConditions().getPressure(),
                 response.getCurrentConditions().getConditions(),
                 LocalDateTime.now().format(formatter)
@@ -73,8 +77,15 @@ public class WeatherService {
                         day.getTempMax(),
                         day.getTempMin(),
                         day.getTemp(),
+                        day.getFeelsLike(),
                         day.getHumidity() != null ? day.getHumidity().intValue() : null,
-                        day.getConditions()
+                        day.getWindSpeed(),
+                        day.getWindDirection(),
+                        day.getPressure(),
+                        day.getConditions(),
+                        day.getUvIndex(),
+                        day.getSunrise(),
+                        day.getSunset()
                 ));
             }
             log.info("Возвращено {} дней прогноза", dailyList.size());
@@ -94,7 +105,15 @@ public class WeatherService {
                         day.getTempMax(),
                         day.getTempMin(),
                         day.getTemp(),
-                        day.getConditions()
+                        day.getFeelsLike(),
+                        day.getHumidity() != null ? day.getHumidity().intValue() : null,
+                        day.getWindSpeed(),
+                        day.getWindDirection(),
+                        day.getPressure(),
+                        day.getConditions(),
+                        day.getUvIndex(),
+                        day.getSunrise(),
+                        day.getSunset()
                 ));
             }
         }
@@ -104,5 +123,56 @@ public class WeatherService {
                 endDate,
                 historyList
         );
+    }
+    //Погода в конкретное время
+    public WeatherResponse getWeatherAtTime(String city, String dateTime) {
+        log.info("Запрос погоды для {} на время {}", city, dateTime);
+        VisualCrossingResponse response = visualCrossingClient.getWeatherAtTime(city, dateTime);
+        return new WeatherResponse(
+                response.getResolvedAddress(),
+                response.getCurrentConditions().getTemp(),
+                response.getCurrentConditions().getFeelsLike(),
+                response.getCurrentConditions().getHumidity() != null ?
+                        response.getCurrentConditions().getHumidity().intValue() : null,
+                response.getCurrentConditions().getWindSpeed(),
+                response.getCurrentConditions().getWindDirection(),
+                response.getCurrentConditions().getPressure(),
+                response.getCurrentConditions().getConditions(),
+                dateTime
+        );
+    }
+
+    //Почасовой прогноз погоды
+    public HourlyForecastResponse getHourlyForecast(String city, String date) {
+        log.info("Запрос почасового прогноза для {} на {}", city, date);
+
+        VisualCrossingResponse response = visualCrossingClient.getHourlyForecast(city, date);
+
+        List<HourlyForecastResponse.HourlyData> hourlyList = new ArrayList<>();
+
+        if (response.getDays() != null && !response.getDays().isEmpty()) {
+            Day day = response.getDays().get(0);           // ← Day, а не DayResponse
+            if (day.getHours() != null) {
+                for (Hour hour : day.getHours()) {
+                    hourlyList.add(HourlyForecastResponse.HourlyData.builder()
+                            .time(hour.getDatetime())
+                            .temperature(hour.getTemp())
+                            .feelsLike(hour.getFeelsLike())
+                            .humidity(hour.getHumidity() != null ? hour.getHumidity().intValue() : null)
+                            .windSpeed(hour.getWindSpeed())
+                            .windDirection(hour.getWindDirection())
+                            .pressure(hour.getPressure())
+                            .conditions(hour.getConditions())
+                            .uvIndex(hour.getUvIndex())
+                            .build());
+                }
+            }
+        }
+
+        return HourlyForecastResponse.builder()
+                .location(response.getResolvedAddress())
+                .date(date)
+                .hours(hourlyList)
+                .build();
     }
 }

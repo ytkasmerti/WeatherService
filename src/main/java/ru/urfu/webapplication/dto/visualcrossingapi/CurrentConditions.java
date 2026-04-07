@@ -11,6 +11,8 @@ public class CurrentConditions {
     private Double humidity;
     @JsonProperty("windspeed")
     private Double windSpeed;
+    @JsonProperty("winddir")
+    private Double windDirection;
     private Double pressure;
     private String conditions;
 }

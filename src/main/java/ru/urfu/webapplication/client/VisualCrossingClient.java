@@ -25,6 +25,7 @@ public class VisualCrossingClient {
                         .queryParam("unitGroup", "metric")
                         .queryParam("key", apiKey)
                         .queryParam("include", "current")
+                        .queryParam("lang", "ru")
                         .build(location))
                 .retrieve()
                 .bodyToMono(VisualCrossingResponse.class)
@@ -40,6 +41,7 @@ public class VisualCrossingClient {
                         .queryParam("key", apiKey)
                         .queryParam("include", "days")
                         .queryParam("days", days)
+                        .queryParam("lang", "ru")
                         .build(location))
                 .retrieve()
                 .bodyToMono(VisualCrossingResponse.class)
@@ -54,7 +56,38 @@ public class VisualCrossingClient {
                         .queryParam("unitGroup", "metric")
                         .queryParam("key", apiKey)
                         .queryParam("include", "days")
+                        .queryParam("lang", "ru")
                         .build(location, startDate, endDate))
+                .retrieve()
+                .bodyToMono(VisualCrossingResponse.class)
+                .block();
+    }
+    //Погода в конкретное время
+    public VisualCrossingResponse getWeatherAtTime(String location, String dateTime) {
+        log.info("Вызов Visual Crossing API для погоды в конкретное время: {} в {}", location, dateTime);
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/{location}/{dateTime}")
+                        .queryParam("unitGroup", "metric")
+                        .queryParam("key", apiKey)
+                        .queryParam("include", "current")
+                        .queryParam("lang", "ru")
+                        .build(location, dateTime))
+                .retrieve()
+                .bodyToMono(VisualCrossingResponse.class)
+                .block();
+    }
+    //Почасовой прогноз погоды
+    public VisualCrossingResponse getHourlyForecast(String location, String date) {
+        log.info("Вызов Visual Crossing API для почасового прогноза: {} в день {}", location, date);
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/{location}/{date}")
+                        .queryParam("unitGroup", "metric")
+                        .queryParam("key", apiKey)
+                        .queryParam("include", "hours")
+                        .queryParam("lang", "ru")
+                        .build(location, date))
                 .retrieve()
                 .bodyToMono(VisualCrossingResponse.class)
                 .block();

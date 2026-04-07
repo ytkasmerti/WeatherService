@@ -2,16 +2,11 @@ package ru.urfu.webapplication.dto.visualcrossingapi;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
-import java.util.List;
 
 @Data
-public class Day {
+public class Hour {
     private String datetime;
     private Double temp;
-    @JsonProperty("tempmax")
-    private Double tempMax;
-    @JsonProperty("tempmin")
-    private Double tempMin;
     @JsonProperty("feelslike")
     private Double feelsLike;
     private Double humidity;
@@ -23,7 +18,4 @@ public class Day {
     private String conditions;
     @JsonProperty("uvindex")
     private Integer uvIndex;
-    private String sunrise;
-    private String sunset;
-    private List<Hour> hours;
 }

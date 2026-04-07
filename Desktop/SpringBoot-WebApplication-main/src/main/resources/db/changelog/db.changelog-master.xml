@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <!--
+        1 миграция - создание таблицы weather_requests
+    -->
+    <changeSet id="1" author="dariaabrosimovaa">
+        <createTable tableName="weather_requests">
+
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="city" type="VARCHAR(255)"/>
+
+            <column name="request_type" type="VARCHAR(50)"/>
+
+            <column name="latitude" type="DOUBLE"/>
+
+            <column name="longitude" type="DOUBLE"/>
+
+            <column name="forecast_days" type="INT"/>
+
+            <column name="start_date" type="VARCHAR(20)"/>
+
+            <column name="end_date" type="VARCHAR(20)"/>
+
+            <column name="request_time" type="TIMESTAMP"/>
+        </createTable>
+    </changeSet>
+
+    <!--
+        2 миграция - индекс по городу
+    -->
+    <changeSet id="2" author="dariaabrosimovaa">
+        <createIndex tableName="weather_requests" indexName="idx_city">
+            <column name="city"/>
+        </createIndex>
+    </changeSet>
+
+    <!--
+        3 миграция - индекс по времени
+    -->
+    <changeSet id="3" author="dariaabrosimovaa">
+        <createIndex tableName="weather_requests" indexName="idx_request_time">
+            <column name="request_time"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

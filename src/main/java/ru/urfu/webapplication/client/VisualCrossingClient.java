@@ -30,7 +30,7 @@ public class VisualCrossingClient {
                 .bodyToMono(VisualCrossingResponse.class)
                 .block();
     }
-    //Прогноз на N дней (максимум 15)
+    //Прогноз на N дней (максимум 15 - ограничение API)
     public VisualCrossingResponse getForecast(String location, int days) {
         log.info("Вызов Visual Crossing API для прогноза на {} дней: {}", days, location);
         return webClient.get()

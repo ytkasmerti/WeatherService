@@ -2,7 +2,6 @@ package ru.urfu.webapplication.dto.visualcrossingapi;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
-
 import java.util.List;
 
 @Data

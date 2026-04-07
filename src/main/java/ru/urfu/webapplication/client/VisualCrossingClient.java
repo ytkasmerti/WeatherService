@@ -4,7 +4,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import ru.urfu.webapplication.dto.visualcrossingapi.VisualCrossingResponse;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Component
 public class VisualCrossingClient {
     private final WebClient webClient;
@@ -16,7 +18,7 @@ public class VisualCrossingClient {
     }
     //Текущая погода
     public VisualCrossingResponse getCurrentWeather(String location) {
-        System.out.println("Вызов Visual Crossing API для текущей погоды: " + location);
+        log.info("Вызов Visual Crossing API для текущей погоды: {}", location);
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/{location}")
@@ -30,7 +32,7 @@ public class VisualCrossingClient {
     }
     //Прогноз на N дней (максимум 15)
     public VisualCrossingResponse getForecast(String location, int days) {
-        System.out.println("Вызов Visual Crossing API для прогноза на " + days + " дней: " + location);
+        log.info("Вызов Visual Crossing API для прогноза на {} дней: {}", days, location);
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/{location}")
@@ -45,7 +47,7 @@ public class VisualCrossingClient {
     }
     //Исторические данные
     public VisualCrossingResponse getHistoricalData(String location, String startDate, String endDate) {
-        System.out.println("Вызов Visual Crossing API для исторических данных: " + location + " с " + startDate + " по " + endDate);
+        log.info("Вызов Visual Crossing API для исторических данных: {} с {} по {}", location, startDate, endDate);
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/{location}/{startDate}/{endDate}")

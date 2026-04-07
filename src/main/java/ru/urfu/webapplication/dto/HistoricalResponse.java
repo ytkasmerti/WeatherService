@@ -2,8 +2,14 @@ package ru.urfu.webapplication.dto;
 
 import lombok.Data;
 import java.util.List;
+import lombok.Builder;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 
 @Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class HistoricalResponse {
     private String location;
     private String startDate;
@@ -11,27 +17,14 @@ public class HistoricalResponse {
     private List<DailyHistory> data;
 
     @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class DailyHistory {
         private String date;
         private Double tempMax;
         private Double tempMin;
         private Double tempAvg;
         private String conditions;
-
-        public DailyHistory(String date, Double tempMax, Double tempMin,
-                            Double tempAvg, String conditions) {
-            this.date = date;
-            this.tempMax = tempMax;
-            this.tempMin = tempMin;
-            this.tempAvg = tempAvg;
-            this.conditions = conditions;
-        }
-    }
-
-    public HistoricalResponse(String location, String startDate, String endDate, List<DailyHistory> data) {
-        this.location = location;
-        this.startDate = startDate;
-        this.endDate = endDate;
-        this.data = data;
     }
 }

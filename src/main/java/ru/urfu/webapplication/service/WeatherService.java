@@ -11,7 +11,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 public class WeatherService {
     private final VisualCrossingClient visualCrossingClient;
@@ -22,13 +24,13 @@ public class WeatherService {
     }
     //Текущая погода по городу
     public WeatherResponse getCurrentWeatherByCity(String city) {
-        System.out.println("WeatherService: запрос текущей погоды для города " + city);
+        log.info("Запрос текущей погоды для города {}", city);
         return getWeatherResponse(city);
     }
     //Текущая погода по координатам
     public WeatherResponse getCurrentWeatherByCoordinates(Double lat, Double lon) {
         String location = lat + "," + lon;
-        System.out.println("WeatherService: запрос текущей погоды по координатам " + location);
+        log.info("Запрос текущей погоды по координатам {}", location);
         return getWeatherResponse(location);
     }
     //Общий метод для получения текущей погоды
@@ -46,7 +48,7 @@ public class WeatherService {
                     LocalDateTime.now().format(formatter)
             );
         } catch (Exception e) {
-            System.out.println("Ошибка при вызове API: " + e.getMessage());
+            log.error("Ошибка при вызове API: {}", e.getMessage());
             return new WeatherResponse(
                     location,
                     -9999.9,
@@ -58,9 +60,14 @@ public class WeatherService {
             );
         }
     }
-    //Прогноз на N дней (максимум 15)
+    //Прогноз на N дней
     public ForecastResponse getForecast(String city, int days) {
-        System.out.println("WeatherService: запрос прогноза на " + days + " дней для " + city);
+        //Ограничение прогноза 15 днями (максимум API)
+        int validDays = Math.min(days, 15);
+        if (days > 15) {
+            log.warn("Запрошено {} дней, ограничиваем 15", days);
+        }
+        log.info("Запрос прогноза на {} дней для города {}", validDays, city);
         try {
             VisualCrossingResponse response = visualCrossingClient.getForecast(city, days);
             List<ForecastResponse.DailyForecast> dailyList = new ArrayList<>();
@@ -77,17 +84,17 @@ public class WeatherService {
                             day.getConditions()
                     ));
                 }
-                System.out.println("Возвращено " + dailyList.size() + " дней прогноза");
+                log.info("Возвращено {} дней прогноза", dailyList.size());
             }
             return new ForecastResponse(response.getResolvedAddress(), dailyList);
         } catch (Exception e) {
-            System.out.println("Ошибка при получении прогноза: " + e.getMessage());
+            log.error("Ошибка при получении прогноза: {}", e.getMessage());
             return new ForecastResponse(city, new ArrayList<>());
         }
     }
     //Исторические данные за период
     public HistoricalResponse getHistoricalData(String city, String startDate, String endDate) {
-        System.out.println("WeatherService: запрос истории для города " + city + " с " + startDate + " по " + endDate);
+        log.info("Запрос истории для города {} с {} по {}", city, startDate, endDate);
         try {
             VisualCrossingResponse response = visualCrossingClient.getHistoricalData(city, startDate, endDate);
             List<HistoricalResponse.DailyHistory> historyList = new ArrayList<>();
@@ -109,7 +116,7 @@ public class WeatherService {
                     historyList
             );
         } catch (Exception e) {
-            System.out.println("Ошибка при получении истории: " + e.getMessage());
+            log.error("Ошибка при получении истории: {}", e.getMessage());
             return new HistoricalResponse(city, startDate, endDate, new ArrayList<>());
         }
     }

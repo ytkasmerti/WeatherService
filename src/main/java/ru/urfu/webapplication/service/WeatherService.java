@@ -28,22 +28,22 @@ public class WeatherService {
     }
 
     //Текущая погода по городу
-    public WeatherResponse getCurrentWeatherByCity(String city) {
+    public WeatherResponse getCurrentWeatherByCity(String city, String lang) {
         log.info("Запрос текущей погоды для города {}", city);
-        return fetchWeatherFromApi(city);
+        return fetchWeatherFromApi(city, lang);
     }
 
     //Текущая погода по координатам
-    public WeatherResponse getCurrentWeatherByCoordinates(Double lat, Double lon) {
+    public WeatherResponse getCurrentWeatherByCoordinates(Double lat, Double lon, String lang) {
         String location = lat + "," + lon;
         log.info("Запрос текущей погоды по координатам {}", location);
-        return fetchWeatherFromApi(location);
+        return fetchWeatherFromApi(location, lang);
     }
 
     //Общий метод для получения текущей погоды
-    private WeatherResponse fetchWeatherFromApi(String location) {
-        log.info("Вызов API для получения погоды по локации: {}", location);
-        VisualCrossingResponse response = visualCrossingClient.getCurrentWeather(location);
+    private WeatherResponse fetchWeatherFromApi(String location,  String lang) {
+        log.info("Вызов API для получения погоды по локации {}", location);
+        VisualCrossingResponse response = visualCrossingClient.getCurrentWeather(location, lang);
         return new WeatherResponse(
                 response.getResolvedAddress(),
                 response.getCurrentConditions().getTemp(),
@@ -59,14 +59,14 @@ public class WeatherService {
     }
 
     //Прогноз на N дней
-    public ForecastResponse getForecast(String city, int days) {
+    public ForecastResponse getForecast(String city, int days, String lang) {
         //Ограничение прогноза 15 днями (максимум API)
         int validDays = Math.min(days, 15);
         if (days > 15) {
-            log.warn("Запрошено {} дней, ограничиваем 15", days);
+            log.warn("Запрошено {} дней, ограничено 15 днями", days);
         }
         log.info("Запрос прогноза на {} дней для города {}", validDays, city);
-        VisualCrossingResponse response = visualCrossingClient.getForecast(city, days);
+        VisualCrossingResponse response = visualCrossingClient.getForecast(city, days, lang);
         List<ForecastResponse.DailyForecast> dailyList = new ArrayList<>();
         if (response.getDays() != null) {
             int limit = Math.min(days, response.getDays().size());
@@ -94,9 +94,9 @@ public class WeatherService {
     }
 
     //Исторические данные за период
-    public HistoricalResponse getHistoricalData(String city, String startDate, String endDate) {
-        log.info("Запрос истории для города {} с {} по {}", city, startDate, endDate);
-        VisualCrossingResponse response = visualCrossingClient.getHistoricalData(city, startDate, endDate);
+    public HistoricalResponse getHistoricalData(String city, String startDate, String endDate, String lang) {
+        log.info("Запрос истории погоды для города {} с {} по {}", city, startDate, endDate);
+        VisualCrossingResponse response = visualCrossingClient.getHistoricalData(city, startDate, endDate, lang);
         List<HistoricalResponse.DailyHistory> historyList = new ArrayList<>();
         if (response.getDays() != null) {
             for (Day day : response.getDays()) {
@@ -124,10 +124,11 @@ public class WeatherService {
                 historyList
         );
     }
+
     //Погода в конкретное время
-    public WeatherResponse getWeatherAtTime(String city, String dateTime) {
-        log.info("Запрос погоды для {} на время {}", city, dateTime);
-        VisualCrossingResponse response = visualCrossingClient.getWeatherAtTime(city, dateTime);
+    public WeatherResponse getWeatherAtTime(String city, String dateTime, String lang) {
+        log.info("Запрос погоды для города {} на время {}", city, dateTime);
+        VisualCrossingResponse response = visualCrossingClient.getWeatherAtTime(city, dateTime, lang);
         return new WeatherResponse(
                 response.getResolvedAddress(),
                 response.getCurrentConditions().getTemp(),
@@ -143,10 +144,10 @@ public class WeatherService {
     }
 
     //Почасовой прогноз погоды
-    public HourlyForecastResponse getHourlyForecast(String city, String date) {
-        log.info("Запрос почасового прогноза для {} на {}", city, date);
+    public HourlyForecastResponse getHourlyForecast(String city, String date, String lang) {
+        log.info("Запрос почасового прогноза для города {} на {}", city, date);
 
-        VisualCrossingResponse response = visualCrossingClient.getHourlyForecast(city, date);
+        VisualCrossingResponse response = visualCrossingClient.getHourlyForecast(city, date, lang);
 
         List<HourlyForecastResponse.HourlyData> hourlyList = new ArrayList<>();
 

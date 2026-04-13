@@ -1,5 +1,6 @@
 package ru.urfu.webapplication.advice;
 
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -35,6 +36,15 @@ public class ErrorHandler {
         Map<String, String> error = new HashMap<>();
         error.put("error", "Внутренняя ошибка сервера");
         error.put("message", "Попробуйте позже");
+        return error;
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public Map<String, String> handleValidationError(ConstraintViolationException e) {
+        log.error("Ошибка валидации: {}", e.getMessage());
+        Map<String, String> error = new HashMap<>();
+        error.put("error", "Ошибка валидации параметров");
+        error.put("message", e.getConstraintViolations().iterator().next().getMessage());
         return error;
     }
 }

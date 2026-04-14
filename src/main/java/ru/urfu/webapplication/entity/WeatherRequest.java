@@ -31,4 +31,10 @@ public class WeatherRequest {
     private String startDate;
     private String endDate;
     private LocalDateTime requestTime;
+
+    public WeatherRequest(String city, String requestType, LocalDateTime requestTime) {
+        this.city = city;
+        this.requestType = requestType;
+        this.requestTime = requestTime;
+    }
 }

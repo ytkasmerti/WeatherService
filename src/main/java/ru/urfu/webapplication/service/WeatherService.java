@@ -11,13 +11,17 @@ import ru.urfu.webapplication.dto.visualcrossingapi.Day;
 import ru.urfu.webapplication.dto.visualcrossingapi.Hour;
 import ru.urfu.webapplication.dto.visualcrossingapi.VisualCrossingResponse;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 import lombok.extern.slf4j.Slf4j;
 import ru.urfu.webapplication.event.WeatherAlertEvent;
+import ru.urfu.webapplication.model.SubscriptionLevel;
 
 @Slf4j
 @Service
@@ -25,10 +29,23 @@ public class WeatherService {
     private final VisualCrossingClient visualCrossingClient;
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private final ApplicationEventPublisher eventPublisher;
+    private final ApiKeyService apiKeyService;
 
-    public WeatherService(VisualCrossingClient visualCrossingClient, ApplicationEventPublisher eventPublisher) {
+    public WeatherService(VisualCrossingClient visualCrossingClient, ApplicationEventPublisher eventPublisher, ApiKeyService apiKeyService) {
         this.visualCrossingClient = visualCrossingClient;
         this.eventPublisher = eventPublisher;
+        this.apiKeyService = apiKeyService;
+    }
+
+    //Регистрация пользователя
+    public Map<String, String> registerUser(String email, String plan) {
+        String apiKey = apiKeyService.generateApiKey(email, plan);
+        log.info("Пользователь {} успешно зарегистрирован. Сгенерирован API ключ: {}", email, apiKey);
+        Map<String, String> response = new HashMap<>();
+        response.put("apiKey", apiKey);
+        response.put("subscription", plan);
+        response.put("message", "Сохраните ваш API ключ!");
+        return response;
     }
 
     //Проверка погодных предупреждений
@@ -54,21 +71,8 @@ public class WeatherService {
         }
     }
 
-    //Текущая погода по городу
-    public WeatherResponse getCurrentWeatherByCity(String city, String lang) {
-        log.info("Запрос текущей погоды для города {}", city);
-        return fetchWeatherFromApi(city, lang);
-    }
-
-    //Текущая погода по координатам
-    public WeatherResponse getCurrentWeatherByCoordinates(Double lat, Double lon, String lang) {
-        String location = lat + "," + lon;
-        log.info("Запрос текущей погоды по координатам {}", location);
-        return fetchWeatherFromApi(location, lang);
-    }
-
     //Общий метод для получения текущей погоды
-    private WeatherResponse fetchWeatherFromApi(String location,  String lang) {
+    private WeatherResponse fetchWeatherFromApi(String location, String lang) {
         log.info("Вызов API для получения погоды по локации {}", location);
         VisualCrossingResponse response = visualCrossingClient.getCurrentWeather(location, lang);
         checkAndPublishAlert(location, "текущее время",
@@ -91,15 +95,34 @@ public class WeatherService {
         );
     }
 
-    //Прогноз на N дней
-    public ForecastResponse getForecast(String city, int days, String lang) {
+    //Текущая погода по городу (доступ free+)
+    public WeatherResponse getCurrentWeatherByCity(String city, String apiKey, String lang) {
+        validateAndGetLevel(apiKey);
+        log.info("Запрос текущей погоды для города {}", city);
+        return fetchWeatherFromApi(city, lang);
+    }
+
+    //Текущая погода по координатам (доступ free+)
+    public WeatherResponse getCurrentWeatherByCoordinates(Double lat, Double lon, String apiKey, String lang) {
+        validateAndGetLevel(apiKey);
+        String location = lat + "," + lon;
+        log.info("Запрос текущей погоды по координатам {}", location);
+        return fetchWeatherFromApi(location, lang);
+    }
+
+    //Прогноз на N дней (доступ basic+)
+    public ForecastResponse getForecast(String city, int days, String apiKey, String lang) {
         //Ограничение прогноза 15 днями (максимум API)
+        SubscriptionLevel level = validateAndGetLevel(apiKey);
+        if (level == SubscriptionLevel.FREE) {
+            throw new RuntimeException("Прогноз погоды доступен только с BASIC или PREMIUM подпиской");
+        }
         int validDays = Math.min(days, 15);
         if (days > 15) {
             log.warn("Запрошено {} дней, ограничено 15 днями", days);
         }
-        log.info("Запрос прогноза на {} дней для города {}", validDays, city);
-        VisualCrossingResponse response = visualCrossingClient.getForecast(city, days, lang);
+        log.info("Запрос прогноза погоды на {} дней для города {}", validDays, city);
+        VisualCrossingResponse response = visualCrossingClient.getForecast(city, validDays, lang);
         List<ForecastResponse.DailyForecast> dailyList = new ArrayList<>();
         if (response.getDays() != null) {
             int limit = Math.min(days, response.getDays().size());
@@ -127,8 +150,21 @@ public class WeatherService {
         return new ForecastResponse(response.getResolvedAddress(), dailyList);
     }
 
-    //Исторические данные за период
-    public HistoricalResponse getHistoricalData(String city, String startDate, String endDate, String lang) {
+    //Исторические данные за период (доступ до 7 дней basic+, доступ больше 7 дней - premium)
+    public HistoricalResponse getHistoricalData(String city, String startDate, String endDate, String apiKey, String lang) {
+        SubscriptionLevel level = validateAndGetLevel(apiKey);
+        if (level == SubscriptionLevel.FREE) {
+            throw new RuntimeException("Прогноз погоды доступен только с BASIC или PREMIUM подпиской");
+        }
+
+        if (level == SubscriptionLevel.BASIC) {
+            LocalDate start = LocalDate.parse(startDate);
+            LocalDate end = LocalDate.parse(endDate);
+            long daysBetween = java.time.temporal.ChronoUnit.DAYS.between(start, end);
+            if (daysBetween > 7) {
+                throw new RuntimeException("BASIC подписка позволяет запрашивать историю не более чем на 7 дней");
+            }
+        }
         log.info("Запрос истории погоды для города {} с {} по {}", city, startDate, endDate);
         VisualCrossingResponse response = visualCrossingClient.getHistoricalData(city, startDate, endDate, lang);
         List<HistoricalResponse.DailyHistory> historyList = new ArrayList<>();
@@ -160,8 +196,12 @@ public class WeatherService {
         );
     }
 
-    //Погода в конкретное время
-    public WeatherResponse getWeatherAtTime(String city, String dateTime, String lang) {
+    //Погода в конкретное время (доступ premium)
+    public WeatherResponse getWeatherAtTime(String city, String dateTime, String apiKey, String lang) {
+        SubscriptionLevel level = validateAndGetLevel(apiKey);
+        if (level != SubscriptionLevel.PREMIUM) {
+            throw new RuntimeException("Погода на конкретное время доступна только с PREMIUM подпиской");
+        }
         log.info("Запрос погоды для города {} на время {}", city, dateTime);
         VisualCrossingResponse response = visualCrossingClient.getWeatherAtTime(city, dateTime, lang);
         checkAndPublishAlert(city, dateTime,
@@ -184,8 +224,12 @@ public class WeatherService {
         );
     }
 
-    //Почасовой прогноз погоды
-    public HourlyForecastResponse getHourlyForecast(String city, String date, String lang) {
+    //Почасовой прогноз погоды (доступ premium)
+    public HourlyForecastResponse getHourlyForecast(String city, String date, String apiKey, String lang) {
+        SubscriptionLevel level = validateAndGetLevel(apiKey);
+        if (level != SubscriptionLevel.PREMIUM) {
+            throw new RuntimeException("Почасовой прогноз доступен только с PREMIUM подпиской");
+        }
         log.info("Запрос почасового прогноза для города {} на {}", city, date);
         VisualCrossingResponse response = visualCrossingClient.getHourlyForecast(city, date, lang);
         List<HourlyForecastResponse.HourlyData> hourlyList = new ArrayList<>();
@@ -213,5 +257,16 @@ public class WeatherService {
                 .date(date)
                 .hours(hourlyList)
                 .build();
+    }
+
+    private SubscriptionLevel validateAndGetLevel(String apiKey) {
+        if (!apiKeyService.isValidKey(apiKey)) {
+            throw new RuntimeException("Неверный API ключ");
+        }
+        SubscriptionLevel level = apiKeyService.getSubscriptionLevel(apiKey);
+        if (level == null) {
+            throw new RuntimeException("Неверный API ключ");
+        }
+        return level;
     }
 }

@@ -51,4 +51,60 @@
         </createIndex>
     </changeSet>
 
+    <!--
+        4 миграция - таблица погодных предупреждений
+    -->
+    <changeSet id="4" author="dariaabrosimovaa">
+        <createTable tableName="weather_alerts">
+            <column name="id" type="BIGSERIAL" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="city" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="message" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="alert_date" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+        </createTable>
+
+        <createIndex tableName="weather_alerts" indexName="idx_alert_city">
+            <column name="city"/>
+        </createIndex>
+
+        <createIndex tableName="weather_alerts" indexName="idx_alert_date">
+            <column name="alert_date"/>
+        </createIndex>
+    </changeSet>
+
+    <!--
+        5 миграция - таблица API ключей
+    -->
+    <changeSet id="5" author="dariaabrosimovaa">
+        <createTable tableName="api_keys">
+            <column name="id" type="BIGSERIAL" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="key_value" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="email" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="subscription_level" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true"/>
+        </createTable>
+
+        <createIndex tableName="api_keys" indexName="idx_api_key_value">
+            <column name="key_value"/>
+        </createIndex>
+        
+    </changeSet>
+
 </databaseChangeLog>

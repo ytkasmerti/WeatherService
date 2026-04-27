@@ -1,5 +1,9 @@
 package ru.urfu.webapplication.service;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.urfu.webapplication.entity.WeatherRequest;
 import ru.urfu.webapplication.repository.WeatherRequestRepository;
@@ -23,8 +27,9 @@ public class RequestHistoryService {
     }
 
     // Получить историю запросов по городу
-    public List<WeatherRequest> getHistoryByCity(String city) {
-        return requestRepository.findByCity(city);
+    public Page<WeatherRequest> getHistoryByCity(String city, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("requestTime").descending());
+        return requestRepository.findByCity(city, pageable);
     }
 
     // Получить последние 10 запросов

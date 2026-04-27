@@ -116,7 +116,15 @@ public class WeatherService {
         if (filterCondition == null || filterCondition.isEmpty()) {
                 return forecast;
         }
-        // фильтрация, выбирающая дни с нужной погодой
+        // словарь соответствий
+        Map<String, List<String>> dict = new HashMap<>();
+        dict.put("дождь", List.of("дождь", "rain"));
+        dict.put("солнце", List.of("солнечно", "ясно", "sun", "clear"));
+        dict.put("облачно", List.of("облачно", "пасмурно", "cloud", "overcast"));
+        dict.put("снег", List.of("снег", "snow"));
+        dict.put("ветер", List.of("ветер", "wind"));
+
+        String filterLower = filterCondition.trim().toLowerCase();
         List<ForecastResponse.DailyForecast> filtered = new ArrayList<>();
         for (ForecastResponse.DailyForecast day : forecast.getDaily()) {
             if (day.getConditions().toLowerCase().contains(filterCondition.toLowerCase())) {

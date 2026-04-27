@@ -110,6 +110,23 @@ public class WeatherService {
         return fetchWeatherFromApi(location, lang);
     }
 
+    // фильтрация
+    public ForecastResponse getForecastWithFilter(String city, int days, String apiKey, String lang, String filterCondition) {
+        ForecastResponse forecast = getForecast(city, days, apiKey, lang);
+        if (filterCondition == null || filterCondition.isEmpty()) {
+                return forecast;
+        }
+        // фильтрация, выбирающая дни с нужной погодой
+        List<ForecastResponse.DailyForecast> filtered = new ArrayList<>();
+        for (ForecastResponse.DailyForecast day : forecast.getDaily()) {
+            if (day.getConditions().toLowerCase().contains(filterCondition.toLowerCase())) {
+                filtered.add(day);
+            }
+        }
+        forecast.setDaily(filtered);
+        log.info("Отфильтровано: из {} дней оставлено {}", forecast.getDaily().size(), filtered.size());
+        return forecast;
+    }
     //Прогноз на N дней (доступ basic+)
     public ForecastResponse getForecast(String city, int days, String apiKey, String lang) {
         //Ограничение прогноза 15 днями (максимум API)

@@ -151,4 +151,31 @@
         
     -->
 
+    <changeSet id="create_popular_searches_table" author="dariaabrosimovaa">
+        <createTable tableName="popular_searches">
+            <column name="id" type="BIGSERIAL" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="city" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="request_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="search_count" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_searched" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+        </createTable>
+
+        <createIndex tableName="popular_searches" indexName="idx_popular_city_type" unique="true">
+            <column name="city"/>
+            <column name="request_type"/>
+        </createIndex>
+
+        <createIndex tableName="popular_searches" indexName="idx_popular_count">
+            <column name="search_count"/>
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>

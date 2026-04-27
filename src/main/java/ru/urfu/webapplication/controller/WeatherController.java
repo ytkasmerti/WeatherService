@@ -111,4 +111,18 @@ public class WeatherController {
     public Map<String, String> register(@RequestParam String email, @RequestParam(defaultValue = "free") String plan) {
         return weatherService.registerUser(email, plan);
     }
+
+    // Фильтрация прогноза погоды по погодным условиям
+    // http://localhost:8080/weather/forecast/filter?city=Sochi&days=7&apiKey=basic-2355dc58-1196184333&filterCondition=rain
+    // http://localhost:8080/weather/forecast/filter?city=Ekaterinburg&days=7&apiKey=basic-2355dc58-1196184333&filterCondition=cloud
+    @GetMapping("/forecast/filter")
+    public ForecastResponse getForecastWithFilter(
+            @RequestParam @NotBlank String city,
+            @RequestParam(defaultValue = "7") @Min(1) @Max(90) int days,
+            @RequestParam String apiKey,
+            @RequestParam(defaultValue = "ru") String lang,
+            @RequestParam(required = false) String filterCondition) { // например: rain, sun, snow, cloud
+
+        return weatherService.getForecastWithFilter(city, days, apiKey, lang, filterCondition);
+    }
 }

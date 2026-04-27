@@ -107,4 +107,48 @@
         
     </changeSet>
 
+    <!--
+        6 миграция - таблица с кэшированными погодными данными (для Redis)
+    -->
+    <changeSet id="create_weather_cache_table" author="dariaabrosimovaa">
+        <createTable tableName="weather_cache">
+            <column name="id" type="BIGSERIAL" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="cache_key" type="VARCHAR(500)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="response_data" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="request_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="location" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expires_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+        </createTable>
+
+        <createIndex tableName="weather_cache" indexName="idx_cache_key">
+            <column name="cache_key"/>
+        </createIndex>
+
+        <createIndex tableName="weather_cache" indexName="idx_cache_expires">
+            <column name="expires_at"/>
+        </createIndex>
+
+        <createIndex tableName="weather_cache" indexName="idx_cache_location_type">
+            <column name="location"/>
+            <column name="request_type"/>
+        </createIndex>
+    </changeSet>
+
+    <!--
+        
+    -->
+
 </databaseChangeLog>

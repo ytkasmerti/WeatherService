@@ -30,8 +30,8 @@ public class ApiKeyService {
 
         if (apiKeyRepository.findByEmail(email).isPresent()) {
             Map<String, String> response = new HashMap<>();
-            response.put("error", "Email already registered");
-            response.put("message", "This email already has an API key");
+            response.put("error", "Этот email уже зарегестрирован");
+            response.put("message", "У этого email уже есть API ключ");
             return response;
         }
 
@@ -49,11 +49,16 @@ public class ApiKeyService {
         Map<String, String> response = new HashMap<>();
         response.put("apiKey", keyValue);
         response.put("subscriptionLevel", level.name());
-        response.put("message", "Successfully registered! Save your API key.");
+        response.put("message", "Регистрация прошла успешно! Сохраните ваш API ключ!");
 
-        log.info("New user registered: {} with {} plan", email, level);
+        log.info("Новый пользователь успешно зарегестрирован: {} с {} планом", email, level);
         return response;
     }
+    // проверка существования ключа
+    public boolean isValidKey(String apiKey) {
+        return apiKeyRepository.findByKeyValueAndIsActiveTrue(apiKey).isPresent();
+    }
+
     // проверка уровня подписки
     public SubscriptionLevel getSubscriptionLevel(String apiKey) {
         return apiKeyRepository.findByKeyValueAndIsActiveTrue(apiKey)
@@ -96,6 +101,16 @@ public class ApiKeyService {
                 .orElse(false);
     }
     // создание API ключа
+    public String generateApiKey(String email, String plan) {
+        SubscriptionLevel level;
+        try {
+            level = SubscriptionLevel.valueOf(plan.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            level = SubscriptionLevel.FREE;
+        }
+        return generateApiKey(email, level);
+    }
+
     private String generateApiKey(String email, SubscriptionLevel level) {
         String prefix = switch (level) {
             case FREE -> "free";
@@ -105,4 +120,5 @@ public class ApiKeyService {
         String uniqueId = UUID.randomUUID().toString().substring(0, 8);
         return prefix + "-" + uniqueId + "-" + Math.abs(email.hashCode());
     }
+
 }

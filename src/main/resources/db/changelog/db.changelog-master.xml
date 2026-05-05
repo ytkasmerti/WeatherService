@@ -8,27 +8,23 @@
     <!--
         1 миграция - создание таблицы weather_requests
     -->
-    <changeSet id="1" author="dariaabrosimovaa">
+    <changeSet id="create_weather_requests_table" author="dariaabrosimovaa">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="weather_requests"/>
+            </not>
+        </preConditions>
         <createTable tableName="weather_requests">
-
-            <column name="id" type="BIGINT" autoIncrement="true">
+            <column name="id" type="BIGSERIAL" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-
             <column name="city" type="VARCHAR(255)"/>
-
             <column name="request_type" type="VARCHAR(50)"/>
-
-            <column name="latitude" type="DOUBLE"/>
-
-            <column name="longitude" type="DOUBLE"/>
-
-            <column name="forecast_days" type="INT"/>
-
+            <column name="latitude" type="DOUBLE PRECISION"/>
+            <column name="longitude" type="DOUBLE PRECISION"/>
+            <column name="forecast_days" type="INTEGER"/>
             <column name="start_date" type="VARCHAR(20)"/>
-
             <column name="end_date" type="VARCHAR(20)"/>
-
             <column name="request_time" type="TIMESTAMP"/>
         </createTable>
     </changeSet>
@@ -36,16 +32,26 @@
     <!--
         2 миграция - индекс по городу
     -->
-    <changeSet id="2" author="dariaabrosimovaa">
+    <changeSet id="add_city_index" author="dariaabrosimovaa">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists indexName="idx_city"/>
+            </not>
+        </preConditions>
         <createIndex tableName="weather_requests" indexName="idx_city">
             <column name="city"/>
         </createIndex>
     </changeSet>
 
     <!--
-        3 миграция - индекс по времени
+        3 миграция - индекс по времени запроса
     -->
-    <changeSet id="3" author="dariaabrosimovaa">
+    <changeSet id="add_request_time_index" author="dariaabrosimovaa">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists indexName="idx_request_time"/>
+            </not>
+        </preConditions>
         <createIndex tableName="weather_requests" indexName="idx_request_time">
             <column name="request_time"/>
         </createIndex>
@@ -54,7 +60,12 @@
     <!--
         4 миграция - таблица погодных предупреждений
     -->
-    <changeSet id="4" author="dariaabrosimovaa">
+    <changeSet id="create_weather_alerts_table" author="dariaabrosimovaa">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="weather_alerts"/>
+            </not>
+        </preConditions>
         <createTable tableName="weather_alerts">
             <column name="id" type="BIGSERIAL" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
@@ -83,7 +94,12 @@
     <!--
         5 миграция - таблица API ключей
     -->
-    <changeSet id="5" author="dariaabrosimovaa">
+    <changeSet id="create_api_keys_table" author="dariaabrosimovaa">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="api_keys"/>
+            </not>
+        </preConditions>
         <createTable tableName="api_keys">
             <column name="id" type="BIGSERIAL" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
@@ -104,54 +120,18 @@
         <createIndex tableName="api_keys" indexName="idx_api_key_value">
             <column name="key_value"/>
         </createIndex>
-        
     </changeSet>
 
     <!--
-        6 миграция - таблица с кэшированными погодными данными (для Redis)
-    -->
-    <changeSet id="create_weather_cache_table" author="dariaabrosimovaa">
-        <createTable tableName="weather_cache">
-            <column name="id" type="BIGSERIAL" autoIncrement="true">
-                <constraints primaryKey="true" nullable="false"/>
-            </column>
-            <column name="cache_key" type="VARCHAR(500)">
-                <constraints nullable="false" unique="true"/>
-            </column>
-            <column name="response_data" type="TEXT">
-                <constraints nullable="false"/>
-            </column>
-            <column name="request_type" type="VARCHAR(50)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="location" type="VARCHAR(255)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="expires_at" type="TIMESTAMP">
-                <constraints nullable="false"/>
-            </column>
-            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
-        </createTable>
-
-        <createIndex tableName="weather_cache" indexName="idx_cache_key">
-            <column name="cache_key"/>
-        </createIndex>
-
-        <createIndex tableName="weather_cache" indexName="idx_cache_expires">
-            <column name="expires_at"/>
-        </createIndex>
-
-        <createIndex tableName="weather_cache" indexName="idx_cache_location_type">
-            <column name="location"/>
-            <column name="request_type"/>
-        </createIndex>
-    </changeSet>
-
-    <!--
-        
+        6 миграция - таблица с популярными запросами (для отслеживания статистики)
     -->
 
     <changeSet id="create_popular_searches_table" author="dariaabrosimovaa">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="city_stats"/>
+            </not>
+        </preConditions>
         <createTable tableName="popular_searches">
             <column name="id" type="BIGSERIAL" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
@@ -178,4 +158,49 @@
         </createIndex>
     </changeSet>
 
+    <!--
+        7 миграция - добавление колонки api_key ы таблицу weather_requests
+    -->
+    <changeSet id="add_api_key_to_weather_requests" author="dariaabrosimovaa">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="weather_requests" columnName="api_key"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="weather_requests">
+            <column name="api_key" type="VARCHAR(255)"/>
+        </addColumn>
+
+        <createIndex tableName="weather_requests" indexName="idx_weather_requests_api_key">
+            <column name="api_key"/>
+        </createIndex>
+    </changeSet>
+
+    <!--
+        8 миграция - создание таблицы users
+    -->
+    <changeSet id="create_users_table" author="dariaabrosimovaa">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="users"/>
+            </not>
+        </preConditions>
+        <createTable tableName="users">
+            <column name="id" type="BIGSERIAL" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="email" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="password" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="api_key" type="VARCHAR(255)">
+                <constraints unique="true"/>
+            </column>
+            <column name="subscription_level" type="VARCHAR(50)"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true"/>
+        </createTable>
+    </changeSet>
 </databaseChangeLog>

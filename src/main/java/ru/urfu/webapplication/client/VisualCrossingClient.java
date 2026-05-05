@@ -27,7 +27,7 @@ public class VisualCrossingClient {
                         .queryParam("unitGroup", "metric")
                         .queryParam("key", apiKey)
                         .queryParam("include", "current")
-                        .queryParam("lang", lang)
+                        .queryParam("lang", lang) // параметр языка
                         .build(location))
                 .retrieve()
                 .bodyToMono(VisualCrossingResponse.class)

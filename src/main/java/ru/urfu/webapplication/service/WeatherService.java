@@ -114,7 +114,7 @@ public class WeatherService {
     public ForecastResponse getForecastWithFilter(String city, int days, String apiKey, String lang, String filterCondition) {
         ForecastResponse forecast = getForecast(city, days, apiKey, lang);
         if (filterCondition == null || filterCondition.isEmpty()) {
-                return forecast;
+            return forecast;
         }
         // словарь соответствий
         Map<String, List<String>> dict = new HashMap<>();

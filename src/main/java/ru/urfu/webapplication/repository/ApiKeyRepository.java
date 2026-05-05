@@ -20,3 +20,4 @@ public interface ApiKeyRepository extends JpaRepository<ApiKey, Long> {
     // подсчет количества запросов этого апи ключа за последние сутки
     long countRequestsByKeyInLast24Hours(@Param("apiKey") String apiKey, @Param("since") LocalDateTime since);
 }
+

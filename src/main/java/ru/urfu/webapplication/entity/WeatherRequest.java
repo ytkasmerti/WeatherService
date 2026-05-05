@@ -1,16 +1,10 @@
 package ru.urfu.webapplication.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import jakarta.persistence.Id;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
+import jakarta.persistence.*;
 import lombok.Data;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
-
 import java.time.LocalDateTime;
-
 @Entity
 @Table(name = "weather_requests")
 @Data
@@ -31,6 +25,9 @@ public class WeatherRequest {
     private String startDate;
     private String endDate;
     private LocalDateTime requestTime;
+
+    @Column(name = "api_key")
+    private String apiKey;
 
     public WeatherRequest(String city, String requestType, LocalDateTime requestTime) {
         this.city = city;

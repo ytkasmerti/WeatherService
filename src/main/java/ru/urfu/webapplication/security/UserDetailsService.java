@@ -25,6 +25,10 @@ class WeatherUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByApiKey(String apiKey) throws UsernameNotFoundException {
         User user = userRepository.findByApiKey(apiKey)
                 .orElseThrow(() -> new UsernameNotFoundException("Неверный API ключ"));
+
+        if (!user.getIsActive()) {
+            throw new UsernameNotFoundException("API ключ деактивирован");
+        }
         return new WeatherUserDetails(user);
     }
 }

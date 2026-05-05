@@ -12,7 +12,6 @@ import ru.urfu.webapplication.dto.visualcrossingapi.Hour;
 import ru.urfu.webapplication.dto.visualcrossingapi.VisualCrossingResponse;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,11 +29,16 @@ public class WeatherService {
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private final ApplicationEventPublisher eventPublisher;
     private final ApiKeyService apiKeyService;
+    private final DtoMapperService mapper;
 
-    public WeatherService(VisualCrossingClient visualCrossingClient, ApplicationEventPublisher eventPublisher, ApiKeyService apiKeyService) {
+    public WeatherService(VisualCrossingClient visualCrossingClient,
+                          ApplicationEventPublisher eventPublisher,
+                          ApiKeyService apiKeyService,
+                          DtoMapperService mapper) {
         this.visualCrossingClient = visualCrossingClient;
         this.eventPublisher = eventPublisher;
         this.apiKeyService = apiKeyService;
+        this.mapper = mapper;
     }
 
     //Регистрация пользователя
@@ -46,6 +50,18 @@ public class WeatherService {
         response.put("subscription", plan);
         response.put("message", "Сохраните ваш API ключ!");
         return response;
+    }
+
+    //Метод проверки ключа и уровня доступа
+    private SubscriptionLevel validateAndGetLevel(String apiKey) {
+        if (!apiKeyService.isValidKey(apiKey)) {
+            throw new RuntimeException("Неверный API ключ");
+        }
+        SubscriptionLevel level = apiKeyService.getSubscriptionLevel(apiKey);
+        if (level == null) {
+            throw new RuntimeException("Неверный API ключ");
+        }
+        return level;
     }
 
     //Проверка погодных предупреждений
@@ -80,19 +96,7 @@ public class WeatherService {
                 response.getCurrentConditions().getTemp(),
                 response.getCurrentConditions().getWindSpeed(),
                 response.getCurrentConditions().getConditions());
-
-        return new WeatherResponse(
-                response.getResolvedAddress(),
-                response.getCurrentConditions().getTemp(),
-                response.getCurrentConditions().getFeelsLike(),
-                response.getCurrentConditions().getHumidity() != null ?
-                        response.getCurrentConditions().getHumidity().intValue() : null,
-                response.getCurrentConditions().getWindSpeed(),
-                response.getCurrentConditions().getWindDirection(),
-                response.getCurrentConditions().getPressure(),
-                response.getCurrentConditions().getConditions(),
-                LocalDateTime.now().format(formatter)
-        );
+        return mapper.toWeatherResponse(response, location, lang);
     }
 
     //Текущая погода по городу (доступ free+)
@@ -124,7 +128,6 @@ public class WeatherService {
         dict.put("снег", List.of("снег", "snow"));
         dict.put("ветер", List.of("ветер", "wind"));
 
-        String filterLower = filterCondition.trim().toLowerCase();
         List<ForecastResponse.DailyForecast> filtered = new ArrayList<>();
         for (ForecastResponse.DailyForecast day : forecast.getDaily()) {
             if (day.getConditions().toLowerCase().contains(filterCondition.toLowerCase())) {
@@ -135,6 +138,7 @@ public class WeatherService {
         log.info("Отфильтровано: из {} дней оставлено {}", forecast.getDaily().size(), filtered.size());
         return forecast;
     }
+
     //Прогноз на N дней (доступ basic+)
     public ForecastResponse getForecast(String city, int days, String apiKey, String lang) {
         //Ограничение прогноза 15 днями (максимум API)
@@ -153,26 +157,12 @@ public class WeatherService {
             int limit = Math.min(days, response.getDays().size());
             for (int i = 0; i < limit; i++) {
                 Day day = response.getDays().get(i);
-                dailyList.add(new ForecastResponse.DailyForecast(
-                        day.getDatetime(),
-                        day.getTempMax(),
-                        day.getTempMin(),
-                        day.getTemp(),
-                        day.getFeelsLike(),
-                        day.getHumidity() != null ? day.getHumidity().intValue() : null,
-                        day.getWindSpeed(),
-                        day.getWindDirection(),
-                        day.getPressure(),
-                        day.getConditions(),
-                        day.getUvIndex(),
-                        day.getSunrise(),
-                        day.getSunset()
-                ));
+                dailyList.add(mapper.toDailyForecast(day));
                 checkAndPublishAlert(city, day.getDatetime(), day.getTempMax(), day.getTempMin(), day.getWindSpeed(), day.getConditions());
             }
             log.info("Возвращено {} дней прогноза", dailyList.size());
         }
-        return new ForecastResponse(response.getResolvedAddress(), dailyList);
+        return mapper.toForecastResponse(response, dailyList);
     }
 
     //Исторические данные за период (доступ до 7 дней basic+, доступ больше 7 дней - premium)
@@ -195,30 +185,11 @@ public class WeatherService {
         List<HistoricalResponse.DailyHistory> historyList = new ArrayList<>();
         if (response.getDays() != null) {
             for (Day day : response.getDays()) {
-                historyList.add(new HistoricalResponse.DailyHistory(
-                        day.getDatetime(),
-                        day.getTempMax(),
-                        day.getTempMin(),
-                        day.getTemp(),
-                        day.getFeelsLike(),
-                        day.getHumidity() != null ? day.getHumidity().intValue() : null,
-                        day.getWindSpeed(),
-                        day.getWindDirection(),
-                        day.getPressure(),
-                        day.getConditions(),
-                        day.getUvIndex(),
-                        day.getSunrise(),
-                        day.getSunset()
-                ));
+                historyList.add(mapper.toDailyHistory(day));
                 checkAndPublishAlert(city, day.getDatetime(), day.getTempMax(), day.getTempMin(), day.getWindSpeed(), day.getConditions());
             }
         }
-        return new HistoricalResponse(
-                response.getResolvedAddress(),
-                startDate,
-                endDate,
-                historyList
-        );
+        return mapper.toHistoricalResponse(response, startDate, endDate, historyList);
     }
 
     //Погода в конкретное время (доступ premium)
@@ -234,19 +205,7 @@ public class WeatherService {
                 response.getCurrentConditions().getTemp(),
                 response.getCurrentConditions().getWindSpeed(),
                 response.getCurrentConditions().getConditions());
-
-        return new WeatherResponse(
-                response.getResolvedAddress(),
-                response.getCurrentConditions().getTemp(),
-                response.getCurrentConditions().getFeelsLike(),
-                response.getCurrentConditions().getHumidity() != null ?
-                        response.getCurrentConditions().getHumidity().intValue() : null,
-                response.getCurrentConditions().getWindSpeed(),
-                response.getCurrentConditions().getWindDirection(),
-                response.getCurrentConditions().getPressure(),
-                response.getCurrentConditions().getConditions(),
-                dateTime
-        );
+        return mapper.toWeatherResponse(response, city, dateTime);
     }
 
     //Почасовой прогноз погоды (доступ premium)
@@ -262,36 +221,11 @@ public class WeatherService {
             Day day = response.getDays().getFirst();
             if (day.getHours() != null) {
                 for (Hour hour : day.getHours()) {
-                    hourlyList.add(HourlyForecastResponse.HourlyData.builder()
-                            .time(hour.getDatetime())
-                            .temperature(hour.getTemp())
-                            .feelsLike(hour.getFeelsLike())
-                            .humidity(hour.getHumidity() != null ? hour.getHumidity().intValue() : null)
-                            .windSpeed(hour.getWindSpeed())
-                            .windDirection(hour.getWindDirection())
-                            .pressure(hour.getPressure())
-                            .conditions(hour.getConditions())
-                            .uvIndex(hour.getUvIndex())
-                            .build());
+                    hourlyList.add(mapper.toHourlyData(hour));
                     checkAndPublishAlert(city, hour.getDatetime(), hour.getTemp(), day.getTemp(), hour.getWindSpeed(), hour.getConditions());
                 }
             }
         }
-        return HourlyForecastResponse.builder()
-                .location(response.getResolvedAddress())
-                .date(date)
-                .hours(hourlyList)
-                .build();
-    }
-
-    private SubscriptionLevel validateAndGetLevel(String apiKey) {
-        if (!apiKeyService.isValidKey(apiKey)) {
-            throw new RuntimeException("Неверный API ключ");
-        }
-        SubscriptionLevel level = apiKeyService.getSubscriptionLevel(apiKey);
-        if (level == null) {
-            throw new RuntimeException("Неверный API ключ");
-        }
-        return level;
+        return mapper.toHourlyForecastResponse(response, date, hourlyList);
     }
 }

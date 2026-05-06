@@ -9,6 +9,7 @@ import ru.urfu.webapplication.model.SubscriptionLevel;
 import ru.urfu.webapplication.repository.ApiKeyRepository;
 import ru.urfu.webapplication.repository.UserRepository;
 import ru.urfu.webapplication.entity.User;
+import ru.urfu.webapplication.repository.WeatherRequestRepository;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -19,57 +20,19 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class ApiKeyService {
-    private final ApiKeyRepository apiKeyRepository;
     private final UserRepository userRepository;
+    private final WeatherRequestRepository requestRepository;
 
     @Transactional
-    // регистрация пользователя
-    public Map<String, String> registerUser(String email, String plan) {
-        SubscriptionLevel level;
-        try {
-            level = SubscriptionLevel.valueOf(plan.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            level = SubscriptionLevel.FREE;
-        }
 
-        if (apiKeyRepository.findByEmail(email).isPresent()) {
-            Map<String, String> response = new HashMap<>();
-            response.put("error", "Этот email уже зарегестрирован");
-            response.put("message", "У этого email уже есть API ключ");
-            return response;
-        }
-
-        String keyValue = generateApiKey(email, level);
-
-        ApiKey apiKey = new ApiKey();
-        apiKey.setKeyValue(keyValue);
-        apiKey.setEmail(email);
-        apiKey.setSubscriptionLevel(level);
-        apiKey.setCreatedAt(LocalDateTime.now());
-        apiKey.setIsActive(true);
-
-        apiKeyRepository.save(apiKey);
-
-        Map<String, String> response = new HashMap<>();
-        response.put("apiKey", keyValue);
-        response.put("subscriptionLevel", level.name());
-        response.put("message", "Регистрация прошла успешно! Сохраните ваш API ключ!");
-
-        log.info("Новый пользователь успешно зарегестрирован: {} с {} планом", email, level);
-        return response;
-    }
     // проверка существования ключа
     public boolean isValidKey(String apiKey) {
-        return userRepository.findByApiKey(apiKey)
-                .map(User::getIsActive)
-                .orElse(false);
+        return userRepository.findByApiKey(apiKey).map(User::getIsActive).orElse(false);
     }
 
     // проверка уровня подписки
     public SubscriptionLevel getSubscriptionLevel(String apiKey) {
-        return userRepository.findByApiKey(apiKey)
-                .map(User::getSubscriptionLevel)
-                .orElse(null);
+        return userRepository.findByApiKey(apiKey).map(User::getSubscriptionLevel).orElse(null);
     }
     // проверка может ли пользователь делать запросы
     public boolean canMakeRequest(String apiKey) {
@@ -89,18 +52,17 @@ public class ApiKeyService {
         }
 
         LocalDateTime twentyFourHoursAgo = LocalDateTime.now().minusHours(24);
-        long requestCount = apiKeyRepository.countRequestsByKeyInLast24Hours(apiKey, twentyFourHoursAgo);
-
+        long requestCount = requestRepository.countRequestsByKeyInLast24Hours(apiKey, twentyFourHoursAgo);
         return requestCount < maxRequests;
     }
 
     // блокировка ключа
     @Transactional
     public boolean deactivateKey(String apiKey) {
-        return apiKeyRepository.findByKeyValueAndIsActiveTrue(apiKey)
+        return userRepository.findByApiKey(apiKey)
                 .map(key -> {
                     key.setIsActive(false);
-                    apiKeyRepository.save(key);
+                    userRepository.save(key);
                     log.info("API key deactivated: {}", apiKey);
                     return true;
                 })

@@ -30,7 +30,7 @@ public class WeatherController {
     }
 
     //Регистрация
-    // http://localhost:8080/weather/register?email=test1@mail.ru&plan=free      free-1c6f8bdf-996408441
+    // http://localhost:8080/weather/register?email=test4@mail.ru&plan=free      free-5064c80f-130987652
     // http://localhost:8080/weather/register?email=test2@mail.ru&plan=basic     basic-f27c60ec-811046022
     // http://localhost:8080/weather/register?email=test3@mail.ru&plan=premium   premium-4fde29ef-1676466811
     @GetMapping("/register")
@@ -49,7 +49,7 @@ public class WeatherController {
     }
 
     //Текущая погода по координатам
-    // http://localhost:8080/weather/current?lat=55.75&lon=37.62&apiKey=free-1c6f8bdf-996408441&lang=en
+    // http://localhost:8080/weather/current?lat=55.75&lon=37.62&apiKey=free-5064c80f-130987652&lang=en
     // некорректная широта http://localhost:8080/weather/current?lat=100&lon=37.62&apiKey=basic-f27c60ec-811046022
     // некорректная долгота http://localhost:8080/weather/current?lat=55.75&lon=200&apiKey=basic-f27c60ec-811046022
     @GetMapping(value = "/current", params = {"lat", "lon"})
@@ -62,7 +62,7 @@ public class WeatherController {
 
     //Прогноз на N дней
     // http://localhost:8080/weather/forecast?city=Moscow&days=7&apiKey=basic-f27c60ec-811046022
-    // ограничение функционала - http://localhost:8080/weather/forecast?city=Moscow&days=7&apiKey=free-1c6f8bdf-996408441
+    // ограничение функционала - http://localhost:8080/weather/forecast?city=Moscow&days=7&apiKey=free-5064c80f-130987652
     // дней < 1 - http://localhost:8080/weather/forecast?city=Moscow&days=0&apiKey=basic-f27c60ec-811046022
     // дней > 90 http://localhost:8080/weather/forecast?city=Moscow&days=100&apiKey=basic-f27c60ec-811046022
     @GetMapping("/forecast")

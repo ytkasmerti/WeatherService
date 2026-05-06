@@ -203,4 +203,33 @@
             <column name="is_active" type="BOOLEAN" defaultValueBoolean="true"/>
         </createTable>
     </changeSet>
+
+    <!--
+        9 миграция - добавление колонки auto_renewal в таблицу users
+    -->
+    <changeSet id="add_auto_renewal_to_users" author="dariaabrosimovaa">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="users" columnName="auto_renewal"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="users">
+            <column name="auto_renewal" type="BOOLEAN" defaultValueBoolean="false"/>
+        </addColumn>
+    </changeSet>
+
+    <!--
+        10 миграция - добавление колонки subscription_expires_at в таблицу users
+    -->
+    <changeSet id="add_subscription_expires_at_to_users" author="dariaabrosimovaa">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="users" columnName="subscription_expires_at"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="users">
+            <column name="subscription_expires_at" type="TIMESTAMP"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>
+

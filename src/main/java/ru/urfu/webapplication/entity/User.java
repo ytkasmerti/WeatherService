@@ -35,4 +35,10 @@ public class User {
 
     @Column(name = "is_active")
     private Boolean isActive = true;
+
+    @Column(name = "subscription_expires_at")
+    private LocalDateTime subscriptionExpiresAt;
+
+    @Column(name = "auto_renewal")
+    private Boolean autoRenewal = false;
 }

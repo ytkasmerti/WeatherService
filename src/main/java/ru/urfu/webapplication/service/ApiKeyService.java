@@ -7,6 +7,8 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.urfu.webapplication.entity.ApiKey;
 import ru.urfu.webapplication.model.SubscriptionLevel;
 import ru.urfu.webapplication.repository.ApiKeyRepository;
+import ru.urfu.webapplication.repository.UserRepository;
+import ru.urfu.webapplication.entity.User;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -18,6 +20,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ApiKeyService {
     private final ApiKeyRepository apiKeyRepository;
+    private final UserRepository userRepository;
+
     @Transactional
     // регистрация пользователя
     public Map<String, String> registerUser(String email, String plan) {
@@ -56,13 +60,15 @@ public class ApiKeyService {
     }
     // проверка существования ключа
     public boolean isValidKey(String apiKey) {
-        return apiKeyRepository.findByKeyValueAndIsActiveTrue(apiKey).isPresent();
+        return userRepository.findByApiKey(apiKey)
+                .map(User::getIsActive)
+                .orElse(false);
     }
 
     // проверка уровня подписки
     public SubscriptionLevel getSubscriptionLevel(String apiKey) {
-        return apiKeyRepository.findByKeyValueAndIsActiveTrue(apiKey)
-                .map(ApiKey::getSubscriptionLevel)
+        return userRepository.findByApiKey(apiKey)
+                .map(User::getSubscriptionLevel)
                 .orElse(null);
     }
     // проверка может ли пользователь делать запросы

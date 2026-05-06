@@ -11,6 +11,7 @@ import ru.urfu.webapplication.dto.HistoricalResponse;
 import ru.urfu.webapplication.dto.HourlyForecastResponse;
 import ru.urfu.webapplication.dto.WeatherResponse;
 import ru.urfu.webapplication.service.ApiKeyService;
+import ru.urfu.webapplication.service.UserService;
 import ru.urfu.webapplication.service.WeatherService;
 
 import java.time.LocalDate;
@@ -21,9 +22,11 @@ import java.util.Map;
 @RequestMapping("/weather")
 public class WeatherController {
     private final WeatherService weatherService;
+    private final UserService userService;
 
-    public WeatherController(WeatherService weatherService, ApiKeyService apiKeyService) {
+    public WeatherController(WeatherService weatherService, ApiKeyService apiKeyService, UserService userService) {
         this.weatherService = weatherService;
+        this.userService = userService;
     }
 
     //Текущая погода по городу
@@ -109,7 +112,7 @@ public class WeatherController {
     // http://localhost:8080/weather/register?email=test@mail.ru&plan=premium
     @GetMapping("/register")
     public Map<String, String> register(@RequestParam String email, @RequestParam(defaultValue = "free") String plan) {
-        return weatherService.registerUser(email, plan);
+        return userService.registerUser(email, plan);
     }
 
     // Фильтрация прогноза погоды по погодным условиям

@@ -4,16 +4,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.urfu.webapplication.entity.ApiKey;
 import ru.urfu.webapplication.model.SubscriptionLevel;
-import ru.urfu.webapplication.repository.ApiKeyRepository;
 import ru.urfu.webapplication.repository.UserRepository;
 import ru.urfu.webapplication.entity.User;
 import ru.urfu.webapplication.repository.WeatherRequestRepository;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 @Slf4j

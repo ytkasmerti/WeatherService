@@ -6,8 +6,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import ru.urfu.webapplication.dto.visualcrossingapi.VisualCrossingResponse;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.print.DocFlavor;
-
 @Slf4j
 @Component
 public class VisualCrossingClient {

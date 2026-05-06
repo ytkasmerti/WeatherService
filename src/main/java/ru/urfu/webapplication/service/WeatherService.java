@@ -12,6 +12,7 @@ import ru.urfu.webapplication.dto.visualcrossingapi.Hour;
 import ru.urfu.webapplication.dto.visualcrossingapi.VisualCrossingResponse;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,8 +20,10 @@ import java.util.Map;
 import java.util.HashMap;
 
 import lombok.extern.slf4j.Slf4j;
+import ru.urfu.webapplication.entity.WeatherRequest;
 import ru.urfu.webapplication.event.WeatherAlertEvent;
 import ru.urfu.webapplication.model.SubscriptionLevel;
+import ru.urfu.webapplication.repository.WeatherRequestRepository;
 
 @Slf4j
 @Service
@@ -30,26 +33,17 @@ public class WeatherService {
     private final ApplicationEventPublisher eventPublisher;
     private final ApiKeyService apiKeyService;
     private final DtoMapperService mapper;
+    private final WeatherRequestRepository weatherRequestRepository;
 
     public WeatherService(VisualCrossingClient visualCrossingClient,
                           ApplicationEventPublisher eventPublisher,
                           ApiKeyService apiKeyService,
-                          DtoMapperService mapper) {
+                          DtoMapperService mapper, WeatherRequestRepository weatherRequestRepository) {
         this.visualCrossingClient = visualCrossingClient;
         this.eventPublisher = eventPublisher;
         this.apiKeyService = apiKeyService;
         this.mapper = mapper;
-    }
-
-    //Регистрация пользователя
-    public Map<String, String> registerUser(String email, String plan) {
-        String apiKey = apiKeyService.generateApiKey(email, plan);
-        log.info("Пользователь {} успешно зарегистрирован. Сгенерирован API ключ: {}", email, apiKey);
-        Map<String, String> response = new HashMap<>();
-        response.put("apiKey", apiKey);
-        response.put("subscription", plan);
-        response.put("message", "Сохраните ваш API ключ!");
-        return response;
+        this.weatherRequestRepository = weatherRequestRepository;
     }
 
     //Метод проверки ключа и уровня доступа
@@ -61,7 +55,21 @@ public class WeatherService {
         if (level == null) {
             throw new RuntimeException("Неверный API ключ");
         }
+        //проверка лимитов
+        if (!apiKeyService.canMakeRequest(apiKey)) {
+            throw new RuntimeException("Превышен лимит запросов на сегодня");
+        }
         return level;
+    }
+
+    private void saveRequest(String city, String requestType, String apiKey) {
+        WeatherRequest request = new WeatherRequest();
+        request.setCity(city);
+        request.setRequestType(requestType);
+        request.setRequestTime(LocalDateTime.now());
+        request.setApiKey(apiKey);
+        weatherRequestRepository.save(request);
+        log.debug("Сохранён запрос {} для города {}, ключ: {}", requestType, city, apiKey);
     }
 
     //Проверка погодных предупреждений
@@ -103,6 +111,7 @@ public class WeatherService {
     public WeatherResponse getCurrentWeatherByCity(String city, String apiKey, String lang) {
         validateAndGetLevel(apiKey);
         log.info("Запрос текущей погоды для города {}", city);
+        saveRequest(city, "current", apiKey);
         return fetchWeatherFromApi(city, lang);
     }
 
@@ -111,6 +120,7 @@ public class WeatherService {
         validateAndGetLevel(apiKey);
         String location = lat + "," + lon;
         log.info("Запрос текущей погоды по координатам {}", location);
+        saveRequest(location, "current", apiKey);
         return fetchWeatherFromApi(location, lang);
     }
 
@@ -136,6 +146,7 @@ public class WeatherService {
         }
         forecast.setDaily(filtered);
         log.info("Отфильтровано: из {} дней оставлено {}", forecast.getDaily().size(), filtered.size());
+        saveRequest(city, "forecast", apiKey);
         return forecast;
     }
 
@@ -162,6 +173,7 @@ public class WeatherService {
             }
             log.info("Возвращено {} дней прогноза", dailyList.size());
         }
+        saveRequest(city, "filteredForecast", apiKey);
         return mapper.toForecastResponse(response, dailyList);
     }
 
@@ -189,6 +201,7 @@ public class WeatherService {
                 checkAndPublishAlert(city, day.getDatetime(), day.getTempMax(), day.getTempMin(), day.getWindSpeed(), day.getConditions());
             }
         }
+        saveRequest(city, "history", apiKey);
         return mapper.toHistoricalResponse(response, startDate, endDate, historyList);
     }
 
@@ -205,6 +218,7 @@ public class WeatherService {
                 response.getCurrentConditions().getTemp(),
                 response.getCurrentConditions().getWindSpeed(),
                 response.getCurrentConditions().getConditions());
+        saveRequest(city, "weatherAtTime", apiKey);
         return mapper.toWeatherResponse(response, city, dateTime);
     }
 
@@ -226,6 +240,7 @@ public class WeatherService {
                 }
             }
         }
+        saveRequest(city, "hourlyForecast", apiKey);
         return mapper.toHourlyForecastResponse(response, date, hourlyList);
     }
 }

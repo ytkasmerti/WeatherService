@@ -20,6 +20,7 @@ public class PaymentService {
 
     private final UserRepository userRepository;
     private final Map<String, PaymentDto> payments = new ConcurrentHashMap<>(); //заменить на бд
+    private final ApiKeyService apiKeyService;
 
     private int getPrice(String plan) {
         return switch (plan.toUpperCase()) {
@@ -83,13 +84,20 @@ public class PaymentService {
 
         User user = userRepository.findByApiKey(payment.getApiKey()).orElseThrow(()
                 -> new RuntimeException("Пользователь не найден"));
-
         SubscriptionLevel newLevel = SubscriptionLevel.valueOf(payment.getPlan());
         user.setSubscriptionLevel(newLevel);
         user.setSubscriptionExpiresAt(LocalDateTime.now().plusMonths(1));
+        //Генерируем новый ключ с новым уровнем и блокируем старый
+        String newApiKey = apiKeyService.generateApiKey(user.getEmail(), payment.getPlan());
+        apiKeyService.deactivateKey(apiKey);
+        //Обновляем пользователя
+        user.setApiKey(newApiKey);
+        user.setSubscriptionLevel(newLevel);
+        user.setSubscriptionExpiresAt(LocalDateTime.now().plusMonths(1));
+        user.setIsActive(true);
         userRepository.save(user);
-
-        log.info("Пользователь {} повышен до {}", payment.getApiKey(), newLevel);
+        payment.setApiKey(newApiKey);
+        log.info("Подписка обновлена: {} -> {}, новый ключ: {}", user.getEmail(), payment.getPlan(), newApiKey);
         return payment;
     }
 }

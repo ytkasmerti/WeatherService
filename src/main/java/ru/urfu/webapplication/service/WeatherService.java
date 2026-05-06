@@ -1,6 +1,7 @@
 package ru.urfu.webapplication.service;
 
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import ru.urfu.webapplication.client.VisualCrossingClient;
 import ru.urfu.webapplication.dto.ForecastResponse;
@@ -124,7 +125,8 @@ public class WeatherService {
         return fetchWeatherFromApi(location, lang);
     }
 
-    // фильтрация
+    // фильтрация (доступ premium)
+    @PreAuthorize("hasRole('PREMIUM')")
     public ForecastResponse getForecastWithFilter(String city, int days, String apiKey, String lang, String filterCondition) {
         ForecastResponse forecast = getForecast(city, days, apiKey, lang);
         if (filterCondition == null || filterCondition.isEmpty()) {
@@ -151,12 +153,10 @@ public class WeatherService {
     }
 
     //Прогноз на N дней (доступ basic+)
+    @PreAuthorize("hasRole('BASIC') or hasRole('PREMIUM')")
     public ForecastResponse getForecast(String city, int days, String apiKey, String lang) {
+        validateAndGetLevel(apiKey);
         //Ограничение прогноза 15 днями (максимум API)
-        SubscriptionLevel level = validateAndGetLevel(apiKey);
-        if (level == SubscriptionLevel.FREE) {
-            throw new RuntimeException("Прогноз погоды доступен только с BASIC или PREMIUM подпиской");
-        }
         int validDays = Math.min(days, 15);
         if (days > 15) {
             log.warn("Запрошено {} дней, ограничено 15 днями", days);
@@ -181,7 +181,7 @@ public class WeatherService {
     public HistoricalResponse getHistoricalData(String city, String startDate, String endDate, String apiKey, String lang) {
         SubscriptionLevel level = validateAndGetLevel(apiKey);
         if (level == SubscriptionLevel.FREE) {
-            throw new RuntimeException("Прогноз погоды доступен только с BASIC или PREMIUM подпиской");
+            throw new RuntimeException("Ваш тариф не позволяет использовать эту функцию. Повысьте уровень подписки");
         }
 
         if (level == SubscriptionLevel.BASIC) {
@@ -189,7 +189,7 @@ public class WeatherService {
             LocalDate end = LocalDate.parse(endDate);
             long daysBetween = java.time.temporal.ChronoUnit.DAYS.between(start, end);
             if (daysBetween > 7) {
-                throw new RuntimeException("BASIC подписка позволяет запрашивать историю не более чем на 7 дней");
+                throw new RuntimeException("BASIC подписка позволяет запрашивать историю не более чем на 7 дней. Повысьте уровень подписки");
             }
         }
         log.info("Запрос истории погоды для города {} с {} по {}", city, startDate, endDate);
@@ -206,11 +206,9 @@ public class WeatherService {
     }
 
     //Погода в конкретное время (доступ premium)
+    @PreAuthorize("hasRole('PREMIUM')")
     public WeatherResponse getWeatherAtTime(String city, String dateTime, String apiKey, String lang) {
-        SubscriptionLevel level = validateAndGetLevel(apiKey);
-        if (level != SubscriptionLevel.PREMIUM) {
-            throw new RuntimeException("Погода на конкретное время доступна только с PREMIUM подпиской");
-        }
+        validateAndGetLevel(apiKey);
         log.info("Запрос погоды для города {} на время {}", city, dateTime);
         VisualCrossingResponse response = visualCrossingClient.getWeatherAtTime(city, dateTime, lang);
         checkAndPublishAlert(city, dateTime,
@@ -223,11 +221,9 @@ public class WeatherService {
     }
 
     //Почасовой прогноз погоды (доступ premium)
+    @PreAuthorize("hasRole('PREMIUM')")
     public HourlyForecastResponse getHourlyForecast(String city, String date, String apiKey, String lang) {
-        SubscriptionLevel level = validateAndGetLevel(apiKey);
-        if (level != SubscriptionLevel.PREMIUM) {
-            throw new RuntimeException("Почасовой прогноз доступен только с PREMIUM подпиской");
-        }
+        validateAndGetLevel(apiKey);
         log.info("Запрос почасового прогноза для города {} на {}", city, date);
         VisualCrossingResponse response = visualCrossingClient.getHourlyForecast(city, date, lang);
         List<HourlyForecastResponse.HourlyData> hourlyList = new ArrayList<>();

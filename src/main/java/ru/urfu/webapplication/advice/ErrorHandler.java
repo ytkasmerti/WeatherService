@@ -2,6 +2,7 @@ package ru.urfu.webapplication.advice;
 
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -45,6 +46,15 @@ public class ErrorHandler {
         Map<String, String> error = new HashMap<>();
         error.put("error", "Ошибка валидации параметров");
         error.put("message", e.getConstraintViolations().iterator().next().getMessage());
+        return error;
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public Map<String, Object> handleAccessDenied(AccessDeniedException e) {
+        log.error("Доступ запрещён: {}", e.getMessage());
+        Map<String, Object> error = new HashMap<>();
+        error.put("error", "Недостаточно прав");
+        error.put("message", "Ваш тариф не позволяет использовать эту функцию. Повысьте уровень подписки");
         return error;
     }
 }

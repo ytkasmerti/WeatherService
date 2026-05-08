@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.urfu.webapplication.entity.UserSubscription;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
@@ -37,5 +39,10 @@ public class SubscriptionService {
             throw new RuntimeException("У вас нет активной подписки на уведомления");
         }
         return subscriptions.get(email);
+    }
+
+    //получение всех подписок
+    public List<UserSubscription> getAllSubscriptions() {
+        return new ArrayList<>(subscriptions.values());
     }
 }

@@ -1,5 +1,6 @@
 package ru.urfu.webapplication.service;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -35,6 +36,8 @@ public class WeatherService {
     private final ApiKeyService apiKeyService;
     private final DtoMapperService mapper;
     private final WeatherRequestRepository weatherRequestRepository;
+    @Value("${systemApiKey}")
+    private String apiKey;
 
     public WeatherService(VisualCrossingClient visualCrossingClient,
                           ApplicationEventPublisher eventPublisher,
@@ -74,7 +77,7 @@ public class WeatherService {
     }
 
     //Проверка погодных предупреждений
-    private void checkAndPublishAlert(String city, String date, Double tempMax, Double tempMin, Double windSpeed, String conditions) {
+    private String checkAndPublishAlert(String city, String date, Double tempMax, Double tempMin, Double windSpeed, String conditions) {
         String alert = null;
         if (tempMax > 30) {
             alert = "Жара: " + tempMax + "градусов";
@@ -94,6 +97,16 @@ public class WeatherService {
         if (alert != null) {
             eventPublisher.publishEvent(new WeatherAlertEvent(this, city, alert, date));
         }
+        return alert;
+    }
+
+    //Проверка погодных условий для планировщика
+    public String checkWeatherConditions(String city, int days, String lang) {
+        ForecastResponse forecast = getForecast(city, days, apiKey, lang);
+        ForecastResponse.DailyForecast today = forecast.getDaily().getFirst();
+        return checkAndPublishAlert(city, "сегодня",
+                today.getTempMax(), today.getTempMin(),
+                today.getWindSpeed(), today.getConditions());
     }
 
     //Общий метод для получения текущей погоды

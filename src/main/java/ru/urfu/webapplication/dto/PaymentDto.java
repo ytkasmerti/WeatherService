@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 public class PaymentDto {
     private String paymentId;
     private String apiKey;
-    private String plan;
+    private String level;
     private Integer amount;
     private LocalDateTime createdAt;
 }

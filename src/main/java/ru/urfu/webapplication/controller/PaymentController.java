@@ -11,7 +11,6 @@ import java.util.Map;
 @RequestMapping("/payment")
 @RequiredArgsConstructor
 public class PaymentController {
-
     private final PaymentService paymentService;
 
     //Информация о подписке
@@ -23,12 +22,12 @@ public class PaymentController {
     }
 
     //Создание платежа
-    //в cmd:  curl -X POST "http://localhost:8080/payment/create?apiKey= ApiKey &plan=BASIC"
+    //в cmd:  curl -X POST "http://localhost:8080/payment/create?apiKey= ApiKey &level=BASIC"
     @PostMapping("/create")
     public PaymentDto createPayment(
             @RequestParam String apiKey,
-            @RequestParam String plan) {
-        return paymentService.createPayment(apiKey, plan);
+            @RequestParam String level) {
+        return paymentService.createPayment(apiKey, level);
     }
 
     //Мок-подтверждение оплаты

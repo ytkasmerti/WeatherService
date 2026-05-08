@@ -21,9 +21,10 @@ public class PaymentService {
     private final UserRepository userRepository;
     private final Map<String, PaymentDto> payments = new ConcurrentHashMap<>(); //заменить на бд
     private final ApiKeyService apiKeyService;
+    private final EmailService emailService;
 
-    private int getPrice(String plan) {
-        return switch (plan.toUpperCase()) {
+    private int getPrice(String level) {
+        return switch (level.toUpperCase()) {
             case "BASIC" -> 500;
             case "PREMIUM" -> 1000;
             default -> 0;
@@ -36,7 +37,7 @@ public class PaymentService {
                 -> new RuntimeException("Пользователь не найден"));
         return Map.of(
                 "apiKey", apiKey,
-                "currentPlan", user.getSubscriptionLevel().name(),
+                "currentLevel", user.getSubscriptionLevel().name(),
                 "expiresAt", user.getSubscriptionExpiresAt() != null ? user.getSubscriptionExpiresAt().toString() : "не ограничено",
                 "autoRenewal", user.getAutoRenewal() != null && user.getAutoRenewal(),
                 "isActive", user.getIsActive()
@@ -44,25 +45,22 @@ public class PaymentService {
     }
 
     //Создание платежа
-    public PaymentDto createPayment(String apiKey, String plan) {
+    public PaymentDto createPayment(String apiKey, String level) {
         User user = userRepository.findByApiKey(apiKey).orElseThrow(()
                 -> new RuntimeException("Пользователь не найден"));
-        String planUpper = plan.toUpperCase();
-        int price = getPrice(planUpper);
-
+        String levelUpper = level.toUpperCase();
+        int price = getPrice(levelUpper);
         if (price == 0) {
             throw new RuntimeException("Неверный тариф. Доступны: BASIC, PREMIUM");
         }
-
-        if (user.getSubscriptionLevel().name().equals(planUpper)) {
-            throw new RuntimeException("У вас уже есть подписка " + planUpper);
+        if (user.getSubscriptionLevel().name().equals(levelUpper)) {
+            throw new RuntimeException("У вас уже есть подписка " + levelUpper);
         }
-
         String paymentId = UUID.randomUUID().toString();
         PaymentDto payment = PaymentDto.builder()
                 .paymentId(paymentId)
                 .apiKey(apiKey)
-                .plan(planUpper)
+                .level(levelUpper)
                 .amount(price)
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -77,19 +75,16 @@ public class PaymentService {
         if (payment == null) {
             throw new RuntimeException("Платёж не найден");
         }
-
         if (!payment.getApiKey().equals(apiKey)) {
             throw new RuntimeException("Неверный API ключ для этого платежа");
         }
-
         User user = userRepository.findByApiKey(payment.getApiKey()).orElseThrow(()
                 -> new RuntimeException("Пользователь не найден"));
-        SubscriptionLevel newLevel = SubscriptionLevel.valueOf(payment.getPlan());
-        user.setSubscriptionLevel(newLevel);
-        user.setSubscriptionExpiresAt(LocalDateTime.now().plusMonths(1));
+        SubscriptionLevel newLevel = SubscriptionLevel.valueOf(payment.getLevel());
         //Генерируем новый ключ с новым уровнем и блокируем старый
-        String newApiKey = apiKeyService.generateApiKey(user.getEmail(), payment.getPlan());
+        String newApiKey = apiKeyService.generateApiKey(user.getEmail(), payment.getLevel());
         apiKeyService.deactivateKey(apiKey);
+
         //Обновляем пользователя
         user.setApiKey(newApiKey);
         user.setSubscriptionLevel(newLevel);
@@ -97,7 +92,11 @@ public class PaymentService {
         user.setIsActive(true);
         userRepository.save(user);
         payment.setApiKey(newApiKey);
-        log.info("Подписка обновлена: {} -> {}, новый ключ: {}", user.getEmail(), payment.getPlan(), newApiKey);
+        payments.remove(paymentId);
+
+        //Отправка письма
+        emailService.sendPaymentSuccessEmail(user.getEmail(), newApiKey, payment.getLevel());
+        log.info("Подписка у {} обновлена до подписки {}, новый ключ: {}", user.getEmail(), payment.getLevel(), newApiKey);
         return payment;
     }
 }

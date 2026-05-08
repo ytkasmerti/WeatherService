@@ -45,18 +45,10 @@ public class UserService {
         user.setSubscriptionLevel(level);
         user.setCreatedAt(LocalDateTime.now());
         user.setIsActive(true);
-
         //Отправка письма
-        try {
-            emailService.sendApiKeyEmail(email, apiKey, level.name());
-        } catch (Exception e) {
-            log.error("Не удалось отправить письмо пользователю {}", email);
-            Map<String, String> response = new HashMap<>();
-            response.put("error", "Ошибка отправки письма");
-            response.put("message", "Не удалось отправить письмо на " + email);
-            return response;
-        }
+        emailService.sendApiKeyEmail(email, apiKey, level.name());
         userRepository.save(user);
+
         Map<String, String> response = new HashMap<>();
         response.put("apiKey", apiKey);
         response.put("subscriptionLevel", level.name());

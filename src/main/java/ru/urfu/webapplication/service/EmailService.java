@@ -37,8 +37,31 @@ public class EmailService {
             mailSender.send(message);
             log.info("Письмо с API ключом отправлено на {}", toEmail);
         } catch (MessagingException e) {
-            log.error("Ошибка при отправке письма: {}", e.getMessage());
+            log.error("Ошибка при отправке письма регистрации: {}", e.getMessage());
             throw new RuntimeException("Не удалось отправить письмо на " + toEmail, e);
+        }
+    }
+
+    public void sendPaymentSuccessEmail(String toEmail, String newApiKey, String level) {
+        String subject = "Оплата подписки Weather Service";
+        String text = String.format("""
+                        Здравствуйте! Ваш платеж успешно подтвержден.
+                        Новый уровень подписки: %s. Ваш новый API ключ: %s
+                        Сохраните этот ключ. Старый ключ больше не работает.
+                        С уважением, команда Weather Service.""",
+                level, newApiKey);
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, "UTF-8");
+            helper.setFrom(fromEmail);
+            helper.setTo(toEmail);
+            helper.setSubject(subject);
+            helper.setText(text);
+            mailSender.send(message);
+            log.info("Письмо об успешной оплате отправлено на {}", toEmail);
+        } catch (MessagingException e) {
+            log.error("Ошибка при отправке письма об успешной оплате: {}", e.getMessage());
+            throw new RuntimeException("Не удалось отправить письмо об оплате на " + toEmail, e);
         }
     }
 }

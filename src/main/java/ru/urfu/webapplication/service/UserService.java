@@ -20,6 +20,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
     public Map<String, String> registerUser(String email, String plan) {
         SubscriptionLevel level;
@@ -37,7 +38,6 @@ public class UserService {
         }
 
         String apiKey = generateApiKey(email, level);
-
         User user = new User();
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(apiKey));
@@ -46,13 +46,21 @@ public class UserService {
         user.setCreatedAt(LocalDateTime.now());
         user.setIsActive(true);
 
+        //Отправка письма
+        try {
+            emailService.sendApiKeyEmail(email, apiKey, level.name());
+        } catch (Exception e) {
+            log.error("Не удалось отправить письмо пользователю {}", email);
+            Map<String, String> response = new HashMap<>();
+            response.put("error", "Ошибка отправки письма");
+            response.put("message", "Не удалось отправить письмо на " + email);
+            return response;
+        }
         userRepository.save(user);
-
         Map<String, String> response = new HashMap<>();
         response.put("apiKey", apiKey);
         response.put("subscriptionLevel", level.name());
         response.put("message", "Регистрация прошла успешно! Сохраните ваш API ключ!");
-
         log.info("Новый пользователь успешно зарегистрирован: {} с {} планом", email, level);
         return response;
     }

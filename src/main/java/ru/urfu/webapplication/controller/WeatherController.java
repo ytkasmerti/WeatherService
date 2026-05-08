@@ -10,7 +10,6 @@ import ru.urfu.webapplication.dto.ForecastResponse;
 import ru.urfu.webapplication.dto.HistoricalResponse;
 import ru.urfu.webapplication.dto.HourlyForecastResponse;
 import ru.urfu.webapplication.dto.WeatherResponse;
-import ru.urfu.webapplication.service.ApiKeyService;
 import ru.urfu.webapplication.service.UserService;
 import ru.urfu.webapplication.service.WeatherService;
 
@@ -24,7 +23,7 @@ public class WeatherController {
     private final WeatherService weatherService;
     private final UserService userService;
 
-    public WeatherController(WeatherService weatherService, ApiKeyService apiKeyService, UserService userService) {
+    public WeatherController(WeatherService weatherService, UserService userService) {
         this.weatherService = weatherService;
         this.userService = userService;
     }

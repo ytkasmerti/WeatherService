@@ -7,6 +7,7 @@ import ru.urfu.webapplication.entity.UserSubscription;
 import ru.urfu.webapplication.service.SubscriptionService;
 import ru.urfu.webapplication.service.ApiKeyService;
 
+
 @RestController
 @RequestMapping("/subscription")
 @RequiredArgsConstructor
@@ -16,6 +17,7 @@ public class SubscriptionController {
     private final ApiKeyService apiKeyService;
 
     //Подписаться (только PREMIUM)
+    // curl -X POST "http://localhost:8080/subscription/subscribe?apiKey=premium-4fde29ef-1676466811&city=Moscow&notifyHeat=true&notifyWind=false"
     @PreAuthorize("hasRole('PREMIUM')")
     @PostMapping("/subscribe")
     public String subscribe(@RequestParam String apiKey,
@@ -38,5 +40,22 @@ public class SubscriptionController {
         subscriptionService.subscribe(sub);
 
         return "Вы подписались на уведомления о погоде в городе " + city;
+    }
+
+    //Отписаться
+    //curl -X DELETE "http://localhost:8080/subscription/unsubscribe?apiKey=premium-4fde29ef-1676466811"
+    @DeleteMapping("/unsubscribe")
+    public String unsubscribe(@RequestParam String apiKey) {
+        String email = apiKeyService.getEmailByApiKey(apiKey);
+        subscriptionService.unsubscribe(email);
+        return "Вы отписались от уведомлений";
+    }
+
+    //Получить настройки подписки
+    // http://localhost:8080/subscription/settings?apiKey=premium-4fde29ef-1676466811
+    @GetMapping("/settings")
+    public UserSubscription getSettings(@RequestParam String apiKey) {
+        String email = apiKeyService.getEmailByApiKey(apiKey);
+        return subscriptionService.getSubscription(email);
     }
 }

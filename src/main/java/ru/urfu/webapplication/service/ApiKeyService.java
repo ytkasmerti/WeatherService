@@ -85,4 +85,10 @@ public class ApiKeyService {
         return prefix + "-" + uniqueId + "-" + Math.abs(email.hashCode());
     }
 
+    //получение почты по апи ключу
+    public String getEmailByApiKey(String apiKey) {
+        return userRepository.findByApiKey(apiKey)
+                .map(User::getEmail)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+    }
 }

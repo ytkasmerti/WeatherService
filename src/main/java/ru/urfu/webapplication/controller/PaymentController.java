@@ -30,7 +30,7 @@ public class PaymentController {
         return paymentService.createPayment(apiKey, level);
     }
 
-    //Мок-подтверждение оплаты
+    //Имитация оплаты
     //curl -X POST "http://localhost:8080/payment/confirm/ PaymentId ?apiKey= ApiKey "
     @PostMapping("/confirm/{paymentId}")
     public PaymentDto confirmPayment(

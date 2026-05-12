@@ -19,7 +19,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class PaymentService {
 
     private final UserRepository userRepository;
-    private final Map<String, PaymentDto> payments = new ConcurrentHashMap<>(); //заменить на бд
+    //заменить на бд
+    private final Map<String, PaymentDto> payments = new ConcurrentHashMap<>();
     private final ApiKeyService apiKeyService;
     private final EmailService emailService;
 
@@ -80,6 +81,23 @@ public class PaymentService {
         }
         User user = userRepository.findByApiKey(payment.getApiKey()).orElseThrow(()
                 -> new RuntimeException("Пользователь не найден"));
+
+        //Имитация оплаты (успешная оплата 80/20)
+        double random = Math.random();
+        boolean paymentSuccess = random < 0.8;
+        if (!paymentSuccess) {
+            log.warn("Платеж {} отклонен", paymentId);
+            payments.remove(paymentId);
+            throw new RuntimeException("Оплата отклонена банком. Попробуйте другую карту или повторите позже.");
+        }
+        //Имитация времени обработки платежа
+        log.warn("Платеж {} в обработке", paymentId);
+        try {
+            Thread.sleep(1500);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        log.warn("Платеж {} принят", paymentId);
         SubscriptionLevel newLevel = SubscriptionLevel.valueOf(payment.getLevel());
         //Генерируем новый ключ с новым уровнем и блокируем старый
         String newApiKey = apiKeyService.generateApiKey(user.getEmail(), payment.getLevel());
@@ -93,10 +111,10 @@ public class PaymentService {
         userRepository.save(user);
         payment.setApiKey(newApiKey);
         payments.remove(paymentId);
+        log.info("Подписка у {} обновлена до подписки {}, новый ключ: {}", user.getEmail(), payment.getLevel(), newApiKey);
 
         //Отправка письма
         emailService.sendPaymentSuccessEmail(user.getEmail(), newApiKey, payment.getLevel());
-        log.info("Подписка у {} обновлена до подписки {}, новый ключ: {}", user.getEmail(), payment.getLevel(), newApiKey);
         return payment;
     }
 }

@@ -17,7 +17,7 @@ public class SubscriptionController {
     private final ApiKeyService apiKeyService;
 
     //Подписаться (только PREMIUM)
-    // curl -X POST "http://localhost:8080/subscription/subscribe?apiKey=premium-4fde29ef-1676466811&city=Moscow&notifyHeat=true&notifyWind=false"
+    // curl -X POST "http://localhost:8080/subscription/subscribe?apiKey=premium-a38dab44-1468544522&city=Moscow&notifyHeat=true&notifyWind=false"
     @PreAuthorize("hasRole('PREMIUM')")
     @PostMapping("/subscribe")
     public String subscribe(@RequestParam String apiKey,

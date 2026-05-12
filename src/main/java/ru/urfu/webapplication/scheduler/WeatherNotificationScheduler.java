@@ -2,13 +2,10 @@ package ru.urfu.webapplication.scheduler;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import ru.urfu.webapplication.dto.ForecastResponse;
 import ru.urfu.webapplication.entity.UserSubscription;
-import ru.urfu.webapplication.repository.WeatherAlertRepository;
 import ru.urfu.webapplication.service.EmailService;
 import ru.urfu.webapplication.service.SubscriptionService;
 import ru.urfu.webapplication.service.WeatherService;
@@ -25,7 +22,7 @@ public class WeatherNotificationScheduler {
     private final WeatherService weatherService;
     private final EmailService emailService;
 
-    //Каждый день в 08:00
+    //Каждый день в 08:00   (каждую минуту - "0 * * * * *")
     @Scheduled(cron = "0 0 8 * * *")
     public void sendDailyWeatherAlerts() {
         log.info("Запуск ежедневной рассылки погодных уведомлений");

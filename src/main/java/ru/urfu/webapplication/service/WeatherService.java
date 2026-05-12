@@ -1,7 +1,6 @@
 package ru.urfu.webapplication.service;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import ru.urfu.webapplication.client.VisualCrossingClient;
@@ -15,7 +14,6 @@ import ru.urfu.webapplication.dto.visualcrossingapi.VisualCrossingResponse;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +21,6 @@ import java.util.HashMap;
 
 import lombok.extern.slf4j.Slf4j;
 import ru.urfu.webapplication.entity.WeatherRequest;
-import ru.urfu.webapplication.event.WeatherAlertEvent;
 import ru.urfu.webapplication.model.SubscriptionLevel;
 import ru.urfu.webapplication.repository.WeatherRequestRepository;
 
@@ -31,8 +28,6 @@ import ru.urfu.webapplication.repository.WeatherRequestRepository;
 @Service
 public class WeatherService {
     private final VisualCrossingClient visualCrossingClient;
-    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    private final ApplicationEventPublisher eventPublisher;
     private final ApiKeyService apiKeyService;
     private final DtoMapperService mapper;
     private final WeatherRequestRepository weatherRequestRepository;
@@ -40,11 +35,9 @@ public class WeatherService {
     private String apiKey;
 
     public WeatherService(VisualCrossingClient visualCrossingClient,
-                          ApplicationEventPublisher eventPublisher,
                           ApiKeyService apiKeyService,
                           DtoMapperService mapper, WeatherRequestRepository weatherRequestRepository) {
         this.visualCrossingClient = visualCrossingClient;
-        this.eventPublisher = eventPublisher;
         this.apiKeyService = apiKeyService;
         this.mapper = mapper;
         this.weatherRequestRepository = weatherRequestRepository;
@@ -77,7 +70,7 @@ public class WeatherService {
     }
 
     //Проверка погодных предупреждений
-    private String checkAndPublishAlert(String city, String date, Double tempMax, Double tempMin, Double windSpeed, String conditions) {
+    private String checkAlert(Double tempMax, Double tempMin, Double windSpeed, String conditions) {
         String alert = null;
         if (tempMax > 30) {
             alert = "Жара: " + tempMax + "градусов";
@@ -94,9 +87,6 @@ public class WeatherService {
                 alert = "Осадки: " + conditions;
             }
         }
-        if (alert != null) {
-            eventPublisher.publishEvent(new WeatherAlertEvent(this, city, alert, date));
-        }
         return alert;
     }
 
@@ -104,8 +94,7 @@ public class WeatherService {
     public String checkWeatherConditions(String city, int days, String lang) {
         ForecastResponse forecast = getForecast(city, days, apiKey, lang);
         ForecastResponse.DailyForecast today = forecast.getDaily().getFirst();
-        return checkAndPublishAlert(city, "сегодня",
-                today.getTempMax(), today.getTempMin(),
+        return checkAlert(today.getTempMax(), today.getTempMin(),
                 today.getWindSpeed(), today.getConditions());
     }
 
@@ -113,11 +102,6 @@ public class WeatherService {
     private WeatherResponse fetchWeatherFromApi(String location, String lang) {
         log.info("Вызов API для получения погоды по локации {}", location);
         VisualCrossingResponse response = visualCrossingClient.getCurrentWeather(location, lang);
-        checkAndPublishAlert(location, "текущее время",
-                response.getCurrentConditions().getTemp(),
-                response.getCurrentConditions().getTemp(),
-                response.getCurrentConditions().getWindSpeed(),
-                response.getCurrentConditions().getConditions());
         return mapper.toWeatherResponse(response, location, lang);
     }
 
@@ -182,7 +166,6 @@ public class WeatherService {
             for (int i = 0; i < limit; i++) {
                 Day day = response.getDays().get(i);
                 dailyList.add(mapper.toDailyForecast(day));
-                checkAndPublishAlert(city, day.getDatetime(), day.getTempMax(), day.getTempMin(), day.getWindSpeed(), day.getConditions());
             }
             log.info("Возвращено {} дней прогноза", dailyList.size());
         }
@@ -211,7 +194,6 @@ public class WeatherService {
         if (response.getDays() != null) {
             for (Day day : response.getDays()) {
                 historyList.add(mapper.toDailyHistory(day));
-                checkAndPublishAlert(city, day.getDatetime(), day.getTempMax(), day.getTempMin(), day.getWindSpeed(), day.getConditions());
             }
         }
         saveRequest(city, "history", apiKey);
@@ -224,11 +206,6 @@ public class WeatherService {
         validateAndGetLevel(apiKey);
         log.info("Запрос погоды для города {} на время {}", city, dateTime);
         VisualCrossingResponse response = visualCrossingClient.getWeatherAtTime(city, dateTime, lang);
-        checkAndPublishAlert(city, dateTime,
-                response.getCurrentConditions().getTemp(),
-                response.getCurrentConditions().getTemp(),
-                response.getCurrentConditions().getWindSpeed(),
-                response.getCurrentConditions().getConditions());
         saveRequest(city, "weatherAtTime", apiKey);
         return mapper.toWeatherResponse(response, city, dateTime);
     }
@@ -245,7 +222,6 @@ public class WeatherService {
             if (day.getHours() != null) {
                 for (Hour hour : day.getHours()) {
                     hourlyList.add(mapper.toHourlyData(hour));
-                    checkAndPublishAlert(city, hour.getDatetime(), hour.getTemp(), day.getTemp(), hour.getWindSpeed(), hour.getConditions());
                 }
             }
         }

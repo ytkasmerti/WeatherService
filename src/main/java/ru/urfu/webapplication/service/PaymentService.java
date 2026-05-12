@@ -88,6 +88,7 @@ public class PaymentService {
         if (!paymentSuccess) {
             log.warn("Платеж {} отклонен", paymentId);
             payments.remove(paymentId);
+            emailService.sendPaymentFailedEmail(user.getEmail(), payment.getLevel(), payment.getAmount());
             throw new RuntimeException("Оплата отклонена банком. Попробуйте другую карту или повторите позже.");
         }
         //Имитация времени обработки платежа
@@ -110,8 +111,11 @@ public class PaymentService {
         user.setIsActive(true);
         userRepository.save(user);
         payment.setApiKey(newApiKey);
-        payments.remove(paymentId);
         log.info("Подписка у {} обновлена до подписки {}, новый ключ: {}", user.getEmail(), payment.getLevel(), newApiKey);
+
+        payment.setMessage(String.format("Оплата успешна! Подписка %s активирована до %s. Проверьте почту для получения актуального API-ключа",
+                payment.getLevel(), user.getSubscriptionExpiresAt().toString()));
+        payments.remove(paymentId);
 
         //Отправка письма
         emailService.sendPaymentSuccessEmail(user.getEmail(), newApiKey, payment.getLevel());

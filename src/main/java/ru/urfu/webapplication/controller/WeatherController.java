@@ -29,9 +29,9 @@ public class WeatherController {
     }
 
     //Регистрация
-    // http://localhost:8080/weather/register?email=test4@mail.ru&plan=free      free-5064c80f-130987652
-    // http://localhost:8080/weather/register?email=test2@mail.ru&plan=basic     basic-f27c60ec-811046022
-    // http://localhost:8080/weather/register?email=test3@mail.ru&plan=premium   premium-4fde29ef-1676466811
+    // http://localhost:8080/weather/register?email=test4@gmail.com&plan=free      free-5064c80f-130987652
+    // http://localhost:8080/weather/register?email=test2@gmail.com&plan=basic     basic-f27c60ec-811046022
+    // http://localhost:8080/weather/register?email=test3@gmail.com&plan=premium   premium-4fde29ef-1676466811
     @GetMapping("/register")
     public Map<String, String> register(@RequestParam String email, @RequestParam(defaultValue = "free") String plan) {
         return userService.registerUser(email, plan);

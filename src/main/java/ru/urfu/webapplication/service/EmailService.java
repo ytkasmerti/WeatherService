@@ -59,9 +59,31 @@ public class EmailService {
             log.info("Письмо об успешной оплате отправлено на {}", toEmail);
         } catch (MessagingException e) {
             log.error("Ошибка при отправке письма об успешной оплате: {}", e.getMessage());
-            throw new RuntimeException("Не удалось отправить письмо об оплате на " + toEmail, e);
+            throw new RuntimeException("Не удалось отправить письмо об успешной оплате на " + toEmail, e);
         }
     }
+
+    public void sendPaymentFailedEmail(String toEmail, String level, int amount) {
+        String subject = "Ошибка оплаты подписки Weather Service";
+        String text = String.format("""
+                        Здравствуйте! Ваш платеж на сумму %d руб. для активации подписки %s был отклонён.
+                        Попробуйте использовать другую карту или повторить попытку позже.
+                        С уважением, команда Weather Service.""", amount, level);
+
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, "UTF-8");
+            helper.setFrom(fromEmail);
+            helper.setTo(toEmail);
+            helper.setSubject(subject);
+            helper.setText(text);
+            mailSender.send(message);
+            log.info("Письмо об отказе в оплате отправлено на {}", toEmail);
+        } catch (MessagingException e) {
+            log.error("Ошибка при отправке письма об отказе в оплате: {}", e.getMessage());
+        }
+    }
+
 
     public void sendWeatherAlertEmail(String toEmail, String city, String alertMessage) {
         String subject = "Погодное предупреждение для " + city;

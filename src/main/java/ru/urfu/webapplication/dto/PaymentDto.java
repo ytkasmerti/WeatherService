@@ -16,4 +16,5 @@ public class PaymentDto {
     private String level;
     private Integer amount;
     private LocalDateTime createdAt;
+    private String message;
 }

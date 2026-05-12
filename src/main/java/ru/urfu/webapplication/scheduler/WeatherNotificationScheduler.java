@@ -22,7 +22,7 @@ public class WeatherNotificationScheduler {
     private final WeatherService weatherService;
     private final EmailService emailService;
 
-    //Каждый день в 08:00   (каждую минуту - "0 * * * * *")
+    //Каждый день в 08:00 - "0 0 8 * * *"  (каждую минуту - "0 * * * * *")
     @Scheduled(cron = "0 0 8 * * *")
     public void sendDailyWeatherAlerts() {
         log.info("Запуск ежедневной рассылки погодных уведомлений");

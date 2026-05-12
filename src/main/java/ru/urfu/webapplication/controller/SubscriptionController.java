@@ -1,12 +1,12 @@
 package ru.urfu.webapplication.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ru.urfu.webapplication.entity.UserSubscription;
 import ru.urfu.webapplication.service.SubscriptionService;
 import ru.urfu.webapplication.service.ApiKeyService;
 
+import java.util.List;
 
 @RestController
 @RequestMapping("/subscription")
@@ -16,9 +16,8 @@ public class SubscriptionController {
     private final SubscriptionService subscriptionService;
     private final ApiKeyService apiKeyService;
 
-    //Подписаться (только PREMIUM)
-    // curl -X POST "http://localhost:8080/subscription/subscribe?apiKey=premium-a38dab44-1468544522&city=Moscow&notifyHeat=true&notifyWind=false"
-    @PreAuthorize("hasRole('PREMIUM')")
+    //Подписаться
+    // curl -X POST "http://localhost:8080/subscription/subscribe?apiKey=premium-a38dab44-1468544522&city=Moscow&notifyWind=false"
     @PostMapping("/subscribe")
     public String subscribe(@RequestParam String apiKey,
                             @RequestParam String city,
@@ -26,9 +25,7 @@ public class SubscriptionController {
                             @RequestParam(required = false, defaultValue = "true") boolean notifyCold,
                             @RequestParam(required = false, defaultValue = "true") boolean notifyWind,
                             @RequestParam(required = false, defaultValue = "true") boolean notifyPrecipitation) {
-        apiKeyService.getSubscriptionLevel(apiKey);
         String email = apiKeyService.getEmailByApiKey(apiKey);
-
         //Создание подписки
         UserSubscription sub = new UserSubscription();
         sub.setEmail(email);
@@ -41,20 +38,30 @@ public class SubscriptionController {
         return "Вы подписались на уведомления о погоде в городе " + city;
     }
 
-    //Отписаться
-    //curl -X DELETE "http://localhost:8080/subscription/unsubscribe?apiKey=premium-4fde29ef-1676466811"
+    //Отписаться от всех
+    //curl -X DELETE "http://localhost:8080/subscription/unsubscribe?apiKey=premium-a38dab44-1468544522"
     @DeleteMapping("/unsubscribe")
     public String unsubscribe(@RequestParam String apiKey) {
         String email = apiKeyService.getEmailByApiKey(apiKey);
-        subscriptionService.unsubscribe(email);
-        return "Вы отписались от уведомлений";
+        subscriptionService.unsubscribeAll(email);
+        return "Вы отписались от всех уведомлений";
     }
 
-    //Получить настройки подписки
-    // http://localhost:8080/subscription/settings?apiKey=premium-4fde29ef-1676466811
+    //Получить все свои подписки
+    // http://localhost:8080/subscription/settings?apiKey=premium-a38dab44-1468544522
     @GetMapping("/settings")
-    public UserSubscription getSettings(@RequestParam String apiKey) {
+    public List<UserSubscription> getSettings(@RequestParam String apiKey) {
         String email = apiKeyService.getEmailByApiKey(apiKey);
-        return subscriptionService.getSubscription(email);
+        return subscriptionService.getUserSubscriptions(email);
+    }
+
+    //Отписаться от конкретной подписки по id (id из settings)
+    //curl -X DELETE "http://localhost:8080/subscription/unsubscribe/1?apiKey=premium-a38dab44-1468544522"
+    @DeleteMapping("/unsubscribe/{subscriptionId}")
+    public String unsubscribeById(@RequestParam String apiKey,
+                                  @PathVariable Long subscriptionId) {
+        String email = apiKeyService.getEmailByApiKey(apiKey);
+        subscriptionService.unsubscribe(subscriptionId, email);
+        return "Вы отписались от уведомлений подписки " + subscriptionId;
     }
 }

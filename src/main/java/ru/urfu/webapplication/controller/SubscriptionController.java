@@ -38,7 +38,6 @@ public class SubscriptionController {
         sub.setNotifyWind(notifyWind);
         sub.setNotifyPrecipitation(notifyPrecipitation);
         subscriptionService.subscribe(sub);
-
         return "Вы подписались на уведомления о погоде в городе " + city;
     }
 

@@ -22,7 +22,7 @@ public class PaymentController {
     }
 
     //Создание платежа
-    //в cmd:  curl -X POST "http://localhost:8080/payment/create?apiKey= ApiKey &level=BASIC"
+    //curl -X POST "http://localhost:8080/payment/create?apiKey= ApiKey &level=BASIC"
     @PostMapping("/create")
     public PaymentDto createPayment(
             @RequestParam String apiKey,
@@ -31,7 +31,7 @@ public class PaymentController {
     }
 
     //Мок-подтверждение оплаты
-    //в cmd: curl -X POST "http://localhost:8080/payment/confirm/ PaymentId ?apiKey= ApiKey "
+    //curl -X POST "http://localhost:8080/payment/confirm/ PaymentId ?apiKey= ApiKey "
     @PostMapping("/confirm/{paymentId}")
     public PaymentDto confirmPayment(
             @PathVariable String paymentId,

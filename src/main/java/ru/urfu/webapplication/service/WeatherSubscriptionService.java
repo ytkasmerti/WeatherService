@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class SubscriptionService {
+public class WeatherSubscriptionService {
 
     private final UserRepository userRepository;
     //заменить на бд

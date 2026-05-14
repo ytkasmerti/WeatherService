@@ -7,7 +7,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import ru.urfu.webapplication.entity.UserSubscription;
 import ru.urfu.webapplication.service.EmailService;
-import ru.urfu.webapplication.service.SubscriptionService;
+import ru.urfu.webapplication.service.WeatherSubscriptionService;
 import ru.urfu.webapplication.service.WeatherService;
 
 import java.util.List;
@@ -18,7 +18,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class WeatherNotificationScheduler {
 
-    private final SubscriptionService subscriptionService;
+    private final WeatherSubscriptionService weatherSubscriptionService;
     private final WeatherService weatherService;
     private final EmailService emailService;
 
@@ -26,7 +26,7 @@ public class WeatherNotificationScheduler {
     @Scheduled(cron = "0 0 8 * * *")
     public void sendDailyWeatherAlerts() {
         log.info("Запуск ежедневной рассылки погодных уведомлений");
-        List<UserSubscription> subscriptions = subscriptionService.getAllSubscriptions();
+        List<UserSubscription> subscriptions = weatherSubscriptionService.getAllSubscriptions();
         for (UserSubscription sub : subscriptions) {
             String alertMessage = weatherService.checkWeatherConditions(sub.getCity(), 1, "ru");
             if (alertMessage != null) {

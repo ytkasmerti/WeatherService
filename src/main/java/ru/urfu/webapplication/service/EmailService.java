@@ -84,7 +84,6 @@ public class EmailService {
         }
     }
 
-
     public void sendWeatherAlertEmail(String toEmail, String city, String alertMessage) {
         String subject = "Погодное предупреждение для " + city;
         String text = String.format("""
@@ -102,6 +101,27 @@ public class EmailService {
             log.info("Погодное уведомление отправлено на {}", toEmail);
         } catch (MessagingException e) {
             log.error("Ошибка при отправке погодного уведомления: {}", e.getMessage());
+        }
+    }
+
+    public void sendSubscriptionExpiredEmail(String toEmail, String oldLevel, String newApiKey) {
+        String subject = "Срок действия подписки истёк";
+        String text = String.format("""
+            Здравствуйте! Срок действия вашей подписки %s истёк, уровень подписки понижен до FREE.
+            Ваш новый API ключ: %s
+            Для восстановления подписки оформите новый платёж.
+            С уважением, команда Weather Service.""", oldLevel, newApiKey);
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, "UTF-8");
+            helper.setFrom(fromEmail);
+            helper.setTo(toEmail);
+            helper.setSubject(subject);
+            helper.setText(text);
+            mailSender.send(message);
+            log.info("Письмо об истечении подписки отправлено на {}", toEmail);
+        } catch (MessagingException e) {
+            log.error("Ошибка при отправке письма об истечении подписки: {}", e.getMessage());
         }
     }
 }

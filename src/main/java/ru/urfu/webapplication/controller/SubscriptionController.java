@@ -3,7 +3,7 @@ package ru.urfu.webapplication.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import ru.urfu.webapplication.entity.UserSubscription;
-import ru.urfu.webapplication.service.SubscriptionService;
+import ru.urfu.webapplication.service.WeatherSubscriptionService;
 import ru.urfu.webapplication.service.ApiKeyService;
 
 import java.util.List;
@@ -13,7 +13,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SubscriptionController {
 
-    private final SubscriptionService subscriptionService;
+    private final WeatherSubscriptionService weatherSubscriptionService;
     private final ApiKeyService apiKeyService;
 
     //Подписаться
@@ -34,7 +34,7 @@ public class SubscriptionController {
         sub.setNotifyCold(notifyCold);
         sub.setNotifyWind(notifyWind);
         sub.setNotifyPrecipitation(notifyPrecipitation);
-        subscriptionService.subscribe(sub);
+        weatherSubscriptionService.subscribe(sub);
         return "Вы подписались на уведомления о погоде в городе " + city;
     }
 
@@ -43,7 +43,7 @@ public class SubscriptionController {
     @DeleteMapping("/unsubscribe")
     public String unsubscribe(@RequestParam String apiKey) {
         String email = apiKeyService.getEmailByApiKey(apiKey);
-        subscriptionService.unsubscribeAll(email);
+        weatherSubscriptionService.unsubscribeAll(email);
         return "Вы отписались от всех уведомлений";
     }
 
@@ -52,7 +52,7 @@ public class SubscriptionController {
     @GetMapping("/settings")
     public List<UserSubscription> getSettings(@RequestParam String apiKey) {
         String email = apiKeyService.getEmailByApiKey(apiKey);
-        return subscriptionService.getUserSubscriptions(email);
+        return weatherSubscriptionService.getUserSubscriptions(email);
     }
 
     //Отписаться от конкретной подписки по id (id из settings)
@@ -61,7 +61,7 @@ public class SubscriptionController {
     public String unsubscribeById(@RequestParam String apiKey,
                                   @PathVariable Long subscriptionId) {
         String email = apiKeyService.getEmailByApiKey(apiKey);
-        subscriptionService.unsubscribe(subscriptionId, email);
+        weatherSubscriptionService.unsubscribe(subscriptionId, email);
         return "Вы отписались от уведомлений подписки " + subscriptionId;
     }
 }

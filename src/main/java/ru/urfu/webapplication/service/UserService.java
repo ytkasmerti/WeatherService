@@ -1,5 +1,6 @@
 package ru.urfu.webapplication.service;
 
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,6 +22,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final ApiKeyService apiKeyService;
 
     public Map<String, String> registerUser(String email, String plan) {
         SubscriptionLevel level;
@@ -65,5 +67,30 @@ public class UserService {
         };
         String uniqueId = UUID.randomUUID().toString().substring(0, 8);
         return prefix + "-" + uniqueId + "-" + Math.abs(email.hashCode());
+    }
+
+    //Понижение подписки при истечении срока
+    @Transactional
+    public void subscriptionReduction(String apiKey) {
+        User user = userRepository.findByApiKey(apiKey).orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+        if (user.getSubscriptionExpiresAt() == null) {
+            return;
+        }
+        if (user.getSubscriptionExpiresAt().isBefore(LocalDateTime.now())) {
+            SubscriptionLevel oldLevel = user.getSubscriptionLevel();
+            SubscriptionLevel newLevel = SubscriptionLevel.FREE;
+            //обновление ключа
+            String newApiKey = apiKeyService.generateApiKey(user.getEmail(), newLevel.name());
+            apiKeyService.deactivateKey(apiKey);
+            //обновление пользователя
+            user.setApiKey(newApiKey);
+            user.setSubscriptionLevel(newLevel);
+            user.setSubscriptionExpiresAt(null);
+            user.setIsActive(true);
+            userRepository.save(user);
+
+            log.info("Подписка пользователя {} истекла. Понижена с {} до FREE. Новый ключ: {}", user.getEmail(), oldLevel, newApiKey);
+            emailService.sendSubscriptionExpiredEmail(user.getEmail(), oldLevel.name(), newApiKey);
+        }
     }
 }

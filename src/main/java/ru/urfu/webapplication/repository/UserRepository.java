@@ -14,4 +14,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByApiKey(String apiKey);
 
     boolean existsByEmail(String email);
+
+    List<User> findBySubscriptionExpiresAtBefore(LocalDateTime dateTime);
+
+    List<User> findBySubscriptionExpiresAtBetween(LocalDateTime start, LocalDateTime end);
 }

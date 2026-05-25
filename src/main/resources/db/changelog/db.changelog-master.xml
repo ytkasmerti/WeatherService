@@ -231,5 +231,46 @@
             <column name="subscription_expires_at" type="TIMESTAMP"/>
         </addColumn>
     </changeSet>
+
+    <!--
+        11 миграция - создание таблицы payments
+    -->
+    <changeSet id="create_payments_table" author="dariaabrosimovaa">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="payments"/>
+            </not>
+        </preConditions>
+        <createTable tableName="payments">
+            <column name="id" type="BIGSERIAL" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="payment_id" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="api_key" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="email" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="level" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="amount" type="INTEGER"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+            <column name="confirmed_at" type="TIMESTAMP"/>
+            <column name="is_confirmed" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="status" type="VARCHAR(50)" defaultValue="PENDING"/>
+        </createTable>
+
+        <createIndex tableName="payments" indexName="idx_payment_api_key">
+            <column name="api_key"/>
+        </createIndex>
+
+        <createIndex tableName="payments" indexName="idx_payment_payment_id">
+            <column name="payment_id"/>
+        </createIndex>
+    </changeSet>
 </databaseChangeLog>
 

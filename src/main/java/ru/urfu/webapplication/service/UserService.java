@@ -93,4 +93,15 @@ public class UserService {
             emailService.sendSubscriptionExpiredEmail(user.getEmail(), oldLevel.name(), newApiKey);
         }
     }
+
+    public User findByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден: " + email));
+    }
+
+    @Transactional
+    public void updateUser(User user) {
+        userRepository.save(user);
+        log.info("Пользователь {} обновлён", user.getEmail());
+    }
 }

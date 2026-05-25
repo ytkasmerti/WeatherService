@@ -115,8 +115,8 @@ public class WeatherController {
     }
 
     // Фильтрация прогноза погоды по погодным условиям
-    // http://localhost:8080/weather/forecast/filter?city=Sochi&days=7&filterCondition=rain&apiKey=basic-f27c60ec-811046022
-    // http://localhost:8080/weather/forecast/filter?city=Ekaterinburg&days=7&filterCondition=cloud&apiKey=basic-f27c60ec-811046022
+    // http://localhost:8080/weather/forecast/filter?city=Sochi&days=7&filterCondition=rain&apiKey=premium-e4d53d49-721323663
+    // http://localhost:8080/weather/forecast/filter?city=Ekaterinburg&days=7&filterCondition=cloud&apiKey=premium-e4d53d49-721323663
     @GetMapping("/forecast/filter")
     public ForecastResponse getForecastWithFilter(
             @RequestParam @NotBlank String city,

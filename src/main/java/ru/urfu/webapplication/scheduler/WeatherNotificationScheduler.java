@@ -5,11 +5,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import ru.urfu.webapplication.entity.User;
 import ru.urfu.webapplication.entity.UserSubscription;
+import ru.urfu.webapplication.model.SubscriptionLevel;
+import ru.urfu.webapplication.repository.UserRepository;
+import ru.urfu.webapplication.service.ApiKeyService;
 import ru.urfu.webapplication.service.EmailService;
 import ru.urfu.webapplication.service.WeatherSubscriptionService;
 import ru.urfu.webapplication.service.WeatherService;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -21,6 +26,8 @@ public class WeatherNotificationScheduler {
     private final WeatherSubscriptionService weatherSubscriptionService;
     private final WeatherService weatherService;
     private final EmailService emailService;
+    private final UserRepository userRepository;
+    private final ApiKeyService apiKeyService;
 
     //Каждый день в 08:00 - "0 0 8 * * *"  (каждую минуту - "0 * * * * *")
     @Scheduled(cron = "0 0 8 * * *")

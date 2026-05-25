@@ -163,4 +163,53 @@ public class PaymentService {
                         payment.getLevel(), user.getSubscriptionExpiresAt().toString()))
                 .build();
     }
+
+    @Transactional
+    public boolean autoRenewSubscription(User user) {
+        if (user.getSubscriptionExpiresAt() == null) {
+            return false;
+        }
+
+        if (!Boolean.TRUE.equals(user.getAutoRenewal())) {
+            log.info("Автопродление отключено для пользователя {}", user.getEmail());
+            return false;
+        }
+
+        SubscriptionLevel currentLevel = user.getSubscriptionLevel();
+        if (currentLevel == SubscriptionLevel.FREE) {
+            log.info("Бесплатная подписка не требует продления для {}", user.getEmail());
+            return false;
+        }
+
+        try {
+            int price = getPrice(currentLevel.name());
+
+            // Имитация списания средств (80% успеха)
+            double random = Math.random();
+            boolean paymentSuccess = random < 0.8;
+
+            if (!paymentSuccess) {
+                log.warn("Автопродление для {} не удалось - ошибка списания", user.getEmail());
+                emailService.sendPaymentFailedEmail(user.getEmail(), currentLevel.name(), price);
+                return false;
+            }
+
+            // Продлевание подписки на месяц
+            LocalDateTime newExpiryDate = user.getSubscriptionExpiresAt().plusMonths(1);
+            user.setSubscriptionExpiresAt(newExpiryDate);
+            userRepository.save(user);
+
+            log.info("Подписка {} автоматически продлена для {} до {}",
+                    currentLevel, user.getEmail(), newExpiryDate);
+
+            // Отправление уведомления об успешном продлении
+            emailService.sendAutoRenewalSuccessEmail(user.getEmail(), currentLevel.name(), newExpiryDate);
+
+            return true;
+
+        } catch (Exception e) {
+            log.error("Ошибка при автопродлении для {}: {}", user.getEmail(), e.getMessage());
+            return false;
+        }
+    }
 }

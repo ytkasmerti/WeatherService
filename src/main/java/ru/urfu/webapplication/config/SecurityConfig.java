@@ -10,6 +10,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import ru.urfu.webapplication.security.ApiKeyAuthenticationFilter;
+import ru.urfu.webapplication.security.CookieAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -18,16 +19,18 @@ import ru.urfu.webapplication.security.ApiKeyAuthenticationFilter;
 public class SecurityConfig {
 
     private final ApiKeyAuthenticationFilter apiKeyAuthenticationFilter;
+    private final CookieAuthenticationFilter cookieAuthenticationFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // отключен CSRF
+                .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/weather/register").permitAll() // Регистрация без ключа
+                        .requestMatchers("/weather/register", "/auth/login", "/auth/logout").permitAll()
                         .anyRequest().authenticated()
                 )
+                .addFilterBefore(cookieAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(apiKeyAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

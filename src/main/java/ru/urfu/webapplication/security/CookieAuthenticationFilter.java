@@ -20,7 +20,7 @@ import java.util.Arrays;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
+public class CookieAuthenticationFilter extends OncePerRequestFilter {
 
     private final WeatherUserDetailsService userDetailsService;
 
@@ -36,16 +36,14 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        if (SecurityContextHolder.getContext().getAuthentication() != null &&
-                SecurityContextHolder.getContext().getAuthentication().isAuthenticated()) {
-            filterChain.doFilter(request, response);
-            return;
+        String apiKey = extractApiKeyFromCookies(request);
+
+        if (apiKey == null) {
+            apiKey = request.getParameter("apiKey");
         }
 
-        String apiKey = request.getParameter("apiKey");
-
         if (apiKey == null || apiKey.trim().isEmpty()) {
-            sendError(response, "требуется API ключ");
+            filterChain.doFilter(request, response);
             return;
         }
 
@@ -58,19 +56,26 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            log.debug("Успешная аутентификация для: {}", userDetails.getUsername());
+            log.debug("Успешная аутентификация через cookie для: {}", userDetails.getUsername());
 
             filterChain.doFilter(request, response);
 
         } catch (Exception e) {
-            log.error("Ошибка аутентификации: {}", e.getMessage());
-            sendError(response, "Неверный API ключ");
+            log.error("Ошибка аутентификации через cookie: {}", e.getMessage());
+            filterChain.doFilter(request, response);
         }
     }
 
-    private void sendError(HttpServletResponse response, String message) throws IOException {
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        response.setContentType("application/json");
-        response.getWriter().write("{\"Ошибка\": \"" + message + "\"}");
+    private String extractApiKeyFromCookies(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null) {
+            return null;
+        }
+
+        return Arrays.stream(cookies)
+                .filter(cookie -> "apiKey".equals(cookie.getName()))
+                .map(Cookie::getValue)
+                .findFirst()
+                .orElse(null);
     }
 }

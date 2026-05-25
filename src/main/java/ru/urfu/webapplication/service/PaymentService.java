@@ -35,8 +35,9 @@ public class PaymentService {
 
     // Информация о подписке
     public Map<String, Object> getSubscriptionInfo(String apiKey) {
-        User user = userRepository.findByApiKey(apiKey).orElseThrow(()
-                -> new RuntimeException("Пользователь не найден"));
+        User user = userRepository.findByApiKey(apiKey)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+
         return Map.of(
                 "apiKey", apiKey,
                 "currentLevel", user.getSubscriptionLevel().name(),
@@ -49,14 +50,16 @@ public class PaymentService {
     // Создание платежа
     @Transactional
     public PaymentDto createPayment(String apiKey, String level) {
-        User user = userRepository.findByApiKey(apiKey).orElseThrow(()
-                -> new RuntimeException("Пользователь не найден"));
+        User user = userRepository.findByApiKey(apiKey)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
         String levelUpper = level.toUpperCase();
         int price = getPrice(levelUpper);
+
         if (price == 0) {
             throw new RuntimeException("Неверный тариф. Доступны: BASIC, PREMIUM");
         }
+
         if (user.getSubscriptionLevel().name().equals(levelUpper)) {
             throw new RuntimeException("У вас уже есть подписка " + levelUpper);
         }
@@ -69,7 +72,6 @@ public class PaymentService {
 
         String paymentId = UUID.randomUUID().toString();
 
-        // Сохраняем в БД
         Payment payment = new Payment();
         payment.setPaymentId(paymentId);
         payment.setApiKey(apiKey);
@@ -96,7 +98,6 @@ public class PaymentService {
     // Подтверждение платежа
     @Transactional
     public PaymentDto confirmPayment(String paymentId, String apiKey) {
-        // Ищем платеж в БД
         Payment payment = paymentRepository.findByPaymentIdAndApiKey(paymentId, apiKey)
                 .orElseThrow(() -> new RuntimeException("Платёж не найден"));
 
@@ -104,10 +105,10 @@ public class PaymentService {
             throw new RuntimeException("Платёж уже был подтверждён");
         }
 
-        User user = userRepository.findByApiKey(payment.getApiKey()).orElseThrow(()
-                -> new RuntimeException("Пользователь не найден"));
+        User user = userRepository.findByApiKey(payment.getApiKey())
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
-        // Имитация оплаты (успешная оплата 80/20)
+        // Имитация оплаты (успех 80%)
         double random = Math.random();
         boolean paymentSuccess = random < 0.8;
 
@@ -116,20 +117,16 @@ public class PaymentService {
             payment.setStatus("FAILED");
             paymentRepository.save(payment);
             emailService.sendPaymentFailedEmail(user.getEmail(), payment.getLevel(), payment.getAmount());
-            throw new RuntimeException("Оплата отклонена банком. Попробуйте другую карту или повторите позже.");
+            throw new RuntimeException("Оплата отклонена банком");
         }
 
-        // Имитация времени обработки платежа
-        log.warn("Платеж {} в обработке", paymentId);
+        // Имитация обработки
         try {
             Thread.sleep(1500);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
 
-        log.warn("Платеж {} принят", paymentId);
-
-        // Обновляем платеж
         payment.setIsConfirmed(true);
         payment.setConfirmedAt(LocalDateTime.now());
         payment.setStatus("CONFIRMED");
@@ -137,20 +134,15 @@ public class PaymentService {
 
         SubscriptionLevel newLevel = SubscriptionLevel.valueOf(payment.getLevel());
 
-        // Генерируем новый ключ с новым уровнем и блокируем старый
         String newApiKey = apiKeyService.generateApiKey(user.getEmail(), payment.getLevel());
         apiKeyService.deactivateKey(apiKey);
 
-        // Обновляем пользователя
         user.setApiKey(newApiKey);
         user.setSubscriptionLevel(newLevel);
         user.setSubscriptionExpiresAt(LocalDateTime.now().plusMonths(1));
         user.setIsActive(true);
         userRepository.save(user);
 
-        log.info("Подписка у {} обновлена до подписки {}, новый ключ: {}", user.getEmail(), payment.getLevel(), newApiKey);
-
-        // Отправка письма
         emailService.sendPaymentSuccessEmail(user.getEmail(), newApiKey, payment.getLevel());
 
         return PaymentDto.builder()
@@ -159,57 +151,8 @@ public class PaymentService {
                 .level(payment.getLevel())
                 .amount(payment.getAmount())
                 .createdAt(payment.getCreatedAt())
-                .message(String.format("Оплата успешна! Подписка %s активирована до %s. Проверьте почту для получения актуального API-ключа",
+                .message(String.format("Оплата успешна! Подписка %s активирована до %s",
                         payment.getLevel(), user.getSubscriptionExpiresAt().toString()))
                 .build();
-    }
-
-    @Transactional
-    public boolean autoRenewSubscription(User user) {
-        if (user.getSubscriptionExpiresAt() == null) {
-            return false;
-        }
-
-        if (!Boolean.TRUE.equals(user.getAutoRenewal())) {
-            log.info("Автопродление отключено для пользователя {}", user.getEmail());
-            return false;
-        }
-
-        SubscriptionLevel currentLevel = user.getSubscriptionLevel();
-        if (currentLevel == SubscriptionLevel.FREE) {
-            log.info("Бесплатная подписка не требует продления для {}", user.getEmail());
-            return false;
-        }
-
-        try {
-            int price = getPrice(currentLevel.name());
-
-            // Имитация списания средств (80% успеха)
-            double random = Math.random();
-            boolean paymentSuccess = random < 0.8;
-
-            if (!paymentSuccess) {
-                log.warn("Автопродление для {} не удалось - ошибка списания", user.getEmail());
-                emailService.sendPaymentFailedEmail(user.getEmail(), currentLevel.name(), price);
-                return false;
-            }
-
-            // Продлевание подписки на месяц
-            LocalDateTime newExpiryDate = user.getSubscriptionExpiresAt().plusMonths(1);
-            user.setSubscriptionExpiresAt(newExpiryDate);
-            userRepository.save(user);
-
-            log.info("Подписка {} автоматически продлена для {} до {}",
-                    currentLevel, user.getEmail(), newExpiryDate);
-
-            // Отправление уведомления об успешном продлении
-            emailService.sendAutoRenewalSuccessEmail(user.getEmail(), currentLevel.name(), newExpiryDate);
-
-            return true;
-
-        } catch (Exception e) {
-            log.error("Ошибка при автопродлении для {}: {}", user.getEmail(), e.getMessage());
-            return false;
-        }
     }
 }

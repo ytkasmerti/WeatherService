@@ -124,4 +124,41 @@ public class EmailService {
             log.error("Ошибка при отправке письма об истечении подписки: {}", e.getMessage());
         }
     }
+
+    public void sendAutoRenewalSuccessEmail(String toEmail, String level, LocalDateTime newExpiryDate) {
+        String subject = "Подписка Weather Service автоматически продлена";
+        String text = String.format("""
+            Здравствуйте! Ваша подписка %s была автоматически продлена.
+            Новый срок действия: %s
+            Спасибо, что остаётесь с нами!
+            С уважением, команда Weather Service.""",
+                level, newExpiryDate.toString());
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, "UTF-8");
+            helper.setFrom(fromEmail);
+            helper.setTo(toEmail);
+            helper.setSubject(subject);
+            helper.setText(text);
+            mailSender.send(message);
+            log.info("Уведомление об автопродлении отправлено на {}", toEmail);
+        } catch (MessagingException e) {
+            log.error("Ошибка при отправке уведомления об автопродлении: {}", e.getMessage());
+        }
+    }
+
+    public void sendCustomEmail(String toEmail, String subject, String text) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, "UTF-8");
+            helper.setFrom(fromEmail);
+            helper.setTo(toEmail);
+            helper.setSubject(subject);
+            helper.setText(text);
+            mailSender.send(message);
+            log.info("Письмо отправлено на {}", toEmail);
+        } catch (MessagingException e) {
+            log.error("Ошибка при отправке письма: {}", e.getMessage());
+        }
+    }
 }

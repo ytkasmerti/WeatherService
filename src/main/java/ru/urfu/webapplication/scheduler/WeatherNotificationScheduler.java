@@ -46,4 +46,70 @@ public class WeatherNotificationScheduler {
             }
         }
     }
+
+    // Проверка просроченных подписок каждый час
+    @Scheduled(cron = "0 0 * * * *") // Каждый час
+    public void processExpiredSubscriptions() {
+        log.info("Запуск обработки просроченных подписок");
+
+        LocalDateTime now = LocalDateTime.now();
+
+        List<User> expiredUsers = userRepository.findBySubscriptionExpiresAtBefore(now);
+
+        for (User user : expiredUsers) {
+            if (user.getSubscriptionLevel() != SubscriptionLevel.FREE) {
+                log.info("Подписка пользователя {} просрочена, понижаем до FREE", user.getEmail());
+
+                String oldLevel = user.getSubscriptionLevel().name();
+
+                String newApiKey = apiKeyService.generateApiKey(user.getEmail(), "FREE");
+
+                apiKeyService.deactivateKey(user.getApiKey());
+
+                user.setApiKey(newApiKey);
+                user.setSubscriptionLevel(SubscriptionLevel.FREE);
+                user.setSubscriptionExpiresAt(null);
+                user.setAutoRenewal(false);
+                userRepository.save(user);
+
+                log.info("Подписка пользователя {} понижена с {} до FREE. Новый ключ: {}",
+                        user.getEmail(), oldLevel, newApiKey);
+
+                emailService.sendSubscriptionExpiredEmail(user.getEmail(), oldLevel, newApiKey);
+            }
+        }
+    }
+
+    // уведомление о скором истечении подписки (за 3 дня)
+    @Scheduled(cron = "0 0 12 * * *") // Каждый день в 12:00
+    public void notifyExpiringSoon() {
+        log.info("Запуск проверки подписок, истекающих через 3 дня");
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime in3Days = now.plusDays(3);
+        LocalDateTime endOfIn3Days = in3Days.withHour(23).withMinute(59).withSecond(59);
+
+        List<User> users = userRepository.findBySubscriptionExpiresAtBetween(now, endOfIn3Days);
+
+        for (User user : users) {
+            if (user.getSubscriptionLevel() != SubscriptionLevel.FREE) {
+                long daysUntilExpiry = java.time.temporal.ChronoUnit.DAYS.between(now, user.getSubscriptionExpiresAt());
+                log.info("Подписка пользователя {} истекает через {} дней", user.getEmail(), daysUntilExpiry);
+
+                String autoRenewalStatus = Boolean.TRUE.equals(user.getAutoRenewal()) ? "включено" : "отключено";
+                String message = String.format("""
+                        Ваша подписка %s истечёт %s (через %d дней).
+                        Статус автопродления: %s
+                        Для продления подписки вы можете:
+                        1. Включить автопродление
+                        2. Создать платёж вручную""",
+                        user.getSubscriptionLevel().name(),
+                        user.getSubscriptionExpiresAt().toString(),
+                        daysUntilExpiry,
+                        autoRenewalStatus);
+
+                emailService.sendCustomEmail(user.getEmail(), "Подписка скоро истечёт", message);
+            }
+        }
+    }
 }

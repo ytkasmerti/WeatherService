@@ -125,28 +125,70 @@ public class WeatherService {
     // фильтрация (доступ premium)
     @PreAuthorize("hasRole('PREMIUM')")
     public ForecastResponse getForecastWithFilter(String city, int days, String apiKey, String lang, String filterCondition) {
+        validateAndGetLevel(apiKey);
         ForecastResponse forecast = getForecast(city, days, apiKey, lang);
-        if (filterCondition == null || filterCondition.isEmpty()) {
+        if (filterCondition == null || filterCondition.trim().isEmpty()) {
+            log.info("Фильтр не был указан, полный прогноз погоды для города {}", city);
             return forecast;
         }
-        // словарь соответствий
-        Map<String, List<String>> dict = new HashMap<>();
-        dict.put("дождь", List.of("дождь", "rain"));
-        dict.put("солнце", List.of("солнечно", "ясно", "sun", "clear"));
-        dict.put("облачно", List.of("облачно", "пасмурно", "cloud", "overcast"));
-        dict.put("снег", List.of("снег", "snow"));
-        dict.put("ветер", List.of("ветер", "wind"));
+        Map<String, List<String>> conditionSynonyms = new HashMap<>();
+        conditionSynonyms.put("дождь", List.of("дождь", "rain", "drizzle", "ливень", "shower"));
+        conditionSynonyms.put("солнце", List.of("солнечно", "ясно", "sun", "clear", "sunny", "fair"));
+        conditionSynonyms.put("облачно", List.of("облачно", "пасмурно", "cloud", "overcast", "cloudy"));
+        conditionSynonyms.put("снег", List.of("снег", "snow", "sleet", "метель", "blizzard"));
+        conditionSynonyms.put("ветер", List.of("ветер", "wind", "windy", "шторм", "storm"));
+        conditionSynonyms.put("гроза", List.of("гроза", "thunderstorm", "thunder", "lightning"));
+        conditionSynonyms.put("туман", List.of("туман", "fog", "mist", "haze"));
+
+        List<String> keywords = getFilterKeywords(filterCondition, conditionSynonyms);
 
         List<ForecastResponse.DailyForecast> filtered = new ArrayList<>();
         for (ForecastResponse.DailyForecast day : forecast.getDaily()) {
-            if (day.getConditions().toLowerCase().contains(filterCondition.toLowerCase())) {
+            if (matchesCondition(day.getConditions(), keywords)) {
                 filtered.add(day);
             }
         }
-        forecast.setDaily(filtered);
-        log.info("Отфильтровано: из {} дней оставлено {}", forecast.getDaily().size(), filtered.size());
-        saveRequest(city, "forecast", apiKey);
-        return forecast;
+
+        ForecastResponse filteredResponse = ForecastResponse.builder()
+                .location(forecast.getLocation())
+                .daily(filtered)
+                .build();
+
+        log.info("Фильтрация по условию '{}': из {} дней оставлено {}",
+                filterCondition, forecast.getDaily().size(), filtered.size());
+        return filteredResponse;
+    }
+
+    // Вспомогательный метод для получения ключевых слов фильтра
+    private List<String> getFilterKeywords(String filterCondition, Map<String, List<String>> synonyms) {
+        String normalizedCondition = filterCondition.toLowerCase().trim();
+        if (synonyms.containsKey(normalizedCondition)) {
+            return synonyms.get(normalizedCondition);
+        }
+
+        for (Map.Entry<String, List<String>> entry : synonyms.entrySet()) {
+            if (entry.getValue().contains(normalizedCondition)) {
+                return entry.getValue();
+            }
+        }
+        return List.of(normalizedCondition);
+    }
+
+    // Вспомогательный метод для проверки соответствия условий
+    private boolean matchesCondition(String conditions, List<String> keywords) {
+        if (conditions == null || conditions.isEmpty()) {
+            return false;
+        }
+
+        String conditionsLower = conditions.toLowerCase();
+
+        for (String keyword : keywords) {
+            if (conditionsLower.contains(keyword)) {
+                log.debug("Совпадение: '{}' содержит '{}'", conditions, keyword);
+                return true;
+            }
+        }
+        return false;
     }
 
     //Прогноз на N дней (доступ basic+)

@@ -26,7 +26,6 @@ public class EmailService {
         String text = String.format("""
                 Здравствуйте! Вы зарегистрированы в Weather Service.
                 Уровень подписки: %s. Ваш API ключ: %s.
-                Сохраните этот ключ. Он понадобится для всех запросов к API.
                 С уважением, команда Weather Service.""", subscriptionLevel, apiKey, apiKey);
         try {
             MimeMessage message = mailSender.createMimeMessage();
@@ -48,7 +47,6 @@ public class EmailService {
         String text = String.format("""
                 Здравствуйте! Ваш платеж успешно подтвержден.
                 Новый уровень подписки: %s. Ваш новый API ключ: %s
-                Сохраните этот ключ. Старый ключ больше не работает.
                 С уважением, команда Weather Service.""", level, newApiKey);
         try {
             MimeMessage message = mailSender.createMimeMessage();
@@ -68,9 +66,9 @@ public class EmailService {
     public void sendPaymentFailedEmail(String toEmail, String level, int amount) {
         String subject = "Ошибка оплаты подписки Weather Service";
         String text = String.format("""
-                        Здравствуйте! Ваш платеж на сумму %d руб. для активации подписки %s был отклонён.
-                        Попробуйте использовать другую карту или повторить попытку позже.
-                        С уважением, команда Weather Service.""", amount, level);
+                Здравствуйте! Ваш платеж на сумму %d руб. для активации подписки %s был отклонён.
+                Попробуйте использовать другую карту или повторить попытку позже.
+                С уважением, команда Weather Service.""", amount, level);
 
         try {
             MimeMessage message = mailSender.createMimeMessage();
@@ -109,10 +107,10 @@ public class EmailService {
     public void sendSubscriptionExpiredEmail(String toEmail, String oldLevel, String newApiKey) {
         String subject = "Срок действия подписки истёк";
         String text = String.format("""
-            Здравствуйте! Срок действия вашей подписки %s истёк, уровень подписки понижен до FREE.
-            Ваш новый API ключ: %s
-            Для восстановления подписки оформите новый платёж.
-            С уважением, команда Weather Service.""", oldLevel, newApiKey);
+                Здравствуйте! Срок действия вашей подписки %s истёк, уровень подписки понижен до FREE.
+                Ваш новый API ключ: %s
+                Для восстановления подписки оформите новый платёж.
+                С уважением, команда Weather Service.""", oldLevel, newApiKey);
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, "UTF-8");
@@ -130,10 +128,10 @@ public class EmailService {
     public void sendAutoRenewalSuccessEmail(String toEmail, String level, LocalDateTime newExpiryDate) {
         String subject = "Подписка Weather Service автоматически продлена";
         String text = String.format("""
-            Здравствуйте! Ваша подписка %s была автоматически продлена.
-            Новый срок действия: %s
-            Спасибо, что остаётесь с нами!
-            С уважением, команда Weather Service.""",
+                        Здравствуйте! Ваша подписка %s была автоматически продлена.
+                        Новый срок действия: %s
+                        Спасибо, что остаётесь с нами!
+                        С уважением, команда Weather Service.""",
                 level, newExpiryDate.toString());
         try {
             MimeMessage message = mailSender.createMimeMessage();
@@ -161,6 +159,27 @@ public class EmailService {
             log.info("Письмо отправлено на {}", toEmail);
         } catch (MessagingException e) {
             log.error("Ошибка при отправке письма: {}", e.getMessage());
+        }
+    }
+
+    public void sendAccountDeletedEmail(String toEmail) {
+        String subject = "Аккаунт Weather Service удалён";
+        String text = """
+                Здравствуйте! Ваш аккаунт в Weather Service был успешно удалён.
+                Если вы не удаляли аккаунт, пожалуйста, свяжитесь с поддержкой.
+                С уважением, команда Weather Service.""";
+
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, "UTF-8");
+            helper.setFrom(fromEmail);
+            helper.setTo(toEmail);
+            helper.setSubject(subject);
+            helper.setText(text);
+            mailSender.send(message);
+            log.info("Письмо об удалении аккаунта отправлено на {}", toEmail);
+        } catch (MessagingException e) {
+            log.error("Ошибка при отправке письма об удалении аккаунта: {}", e.getMessage());
         }
     }
 }

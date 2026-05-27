@@ -18,33 +18,26 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @PostMapping("/login")
     public Map<String, Object> login(@RequestParam @NotBlank String email,
                                      @RequestParam @NotBlank String password,
                                      HttpServletResponse response) {
-
-        log.info("Попытка входа: email={}", email);
-
-        // Ищем пользователя по email
+        log.info("Попытка входа пользователя {}", email);
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> {
                     log.error("Пользователь не найден: {}", email);
                     return new RuntimeException("Неверный email или пароль");
                 });
-
-        log.info("Пользователь найден: {}, пароль в БД: {}", user.getEmail(), user.getPassword());
-        log.info("Введённый пароль: {}", password);
-
-        // Проверяем пароль
+        //Проверяем пароль
         boolean matches = passwordEncoder.matches(password, user.getPassword());
         log.info("Пароль совпадает: {}", matches);
-
         if (!matches) {
             throw new RuntimeException("Неверный email или пароль");
         }
+        log.info("Успешный вход пользователя {}", email);
         String apiKey = user.getApiKey();
 
         Cookie cookie = new Cookie("apiKey", apiKey);

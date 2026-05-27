@@ -1,19 +1,24 @@
 package ru.urfu.webapplication.controller;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import ru.urfu.webapplication.entity.User;
 import ru.urfu.webapplication.repository.UserRepository;
 import ru.urfu.webapplication.repository.WeatherRequestRepository;
 import ru.urfu.webapplication.security.WeatherUserDetails;
 import ru.urfu.webapplication.model.SubscriptionLevel;
+import ru.urfu.webapplication.service.ApiKeyService;
+import ru.urfu.webapplication.service.EmailService;
 import ru.urfu.webapplication.service.UserService;
 
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,6 +31,9 @@ public class UserController {
     private final UserRepository userRepository;
     private final WeatherRequestRepository requestRepository;
     private final UserService userService;
+    private final PasswordEncoder passwordEncoder;
+    private final ApiKeyService apiKeyService;
+    private final EmailService emailService;
 
     private User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -93,6 +101,36 @@ public class UserController {
                 "success", true,
                 "autoRenewal", enabled,
                 "message", String.format("Автопродление %s", enabled ? "включено" : "отключено")
+        );
+    }
+
+    //Удаление аккаунта с подтверждением пароля
+    @DeleteMapping("/account")
+    public Map<String, String> deleteAccount(@RequestParam @NotBlank String password, HttpServletResponse response) {
+        User user = getCurrentUser();
+        String userEmail = user.getEmail();
+
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Неверный пароль");
+            error.put("message", "Пароль не совпадает");
+            return error;
+        }
+
+        apiKeyService.deactivateKey(user.getApiKey());
+        userRepository.delete(user);
+        emailService.sendAccountDeletedEmail(userEmail);
+        //Очищаем куки
+        Cookie cookie = new Cookie("apiKey", null);
+        cookie.setPath("/");
+        cookie.setMaxAge(0);
+        response.addCookie(cookie);
+        //Очищаем контекст безопасности
+        SecurityContextHolder.clearContext();
+        log.info("Пользователь {} удалил аккаунт", user.getEmail());
+        return Map.of(
+                "success", "true",
+                "message", "Аккаунт успешно удалён"
         );
     }
 }

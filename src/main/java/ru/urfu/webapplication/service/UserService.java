@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import ru.urfu.webapplication.dto.RegisterRequest;
 import ru.urfu.webapplication.entity.User;
 import ru.urfu.webapplication.model.SubscriptionLevel;
 import ru.urfu.webapplication.repository.UserRepository;
@@ -26,7 +25,7 @@ public class UserService {
     private final ApiKeyService apiKeyService;
 
     public Map<String, String> registerUser(String email, String password, String confirmPassword) {
-        // Проверка совпадения паролей (единственная ручная проверка)
+
         if (!password.equals(confirmPassword)) {
             Map<String, String> response = new HashMap<>();
             response.put("error", "Пароли не совпадают");
@@ -34,7 +33,6 @@ public class UserService {
             return response;
         }
 
-        // Проверка существования пользователя
         if (userRepository.findByEmail(email).isPresent()) {
             Map<String, String> response = new HashMap<>();
             response.put("error", "Email уже зарегистрирован");
@@ -44,17 +42,10 @@ public class UserService {
 
         SubscriptionLevel level = SubscriptionLevel.FREE;
 
-        if (userRepository.findByEmail(email).isPresent()) {
-            Map<String, String> response = new HashMap<>();
-            response.put("error", "Email уже зарегестрирован");
-            response.put("message", "Этот email уже существует");
-            return response;
-        }
-
         String apiKey = generateApiKey(email, level);
         User user = new User();
         user.setEmail(email);
-        user.setPassword(passwordEncoder.encode(apiKey));
+        user.setPassword(passwordEncoder.encode(password));
         user.setApiKey(apiKey);
         user.setSubscriptionLevel(level);
         user.setCreatedAt(LocalDateTime.now());

@@ -2,8 +2,10 @@ package ru.urfu.webapplication.controller;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import ru.urfu.webapplication.entity.User;
 import ru.urfu.webapplication.repository.UserRepository;
@@ -16,16 +18,34 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AuthController {
 
+    private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
 
-    @GetMapping("/login")
-    public Map<String, Object> login(@RequestParam String apiKey, HttpServletResponse response) {
-        User user = userRepository.findByApiKey(apiKey)
-                .orElseThrow(() -> new RuntimeException("Неверный API ключ"));
+    @PostMapping("/login")
+    public Map<String, Object> login(@RequestParam @NotBlank String email,
+                                     @RequestParam @NotBlank String password,
+                                     HttpServletResponse response) {
 
-        if (!user.getIsActive()) {
-            throw new RuntimeException("API ключ деактивирован");
+        log.info("Попытка входа: email={}", email);
+
+        // Ищем пользователя по email
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> {
+                    log.error("Пользователь не найден: {}", email);
+                    return new RuntimeException("Неверный email или пароль");
+                });
+
+        log.info("Пользователь найден: {}, пароль в БД: {}", user.getEmail(), user.getPassword());
+        log.info("Введённый пароль: {}", password);
+
+        // Проверяем пароль
+        boolean matches = passwordEncoder.matches(password, user.getPassword());
+        log.info("Пароль совпадает: {}", matches);
+
+        if (!matches) {
+            throw new RuntimeException("Неверный email или пароль");
         }
+        String apiKey = user.getApiKey();
 
         Cookie cookie = new Cookie("apiKey", apiKey);
         cookie.setHttpOnly(true);

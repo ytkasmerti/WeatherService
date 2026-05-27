@@ -21,6 +21,7 @@ public class AuthController {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
+    //curl -X POST "http://localhost:8080/auth/login?email=weatherservice26@gmail.com&password=123456" -c cookies.txt
     @PostMapping("/login")
     public Map<String, Object> login(@RequestParam @NotBlank String email,
                                      @RequestParam @NotBlank String password,
@@ -33,7 +34,6 @@ public class AuthController {
                 });
         //Проверяем пароль
         boolean matches = passwordEncoder.matches(password, user.getPassword());
-        log.info("Пароль совпадает: {}", matches);
         if (!matches) {
             throw new RuntimeException("Неверный email или пароль");
         }
@@ -54,6 +54,7 @@ public class AuthController {
         );
     }
 
+    //curl -X POST "http://localhost:8080/auth/logout" -b cookies.txt
     @GetMapping("/logout")
     public Map<String, String> logout(HttpServletResponse response) {
         Cookie cookie = new Cookie("apiKey", null);

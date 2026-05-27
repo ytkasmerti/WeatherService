@@ -54,6 +54,7 @@ public class UserController {
     }
 
     //Получение профиля пользователя
+    //curl -X GET "http://localhost:8080/user/profile" -b cookies.txt
     @GetMapping("/profile")
     public Map<String, Object> getProfile() {
         User user = getCurrentUser();
@@ -82,12 +83,13 @@ public class UserController {
         limits.put("remainingToday", remainingRequests == Integer.MAX_VALUE ? "Неограничено" : remainingRequests);
         profile.put("limits", limits);
 
+        log.info("Пользователь {} получил информацию о своем профиле", user.getEmail());
         return profile;
     }
 
     // Включить/отключить автопродление подписки
-    //http://localhost:8080/subscription/auto-renewal?enabled=true
-    //http://localhost:8080/subscription/auto-renewal?enabled=false
+    //http://localhost:8080/user/auto-renewal?enabled=true
+    //http://localhost:8080/user/auto-renewal?enabled=false
     @GetMapping("/auto-renewal")
     public Map<String, Object> setAutoRenewal(
             @RequestParam(required = false) String apiKey,
@@ -97,6 +99,7 @@ public class UserController {
         user.setAutoRenewal(enabled);
         userService.updateUser(user);
 
+        log.info("Пользователь {} изменил автопродление подписки на {}", user.getEmail(),  enabled);
         return Map.of(
                 "success", true,
                 "autoRenewal", enabled,
@@ -105,6 +108,7 @@ public class UserController {
     }
 
     //Удаление аккаунта с подтверждением пароля
+    //curl -X DELETE "http://localhost:8080/user/account?password=123456" -b cookies.txt
     @DeleteMapping("/account")
     public Map<String, String> deleteAccount(@RequestParam @NotBlank String password, HttpServletResponse response) {
         User user = getCurrentUser();

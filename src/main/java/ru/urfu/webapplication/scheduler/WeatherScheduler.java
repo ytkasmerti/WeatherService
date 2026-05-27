@@ -9,10 +9,7 @@ import ru.urfu.webapplication.entity.User;
 import ru.urfu.webapplication.entity.UserSubscription;
 import ru.urfu.webapplication.model.SubscriptionLevel;
 import ru.urfu.webapplication.repository.UserRepository;
-import ru.urfu.webapplication.service.ApiKeyService;
-import ru.urfu.webapplication.service.EmailService;
-import ru.urfu.webapplication.service.WeatherSubscriptionService;
-import ru.urfu.webapplication.service.WeatherService;
+import ru.urfu.webapplication.service.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -27,7 +24,7 @@ public class WeatherScheduler {
     private final WeatherService weatherService;
     private final EmailService emailService;
     private final UserRepository userRepository;
-    private final ApiKeyService apiKeyService;
+    private final UserService userService;
 
     //Каждый день в 08:00 - "0 0 8 * * *"  (каждую минуту - "0 * * * * *")
     @Scheduled(cron = "0 0 8 * * *")
@@ -65,24 +62,7 @@ public class WeatherScheduler {
 
         for (User user : expiredUsers) {
             if (user.getSubscriptionLevel() != SubscriptionLevel.FREE) {
-                log.info("Подписка пользователя {} просрочена, понижаем до FREE", user.getEmail());
-
-                String oldLevel = user.getSubscriptionLevel().name();
-
-                String newApiKey = apiKeyService.generateApiKey(user.getEmail(), "FREE");
-
-                apiKeyService.deactivateKey(user.getApiKey());
-
-                user.setApiKey(newApiKey);
-                user.setSubscriptionLevel(SubscriptionLevel.FREE);
-                user.setSubscriptionExpiresAt(null);
-                user.setAutoRenewal(false);
-                userRepository.save(user);
-
-                log.info("Подписка пользователя {} понижена с {} до FREE. Новый ключ: {}",
-                        user.getEmail(), oldLevel, newApiKey);
-
-                emailService.sendSubscriptionExpiredEmail(user.getEmail(), oldLevel, newApiKey);
+                userService.subscriptionReduction(user.getApiKey());
             }
         }
     }

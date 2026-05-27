@@ -95,25 +95,4 @@ public class SubscriptionController {
         weatherSubscriptionService.unsubscribe(subscriptionId, email);
         return "Вы отписались от уведомлений подписки " + subscriptionId;
     }
-
-    // Включить/отключить автопродление подписки
-    //http://localhost:8080/subscription/auto-renewal?enabled=true
-    //http://localhost:8080/subscription/auto-renewal?enabled=false
-    @GetMapping("/auto-renewal")
-    public Map<String, Object> setAutoRenewal(
-            @RequestParam(required = false) String apiKey,
-            @RequestParam boolean enabled) {
-
-        String validApiKey = getApiKeyFromRequestOrAuth(apiKey);
-        String email = getEmailFromApiKey(validApiKey);
-        User user = userService.findByEmail(email);
-        user.setAutoRenewal(enabled);
-        userService.updateUser(user);
-
-        return Map.of(
-                "success", true,
-                "autoRenewal", enabled,
-                "message", String.format("Автопродление %s", enabled ? "включено" : "отключено")
-        );
-    }
 }

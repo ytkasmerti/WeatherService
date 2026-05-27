@@ -215,19 +215,28 @@ public class WeatherService {
         return mapper.toForecastResponse(response, dailyList);
     }
 
-    //Исторические данные за период (доступ до 7 дней basic+, доступ больше 7 дней - premium)
+    //Исторические данные за период (доступ до 7 дней назад basic, доступ больше 7 дней - premium)
     public HistoricalResponse getHistoricalData(String city, String startDate, String endDate, String apiKey, String lang) {
         SubscriptionLevel level = validateAndGetLevel(apiKey);
         if (level == SubscriptionLevel.FREE) {
             throw new RuntimeException("Ваш тариф не позволяет использовать эту функцию. Повысьте уровень подписки");
+        }
+        LocalDate requestedDate = LocalDate.parse(startDate);
+        LocalDate today = LocalDate.now();
+        if (requestedDate.isAfter(today)) {
+            throw new RuntimeException("Нельзя запрашивать историю для будущих дат");
         }
 
         if (level == SubscriptionLevel.BASIC) {
             LocalDate start = LocalDate.parse(startDate);
             LocalDate end = LocalDate.parse(endDate);
             long daysBetween = java.time.temporal.ChronoUnit.DAYS.between(start, end);
+            long daysAgo = java.time.temporal.ChronoUnit.DAYS.between(start, today);
             if (daysBetween > 7) {
                 throw new RuntimeException("BASIC подписка позволяет запрашивать историю не более чем на 7 дней. Повысьте уровень подписки");
+            }
+            if (daysAgo > 7) {
+                throw new RuntimeException("BASIC подписка позволяет запрашивать историю не ранее чем 7 дней назад. Повысьте уровень подписки");
             }
         }
         log.info("Запрос истории погоды для города {} с {} по {}", city, startDate, endDate);

@@ -8,8 +8,6 @@ import ru.urfu.webapplication.dto.PaymentDto;
 import ru.urfu.webapplication.security.WeatherUserDetails;
 import ru.urfu.webapplication.service.PaymentService;
 
-import java.util.Map;
-
 @Slf4j
 @RestController
 @RequestMapping("/payment")
@@ -30,14 +28,6 @@ public class PaymentController {
         throw new RuntimeException("API ключ не найден");
     }
 
-    // Информация о подписке
-    //http://localhost:8080/payment/subscription/info
-    @GetMapping("/subscription/info")
-    public Map<String, Object> getSubscriptionInfo(@RequestParam(required = false) String apiKey) {
-        String validApiKey = getApiKeyFromRequestOrAuth(apiKey);
-        return paymentService.getSubscriptionInfo(validApiKey);
-    }
-
     // Создание платежа
     //curl -X POST "http://localhost:8080/payment/create?level=PREMIUM" -b cookies.txt
     @PostMapping("/create")
@@ -56,5 +46,14 @@ public class PaymentController {
             @RequestParam(required = false) String apiKey) {
         String validApiKey = getApiKeyFromRequestOrAuth(apiKey);
         return paymentService.confirmPayment(paymentId, validApiKey);
+    }
+
+    //Проверка статуса платежа
+    //GET http://localhost:8080/payment/status/fb91e4ac-c539-44fa-b946-656290196ce0
+    @GetMapping("/status/{paymentId}")
+    public PaymentDto getPaymentStatus(@PathVariable String paymentId,
+                                       @RequestParam(required = false) String apiKey) {
+        String validApiKey = getApiKeyFromRequestOrAuth(apiKey);
+        return paymentService.getPaymentStatus(paymentId, validApiKey);
     }
 }

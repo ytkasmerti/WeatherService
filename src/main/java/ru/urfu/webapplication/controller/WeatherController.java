@@ -95,7 +95,7 @@ public class WeatherController {
     }
 
     // Исторические данные за период
-    //доступ BASIC(максимум 7 дней) и PREMIUM (неограничено)
+    //доступ BASIC(максимум 7 дней назад и максимум 7 дней периода) и PREMIUM (неограничено)
     //http://localhost:8080/weather/history?city=Moscow&start=2026-05-23&end=2026-05-25
     //http://localhost:8080/weather/history?city=Sochi&start=2026-04-25&end=2026-05-25 - только PREMIUM
     @GetMapping("/history")
@@ -108,7 +108,7 @@ public class WeatherController {
         return weatherService.getHistoricalData(city, start.toString(), end.toString(), validApiKey, lang);
     }
 
-    // Исторические данные о погоде в конкретную дату
+    // Исторические данные о погоде в конкретную дату (BASIC - максимум 7 дней назад, PREMIUM - неограниченно)
     //http://localhost:8080/weather/history/date?city=Moscow&date=2026-05-25
     @GetMapping("/history/date")
     public HistoricalResponse getHistoricalDataByDate(@RequestParam @NotBlank String city,

@@ -26,6 +26,7 @@ public class EmailService {
         String text = String.format("""
                 Здравствуйте! Вы зарегистрированы в Weather Service.
                 Уровень подписки: %s. Ваш API ключ: %s.
+                Вы можете повысить уровень подписки на сайте для доступа к большему количеству возможностей.
                 С уважением, команда Weather Service.""", subscriptionLevel, apiKey, apiKey);
         try {
             MimeMessage message = mailSender.createMimeMessage();

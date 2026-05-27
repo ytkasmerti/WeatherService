@@ -92,6 +92,7 @@ public class PaymentService {
                 .level(levelUpper)
                 .amount(price)
                 .createdAt(LocalDateTime.now())
+                .message(String.format("Платеж на сумму %d ожидает оплаты", payment.getAmount()))
                 .build();
     }
 
@@ -108,10 +109,9 @@ public class PaymentService {
         User user = userRepository.findByApiKey(payment.getApiKey())
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
-        // Имитация оплаты (успех 80%)
+        //Имитация оплаты (успех 80%)
         double random = Math.random();
-        boolean paymentSuccess = random < 0.8;
-
+        boolean paymentSuccess = random < 0.8; // 80%
         if (!paymentSuccess) {
             log.warn("Платеж {} отклонен", paymentId);
             payment.setStatus("FAILED");
@@ -120,7 +120,7 @@ public class PaymentService {
             throw new RuntimeException("Оплата отклонена банком");
         }
 
-        // Имитация обработки
+        //Имитация обработки платежа
         try {
             Thread.sleep(1500);
         } catch (InterruptedException e) {
@@ -153,6 +153,28 @@ public class PaymentService {
                 .createdAt(payment.getCreatedAt())
                 .message(String.format("Оплата успешна! Подписка %s активирована до %s",
                         payment.getLevel(), user.getSubscriptionExpiresAt().toString()))
+                .build();
+    }
+
+    //Проверка статуса платежа
+    public PaymentDto getPaymentStatus(String paymentId, String apiKey) {
+        Payment payment = paymentRepository.findByPaymentIdAndApiKey(paymentId, apiKey)
+                .orElseThrow(() -> new RuntimeException("Платёж не найден"));
+
+        String statusMessage = switch (payment.getStatus()) {
+            case "PENDING" -> "Платёж ожидает подтверждения";
+            case "CONFIRMED" -> "Платёж подтверждён, подписка активирована";
+            case "FAILED" -> "Платёж отклонён";
+            default -> "Неизвестный статус";
+        };
+
+        return PaymentDto.builder()
+                .paymentId(payment.getPaymentId())
+                .apiKey(payment.getApiKey())
+                .level(payment.getLevel())
+                .amount(payment.getAmount())
+                .createdAt(payment.getCreatedAt())
+                .message(statusMessage)
                 .build();
     }
 }

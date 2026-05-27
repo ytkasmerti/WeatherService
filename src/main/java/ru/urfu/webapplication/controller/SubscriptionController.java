@@ -22,7 +22,6 @@ public class SubscriptionController {
 
     private final WeatherSubscriptionService weatherSubscriptionService;
     private final ApiKeyService apiKeyService;
-    private final UserService userService;
 
     private String getApiKeyFromRequestOrAuth(String apiKeyParam) {
         if (apiKeyParam != null && !apiKeyParam.isEmpty()) {
@@ -42,8 +41,8 @@ public class SubscriptionController {
     }
 
     //Подписаться
-    //http://localhost:8080/subscription/subscribe?city=Moscow&notifyWind=false
-    //http://localhost:8080/subscription/subscribe?city=Moscow
+    // http://localhost:8080/subscription/subscribe?city=Moscow&notifyWind=false
+    // http://localhost:8080/subscription/subscribe?city=Moscow
     @GetMapping("/subscribe")
     public String subscribe(@RequestParam(required = false) String apiKey,
                             @RequestParam String city,
@@ -67,7 +66,7 @@ public class SubscriptionController {
     }
 
     //Отписаться от всех
-    //http://localhost:8080/subscription/unsubscribe
+    // http://localhost:8080/subscription/unsubscribe
     @GetMapping("/unsubscribe")
     public String unsubscribe(@RequestParam(required = false) String apiKey) {
         String validApiKey = getApiKeyFromRequestOrAuth(apiKey);
@@ -76,17 +75,17 @@ public class SubscriptionController {
         return "Вы отписались от всех уведомлений";
     }
 
-    // Получить все подписки
-    //http://localhost:8080/subscription/settings
-    @GetMapping("/settings")
+    //Получить все подписки
+    // http://localhost:8080/subscription/subscribtions
+    @GetMapping("/subscribtions")
     public List<UserSubscription> getSettings(@RequestParam(required = false) String apiKey) {
         String validApiKey = getApiKeyFromRequestOrAuth(apiKey);
         String email = getEmailFromApiKey(validApiKey);
         return weatherSubscriptionService.getUserSubscriptions(email);
     }
 
-    // Отписаться по конкретному id
-    //http://localhost:8080/subscription/unsubscribe/3
+    //Отписаться по конкретному id
+    // http://localhost:8080/subscription/unsubscribe/3
     @GetMapping("/unsubscribe/{subscriptionId}")
     public String unsubscribeById(@RequestParam(required = false) String apiKey,
                                   @PathVariable Long subscriptionId) {

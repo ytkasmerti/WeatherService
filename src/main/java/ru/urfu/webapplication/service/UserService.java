@@ -24,13 +24,32 @@ public class UserService {
     private final EmailService emailService;
     private final ApiKeyService apiKeyService;
 
-    public Map<String, String> registerUser(String email, String plan) {
-        SubscriptionLevel level;
-        try {
-            level = SubscriptionLevel.valueOf(plan.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            level = SubscriptionLevel.FREE;
+    public Map<String, String> registerUser(String email, String password, String confirmPassword) {
+        // Валидация пароля
+        if (password == null || password.length() < 6) {
+            Map<String, String> response = new HashMap<>();
+            response.put("error", "Слабый пароль");
+            response.put("message", "Пароль должен содержать минимум 6 символов");
+            return response;
         }
+
+        // Проверка совпадения паролей
+        if (!password.equals(confirmPassword)) {
+            Map<String, String> response = new HashMap<>();
+            response.put("error", "Пароли не совпадают");
+            response.put("message", "Введённые пароли отличаются");
+            return response;
+        }
+
+        // Проверка существования пользователя
+        if (userRepository.findByEmail(email).isPresent()) {
+            Map<String, String> response = new HashMap<>();
+            response.put("error", "Email уже зарегистрирован");
+            response.put("message", "Этот email уже существует");
+            return response;
+        }
+
+        SubscriptionLevel level = SubscriptionLevel.FREE;
 
         if (userRepository.findByEmail(email).isPresent()) {
             Map<String, String> response = new HashMap<>();
@@ -55,7 +74,7 @@ public class UserService {
         response.put("apiKey", apiKey);
         response.put("subscriptionLevel", level.name());
         response.put("message", "Регистрация прошла успешно! Сохраните ваш API ключ!");
-        log.info("Новый пользователь успешно зарегистрирован: {} с {} планом", email, level);
+        log.info("Новый пользователь успешно зарегистрирован: {} с FREE планом", email);
         return response;
     }
 

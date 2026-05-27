@@ -7,10 +7,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.urfu.webapplication.dto.ForecastResponse;
-import ru.urfu.webapplication.dto.HistoricalResponse;
-import ru.urfu.webapplication.dto.HourlyForecastResponse;
-import ru.urfu.webapplication.dto.WeatherResponse;
+import ru.urfu.webapplication.dto.*;
 import ru.urfu.webapplication.security.WeatherUserDetails;
 import ru.urfu.webapplication.service.UserService;
 import ru.urfu.webapplication.service.WeatherService;
@@ -32,14 +29,20 @@ public class WeatherController {
     }
 
     // Регистрация
-    //curl "http://localhost:8080/weather/register?email=test@example.com&plan=free"
+    //curl "http://localhost:8080/weather/register?email=test@example.com"
     //далее вход с куки
     //curl -X GET "http://localhost:8080/auth/login?apiKey=premium-b62d1421-1883150225" -c cookies.txt
     //http://localhost:8080/auth/login?apiKey=premium-b62d1421-1883150225
 
-    @GetMapping("/register")
-    public Map<String, String> register(@RequestParam String email, @RequestParam(defaultValue = "free") String plan) {
-        return userService.registerUser(email, plan);
+    @PostMapping("/register")
+    public Map<String, String> register(@RequestBody RegisterRequest request) {
+        if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Email обязателен");
+            error.put("message", "Введите email");
+            return error;
+        }
+        return userService.registerUser(request.getEmail(), request.getPassword(), request.getRepeatPassword());
     }
 
     private String getApiKeyFromRequestOrAuth(String apiKeyParam) {

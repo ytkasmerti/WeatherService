@@ -21,7 +21,7 @@ import java.util.List;
 @Component
 @EnableScheduling
 @RequiredArgsConstructor
-public class WeatherNotificationScheduler {
+public class WeatherScheduler {
 
     private final WeatherSubscriptionService weatherSubscriptionService;
     private final WeatherService weatherService;

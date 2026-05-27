@@ -3,6 +3,7 @@ package ru.urfu.webapplication.controller;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
@@ -13,7 +14,6 @@ import ru.urfu.webapplication.service.UserService;
 import ru.urfu.webapplication.service.WeatherService;
 
 import java.time.LocalDate;
-import java.util.HashMap;
 import java.util.Map;
 
 @Validated
@@ -29,20 +29,17 @@ public class WeatherController {
     }
 
     // Регистрация
-    //curl "http://localhost:8080/weather/register?email=test@example.com"
+    //curl "http://localhost:8080/weather/register?email=test@example.com&plan=free"
     //далее вход с куки
     //curl -X GET "http://localhost:8080/auth/login?apiKey=premium-b62d1421-1883150225" -c cookies.txt
     //http://localhost:8080/auth/login?apiKey=premium-b62d1421-1883150225
 
     @PostMapping("/register")
-    public Map<String, String> register(@RequestBody RegisterRequest request) {
-        if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", "Email обязателен");
-            error.put("message", "Введите email");
-            return error;
-        }
-        return userService.registerUser(request.getEmail(), request.getPassword(), request.getRepeatPassword());
+    public Map<String, String> register(@RequestParam @NotBlank String email,
+                                        @RequestParam @NotBlank
+                                        @Size(min = 6, message = "Пароль должен содержать минимум 6 символов") String password,
+                                        @RequestParam @NotBlank String confirmPassword) {
+        return userService.registerUser(email, password, confirmPassword);
     }
 
     private String getApiKeyFromRequestOrAuth(String apiKeyParam) {

@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import ru.urfu.webapplication.dto.RegisterRequest;
 import ru.urfu.webapplication.entity.User;
 import ru.urfu.webapplication.model.SubscriptionLevel;
 import ru.urfu.webapplication.repository.UserRepository;
@@ -25,15 +26,7 @@ public class UserService {
     private final ApiKeyService apiKeyService;
 
     public Map<String, String> registerUser(String email, String password, String confirmPassword) {
-        // Валидация пароля
-        if (password == null || password.length() < 6) {
-            Map<String, String> response = new HashMap<>();
-            response.put("error", "Слабый пароль");
-            response.put("message", "Пароль должен содержать минимум 6 символов");
-            return response;
-        }
-
-        // Проверка совпадения паролей
+        // Проверка совпадения паролей (единственная ручная проверка)
         if (!password.equals(confirmPassword)) {
             Map<String, String> response = new HashMap<>();
             response.put("error", "Пароли не совпадают");

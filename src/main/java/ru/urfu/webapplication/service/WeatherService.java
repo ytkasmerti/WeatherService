@@ -215,7 +215,7 @@ public class WeatherService {
         return mapper.toForecastResponse(response, dailyList);
     }
 
-    //Исторические данные за период (доступ до 7 дней назад basic, доступ больше 7 дней - premium)
+    //Исторические данные за период (доступ до 7 дней назад basic, доступ до 8 месяцев периода - premium)
     public HistoricalResponse getHistoricalData(String city, String startDate, String endDate, String apiKey, String lang) {
         SubscriptionLevel level = validateAndGetLevel(apiKey);
         if (level == SubscriptionLevel.FREE) {

@@ -32,7 +32,6 @@ public class WeatherController {
     //curl -X POST "http://localhost:8080/weather/register?email=weatherservice26@gmail.com&password=123456&confirmPassword=123456"
     //далее вход с куки
     //curl -X POST "http://localhost:8080/auth/login?email=weatherservice26@gmail.com&password=123456" -c cookies.txt
-
     @PostMapping("/register")
     public Map<String, String> register(@RequestParam @NotBlank String email,
                                         @RequestParam @NotBlank

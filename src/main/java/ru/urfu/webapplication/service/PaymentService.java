@@ -12,7 +12,6 @@ import ru.urfu.webapplication.repository.PaymentRepository;
 import ru.urfu.webapplication.repository.UserRepository;
 
 import java.time.LocalDateTime;
-import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -33,20 +32,6 @@ public class PaymentService {
         };
     }
 
-    // Информация о подписке
-    public Map<String, Object> getSubscriptionInfo(String apiKey) {
-        User user = userRepository.findByApiKey(apiKey)
-                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
-
-        return Map.of(
-                "apiKey", apiKey,
-                "currentLevel", user.getSubscriptionLevel().name(),
-                "expiresAt", user.getSubscriptionExpiresAt() != null ? user.getSubscriptionExpiresAt().toString() : "не ограничено",
-                "autoRenewal", user.getAutoRenewal() != null && user.getAutoRenewal(),
-                "isActive", user.getIsActive()
-        );
-    }
-
     // Создание платежа
     @Transactional
     public PaymentDto createPayment(String apiKey, String level) {
@@ -65,7 +50,7 @@ public class PaymentService {
         }
 
         // Проверяем, нет ли уже ожидающего платежа
-        paymentRepository.findByApiKeyAndIsConfirmedFalse(apiKey)
+        paymentRepository.findByApiKeyAndStatusAndIsConfirmedFalse(apiKey, "PENDING")
                 .ifPresent(p -> {
                     throw new RuntimeException("У вас уже есть ожидающий платеж. PaymentId: " + p.getPaymentId());
                 });
@@ -84,7 +69,7 @@ public class PaymentService {
 
         paymentRepository.save(payment);
 
-        log.info("Создан платеж {} для {} на сумму {}", paymentId, apiKey, price);
+        log.info("Создан платеж {} для {} на сумму {} рублей", paymentId, apiKey, price);
 
         return PaymentDto.builder()
                 .paymentId(paymentId)
@@ -92,18 +77,22 @@ public class PaymentService {
                 .level(levelUpper)
                 .amount(price)
                 .createdAt(LocalDateTime.now())
-                .message(String.format("Платеж на сумму %d ожидает оплаты", payment.getAmount()))
+                .message(String.format("Платеж на сумму %d рублей ожидает оплаты", payment.getAmount()))
                 .build();
     }
 
     // Подтверждение платежа
     @Transactional
     public PaymentDto confirmPayment(String paymentId, String apiKey) {
-        Payment payment = paymentRepository.findByPaymentIdAndApiKey(paymentId, apiKey)
+        Payment payment = paymentRepository.findByPaymentId(paymentId)
                 .orElseThrow(() -> new RuntimeException("Платёж не найден"));
 
         if (payment.getIsConfirmed()) {
             throw new RuntimeException("Платёж уже был подтверждён");
+        }
+
+        if (payment.getStatus().equals("FAILED")) {
+            throw new RuntimeException("Платеж был отклонен. Создайте новый платеж.");
         }
 
         User user = userRepository.findByApiKey(payment.getApiKey())
@@ -115,25 +104,32 @@ public class PaymentService {
         if (!paymentSuccess) {
             log.warn("Платеж {} отклонен", paymentId);
             payment.setStatus("FAILED");
+            payment.setIsConfirmed(false);
             paymentRepository.save(payment);
             emailService.sendPaymentFailedEmail(user.getEmail(), payment.getLevel(), payment.getAmount());
-            throw new RuntimeException("Оплата отклонена банком");
+            return PaymentDto.builder()
+                    .paymentId(paymentId)
+                    .apiKey(apiKey)
+                    .level(payment.getLevel())
+                    .amount(payment.getAmount())
+                    .createdAt(payment.getCreatedAt())
+                    .message("Платеж отклонен банком. Создайте новый платеж")
+                    .build();
         }
 
         //Имитация обработки платежа
         try {
-            Thread.sleep(1500);
+            Thread.sleep(1000);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
 
+        payment.setStatus("CONFIRMED");
         payment.setIsConfirmed(true);
         payment.setConfirmedAt(LocalDateTime.now());
-        payment.setStatus("CONFIRMED");
         paymentRepository.save(payment);
 
         SubscriptionLevel newLevel = SubscriptionLevel.valueOf(payment.getLevel());
-
         String newApiKey = apiKeyService.generateApiKey(user.getEmail(), payment.getLevel());
         apiKeyService.deactivateKey(apiKey);
 
@@ -151,19 +147,19 @@ public class PaymentService {
                 .level(payment.getLevel())
                 .amount(payment.getAmount())
                 .createdAt(payment.getCreatedAt())
-                .message(String.format("Оплата успешна! Подписка %s активирована до %s",
+                .message(String.format("Оплата успешна! Подписка %s активирована до %s. Пожалуйста, перезайдите в свой аккаунт.",
                         payment.getLevel(), user.getSubscriptionExpiresAt().toString()))
                 .build();
     }
 
     //Проверка статуса платежа
-    public PaymentDto getPaymentStatus(String paymentId, String apiKey) {
-        Payment payment = paymentRepository.findByPaymentIdAndApiKey(paymentId, apiKey)
+    public PaymentDto getPaymentStatus(String paymentId) {
+        Payment payment = paymentRepository.findByPaymentId(paymentId)
                 .orElseThrow(() -> new RuntimeException("Платёж не найден"));
 
         String statusMessage = switch (payment.getStatus()) {
             case "PENDING" -> "Платёж ожидает подтверждения";
-            case "CONFIRMED" -> "Платёж подтверждён, подписка активирована";
+            case "CONFIRMED" -> "Платёж подтверждён";
             case "FAILED" -> "Платёж отклонён";
             default -> "Неизвестный статус";
         };

@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import ru.urfu.webapplication.dto.PaymentDto;
+import ru.urfu.webapplication.entity.Payment;
+import ru.urfu.webapplication.repository.PaymentRepository;
 import ru.urfu.webapplication.security.WeatherUserDetails;
 import ru.urfu.webapplication.service.PaymentService;
 
@@ -29,7 +31,7 @@ public class PaymentController {
     }
 
     // Создание платежа
-    //curl -X POST "http://localhost:8080/payment/create?level=PREMIUM" -b cookies.txt
+    //curl -X POST "http://localhost:8080/payment/create?level=BASIC" -b cookies.txt
     @PostMapping("/create")
     public PaymentDto createPayment(
             @RequestParam(required = false) String apiKey,
@@ -51,9 +53,8 @@ public class PaymentController {
     //Проверка статуса платежа
     //GET http://localhost:8080/payment/status/fb91e4ac-c539-44fa-b946-656290196ce0
     @GetMapping("/status/{paymentId}")
-    public PaymentDto getPaymentStatus(@PathVariable String paymentId,
-                                       @RequestParam(required = false) String apiKey) {
-        String validApiKey = getApiKeyFromRequestOrAuth(apiKey);
-        return paymentService.getPaymentStatus(paymentId, validApiKey);
+    public PaymentDto getPaymentStatus(@PathVariable String paymentId) {
+        return paymentService.getPaymentStatus(paymentId);
     }
+
 }

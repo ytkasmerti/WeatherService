@@ -2,13 +2,12 @@ package ru.urfu.webapplication.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.urfu.webapplication.dto.ForecastResponse;
-import ru.urfu.webapplication.dto.HistoricalResponse;
-import ru.urfu.webapplication.dto.HourlyForecastResponse;
-import ru.urfu.webapplication.dto.WeatherResponse;
+import ru.urfu.webapplication.dto.*;
 import ru.urfu.webapplication.dto.visualcrossingapi.Day;
 import ru.urfu.webapplication.dto.visualcrossingapi.Hour;
 import ru.urfu.webapplication.dto.visualcrossingapi.VisualCrossingResponse;
+import ru.urfu.webapplication.entity.Payment;
+import ru.urfu.webapplication.model.PaymentStatus;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -19,6 +18,15 @@ import java.util.List;
 public class DtoMapperService {
 
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    private String getStatusMessage(PaymentStatus status) {
+        return switch (status) {
+            case PaymentStatus.PENDING -> "Платёж ожидает подтверждения";
+            case PaymentStatus.CONFIRMED -> "Платёж подтверждён";
+            case PaymentStatus.FAILED -> "Платёж отклонён";
+            case PaymentStatus.EXPIRED-> "Платёж просрочен";
+        };
+    }
 
     public WeatherResponse toWeatherResponse(VisualCrossingResponse response, String location, String lang) {
         log.debug("Маппинг текущей погоды для {}", location);
@@ -104,6 +112,57 @@ public class DtoMapperService {
                 .pressure(hour.getPressure())
                 .conditions(hour.getConditions())
                 .uvIndex(hour.getUvIndex())
+                .build();
+    }
+
+    public PaymentDto toPaymentDto(Payment payment) {
+        if (payment == null) return null;
+
+        return PaymentDto.builder()
+                .paymentId(payment.getPaymentId())
+                .apiKey(payment.getApiKey())
+                .level(payment.getLevel())
+                .amount(payment.getAmount())
+                .createdAt(payment.getCreatedAt())
+                .message(getStatusMessage(payment.getStatus()))
+                .build();
+    }
+
+    public PaymentInfoDto toPaymentInfoDto(Payment payment) {
+        if (payment == null) return null;
+
+        return PaymentInfoDto.builder()
+                .paymentId(payment.getPaymentId())
+                .level(payment.getLevel())
+                .amount(payment.getAmount())
+                .status(payment.getStatus())
+                .createdAt(payment.getCreatedAt())
+                .confirmedAt(payment.getConfirmedAt())
+                .message(getStatusMessage(payment.getStatus()))
+                .build();
+    }
+
+    public PaymentHistoryDto toPaymentHistoryDto(String email, List<Payment> payments) {
+        List<PaymentInfoDto> paymentInfoList = payments.stream()
+                .map(this::toPaymentInfoDto)
+                .toList();
+
+        return PaymentHistoryDto.builder()
+                .payments(paymentInfoList)
+                .totalCount(paymentInfoList.size())
+                .build();
+    }
+
+    public PaymentDto buildPaymentDto(Payment payment, String apiKey, String message) {
+        if (payment == null) return null;
+
+        return PaymentDto.builder()
+                .paymentId(payment.getPaymentId())
+                .apiKey(apiKey != null ? apiKey : payment.getApiKey())
+                .level(payment.getLevel())
+                .amount(payment.getAmount())
+                .createdAt(payment.getCreatedAt())
+                .message(message)
                 .build();
     }
 }

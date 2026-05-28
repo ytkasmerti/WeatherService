@@ -5,9 +5,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import ru.urfu.webapplication.dto.PaymentDto;
+import ru.urfu.webapplication.dto.PaymentHistoryDto;
 import ru.urfu.webapplication.entity.Payment;
 import ru.urfu.webapplication.repository.PaymentRepository;
 import ru.urfu.webapplication.security.WeatherUserDetails;
+import ru.urfu.webapplication.service.ApiKeyService;
 import ru.urfu.webapplication.service.PaymentService;
 
 @Slf4j
@@ -16,6 +18,7 @@ import ru.urfu.webapplication.service.PaymentService;
 @RequiredArgsConstructor
 public class PaymentController {
     private final PaymentService paymentService;
+    private final ApiKeyService apiKeyService;
 
     private String getApiKeyFromRequestOrAuth(String apiKeyParam) {
         if (apiKeyParam != null && !apiKeyParam.isEmpty()) {
@@ -57,4 +60,12 @@ public class PaymentController {
         return paymentService.getPaymentStatus(paymentId);
     }
 
+    //Получить историю платежей
+    //GET http://localhost:8080/payment/history
+    @GetMapping("/history")
+    public PaymentHistoryDto getPaymentHistory(@RequestParam(required = false) String apiKey) {
+        String validApiKey = getApiKeyFromRequestOrAuth(apiKey);
+        String email = apiKeyService.getEmailByApiKey(validApiKey);
+        return paymentService.getPaymentHistoryByEmail(email);
+    }
 }

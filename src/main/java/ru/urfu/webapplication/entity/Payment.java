@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import ru.urfu.webapplication.model.PaymentStatus;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -37,9 +39,7 @@ public class Payment {
     @Column(name = "confirmed_at")
     private LocalDateTime confirmedAt;
 
-    @Column(name = "is_confirmed")
-    private Boolean isConfirmed = false;
-
+    @Enumerated(EnumType.STRING)  // ← добавляем
     @Column(name = "status")
-    private String status; // PENDING, CONFIRMED, EXPIRED, FAILED
+    private PaymentStatus status;
 }

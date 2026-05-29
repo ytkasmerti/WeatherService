@@ -38,7 +38,7 @@ public class PaymentController {
             @RequestParam(required = false) String apiKey,
             @RequestParam String level) {
         String validApiKey = getApiKeyFromRequestOrAuth(apiKey);
-        return paymentService.createPayment(validApiKey, level);
+        return paymentService.createPayment(validApiKey, level, false);
     }
 
     // Подтверждение оплаты

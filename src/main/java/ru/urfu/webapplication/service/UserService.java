@@ -104,6 +104,7 @@ public class UserService {
             return;
         }
         if (user.getSubscriptionExpiresAt().isBefore(LocalDateTime.now())) {
+            log.info("Подписка пользователя {} истекла. Начало понижения подписки.", user.getEmail());
             SubscriptionLevel oldLevel = user.getSubscriptionLevel();
             SubscriptionLevel newLevel = SubscriptionLevel.FREE;
             subscriptionService.unsubscribeAll(user.getEmail());
@@ -118,7 +119,7 @@ public class UserService {
             user.setIsActive(true);
             userRepository.save(user);
 
-            log.info("Подписка пользователя {} истекла. Понижена с {} до FREE. Новый ключ: {}", user.getEmail(), oldLevel, newApiKey);
+            log.info("Подписка пользователя {} понижена с {} до FREE. Новый ключ: {}", user.getEmail(), oldLevel, newApiKey);
             emailService.sendSubscriptionExpiredEmail(user.getEmail(), oldLevel.name(), newApiKey);
         }
     }

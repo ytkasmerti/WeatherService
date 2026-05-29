@@ -72,8 +72,8 @@ public class EmailService {
     public void sendPaymentSuccessEmail(String toEmail, String newApiKey, String level) {
         String subject = "Оплата подписки Weather Service";
         String text = String.format("""
-                Здравствуйте! Ваш платеж успешно подтвержден.
-                Новый уровень подписки: %s. Ваш новый API ключ: %s
+                Здравствуйте! Ваш платёж для оплаты подписки %s был успешно подтверждён.
+                Ваш новый API ключ: %s
                 С уважением, команда Weather Service.""", level, newApiKey);
         try {
             MimeMessage message = mailSender.createMimeMessage();
@@ -93,7 +93,7 @@ public class EmailService {
     public void sendPaymentFailedEmail(String toEmail, String level, int amount) {
         String subject = "Ошибка оплаты подписки Weather Service";
         String text = String.format("""
-                Здравствуйте! Ваш платеж на сумму %d руб. для активации подписки %s был отклонён.
+                Здравствуйте! Ваш платёж на сумму %d руб. для активации подписки %s был отклонён.
                 Попробуйте использовать другую карту или повторить попытку позже.
                 С уважением, команда Weather Service.""", amount, level);
 
@@ -114,7 +114,7 @@ public class EmailService {
     public void sendWeatherAlertEmail(String toEmail, String city, String alertMessage) {
         String subject = "Погодное предупреждение для " + city;
         String text = String.format("""
-                Здравствуйте! Получено погодное уведомление.
+                Здравствуйте! Получено уведомление по Вашей подписке на погодные предупреждения.
                 По городу %s обнаружено погодное явление:%s
                 С уважением, команда Weather Service.""", city, alertMessage);
         try {
@@ -131,11 +131,38 @@ public class EmailService {
         }
     }
 
+    public void sendSubscriptionExpiringSoonEmail(String toEmail, String level, LocalDateTime expiresAt,
+                                                  long daysUntilExpiry, boolean autoRenewal) {
+        String subject = "Подписка Weather Service скоро истечёт";
+        String autoRenewalStatus = autoRenewal ? "включено" : "отключено";
+        String text = String.format("""
+            Здравствуйте! Ваша подписка %s истечёт %s (через %d дней).
+            Статус автопродления: %s
+            Для продления подписки вы можете:
+            1. Включить автопродление
+            2. Создать платёж вручную
+            С уважением, команда Weather Service.""",
+                level, expiresAt.toString(), daysUntilExpiry, autoRenewalStatus);
+
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, "UTF-8");
+            helper.setFrom(fromEmail);
+            helper.setTo(toEmail);
+            helper.setSubject(subject);
+            helper.setText(text);
+            mailSender.send(message);
+            log.info("Уведомление о скором истечении подписки отправлено на {}", toEmail);
+        } catch (MessagingException e) {
+            log.error("Ошибка при отправке уведомления о скором истечении: {}", e.getMessage());
+        }
+    }
+
     public void sendSubscriptionExpiredEmail(String toEmail, String oldLevel, String newApiKey) {
         String subject = "Срок действия подписки Weather Service истёк";
         String text = String.format("""
-                Здравствуйте! Срок действия вашей подписки %s истёк, уровень подписки понижен до FREE.
-                Ваш новый API ключ: %s
+                Здравствуйте! Срок действия Вашей подписки %s истёк, уровень подписки понижен до FREE.
+                Ваш новый API ключ: %s.
                 Для восстановления подписки оформите новый платёж.
                 С уважением, команда Weather Service.""", oldLevel, newApiKey);
         try {
@@ -156,7 +183,7 @@ public class EmailService {
         String subject = "Подписка Weather Service автоматически продлена";
         String text = String.format("""
                         Здравствуйте! Ваша подписка %s была автоматически продлена.
-                        Новый срок действия: %s
+                        Новый срок действия: %s.
                         Спасибо, что остаётесь с нами!
                         С уважением, команда Weather Service.""",
                 level, newExpiryDate.toString());
@@ -193,7 +220,7 @@ public class EmailService {
         String subject = "Аккаунт Weather Service удалён";
         String text = """
                 Здравствуйте! Ваш аккаунт в Weather Service был успешно удалён.
-                Если вы не удаляли аккаунт, пожалуйста, свяжитесь с поддержкой.
+                Если Вы не удаляли аккаунт, пожалуйста, свяжитесь с поддержкой.
                 С уважением, команда Weather Service.""";
 
         try {
@@ -215,7 +242,7 @@ public class EmailService {
         String text = String.format("""
                 Здравствуйте! Вы запросили восстановление пароля для аккаунта.
                 Ваш код для сброса пароля: %s
-                Если вы не запрашивали восстановление пароля, просто проигнорируйте это письмо.
+                Если Вы не запрашивали восстановление пароля, просто проигнорируйте это письмо.
                 С уважением, команда Weather Service.""", code);
         try {
             MimeMessage message = mailSender.createMimeMessage();
@@ -235,8 +262,8 @@ public class EmailService {
     public void sendPasswordChangedEmail(String toEmail) {
         String subject = "Пароль для Weather Service изменён";
         String text = """
-                Здравствуйте! Ваш пароль для входа в Weather Service был успешно изменен.
-                Если вы не меняли пароль, пожалуйста, немедленно свяжитесь с поддержкой.
+                Здравствуйте! Ваш пароль для входа в Weather Service был успешно изменён.
+                Если Вы не меняли пароль, пожалуйста, свяжитесь с поддержкой.
                 С уважением, команда Weather Service.""";
         try {
             MimeMessage message = mailSender.createMimeMessage();

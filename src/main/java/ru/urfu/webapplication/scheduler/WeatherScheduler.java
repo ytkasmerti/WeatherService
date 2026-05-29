@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import ru.urfu.webapplication.entity.User;
 import ru.urfu.webapplication.entity.UserSubscription;
@@ -25,6 +26,7 @@ public class WeatherScheduler {
     private final EmailService emailService;
     private final UserRepository userRepository;
     private final UserService userService;
+    private final PaymentService paymentService;
 
     //Каждый день в 08:00 - "0 0 8 * * *"  (каждую минуту - "0 * * * * *")
     @Scheduled(cron = "0 0 8 * * *")
@@ -59,12 +61,25 @@ public class WeatherScheduler {
         LocalDateTime now = LocalDateTime.now();
 
         List<User> expiredUsers = userRepository.findBySubscriptionExpiresAtBefore(now);
-
+        log.info("Просроченных пользователей: {}", expiredUsers.size());
         for (User user : expiredUsers) {
             if (user.getSubscriptionLevel() != SubscriptionLevel.FREE) {
-                userService.subscriptionReduction(user.getApiKey());
+                if (Boolean.TRUE.equals(user.getAutoRenewal())) {
+                    log.info("Автопродление включено у пользователя {}", user.getEmail());
+                    try {
+                        paymentService.processAutoRenewal(user.getEmail());
+                        log.info("Автопродление для пользователя {} удалось", user.getEmail());
+                    } catch (Exception e) {
+                        log.error("Автопродление для пользователя {} не удалось: {}", user.getEmail(), e.getMessage());
+                        userService.subscriptionReduction(user.getApiKey());
+                    }
+                } else {
+                    log.info("Автопродление выключено для пользователя {}, понижаем до FREE", user.getEmail());
+                    userService.subscriptionReduction(user.getApiKey());
+                }
             }
         }
+
     }
 
     // уведомление о скором истечении подписки (за 3 дня)
@@ -83,19 +98,13 @@ public class WeatherScheduler {
                 long daysUntilExpiry = java.time.temporal.ChronoUnit.DAYS.between(now, user.getSubscriptionExpiresAt());
                 log.info("Подписка пользователя {} истекает через {} дней", user.getEmail(), daysUntilExpiry);
 
-                String autoRenewalStatus = Boolean.TRUE.equals(user.getAutoRenewal()) ? "включено" : "отключено";
-                String message = String.format("""
-                        Ваша подписка %s истечёт %s (через %d дней).
-                        Статус автопродления: %s
-                        Для продления подписки вы можете:
-                        1. Включить автопродление
-                        2. Создать платёж вручную""",
+                emailService.sendSubscriptionExpiringSoonEmail(
+                        user.getEmail(),
                         user.getSubscriptionLevel().name(),
-                        user.getSubscriptionExpiresAt().toString(),
+                        user.getSubscriptionExpiresAt(),
                         daysUntilExpiry,
-                        autoRenewalStatus);
-
-                emailService.sendCustomEmail(user.getEmail(), "Подписка скоро истечёт", message);
+                        Boolean.TRUE.equals(user.getAutoRenewal())
+                );
             }
         }
     }

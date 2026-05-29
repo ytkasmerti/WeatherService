@@ -38,7 +38,7 @@ public class PaymentService {
 
     // Создание платежа
     @Transactional
-    public PaymentDto createPayment(String apiKey, String level) {
+    public PaymentDto createPayment(String apiKey, String level, boolean isAutoRenewal) {
         User user = userRepository.findByApiKey(apiKey)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
@@ -49,7 +49,7 @@ public class PaymentService {
             throw new RuntimeException("Неверный тариф. Доступны: BASIC, PREMIUM");
         }
 
-        if (user.getSubscriptionLevel().name().equals(levelUpper)) {
+        if (!isAutoRenewal && user.getSubscriptionLevel().name().equals(levelUpper)) {
             throw new RuntimeException("У вас уже есть подписка " + levelUpper);
         }
 
@@ -91,10 +91,12 @@ public class PaymentService {
         }
 
         if (payment.getStatus().equals(PaymentStatus.CONFIRMED)) {
-            throw new RuntimeException("Платеж уже был подтвержден");
+            log.info("Платеж {} уже был подтвержден ранее", paymentId);
+            return mapper.buildPaymentDto(payment, apiKey, "Платеж уже был подтвержден");
         }
 
         if (payment.getStatus().equals(PaymentStatus.FAILED)) {
+            log.info("Платеж {} уже был отклонен ранее", paymentId);
             throw new RuntimeException("Платеж был отклонен. Создайте новый платеж.");
         }
 
@@ -121,7 +123,7 @@ public class PaymentService {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-
+        log.info("Платеж {} подтвержден", paymentId);
         payment.setStatus(PaymentStatus.CONFIRMED);
         payment.setConfirmedAt(LocalDateTime.now());
         paymentRepository.save(payment);
@@ -133,7 +135,6 @@ public class PaymentService {
         user.setApiKey(newApiKey);
         user.setSubscriptionLevel(newLevel);
         user.setSubscriptionExpiresAt(LocalDateTime.now().plusMonths(1));
-//        user.setSubscriptionExpiresAt(LocalDateTime.now().plusMinutes(1));
         user.setIsActive(true);
         userRepository.save(user);
 
@@ -158,5 +159,27 @@ public class PaymentService {
                 .orElseThrow(() -> new RuntimeException("Пользователь с email " + email + " не найден"));
         List<Payment> payments = paymentRepository.findAllByEmailOrderByCreatedAtDesc(email);
         return mapper.toPaymentHistoryDto(email, payments);
+    }
+
+    //Автопродление подписки
+    @Transactional
+    public void processAutoRenewal(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+        String level = user.getSubscriptionLevel().name();
+        log.info("Начало автопродления для {}", email);
+
+        PaymentDto payment = createPayment(user.getApiKey(), level, true);
+        confirmPayment(payment.getPaymentId(), user.getApiKey());
+
+        Payment paymentEntity = paymentRepository.findByPaymentId(payment.getPaymentId())
+                .orElseThrow(() -> new RuntimeException("Платеж не найден"));
+        PaymentDto confirmResult = confirmPayment(payment.getPaymentId(), user.getApiKey());
+        if (paymentEntity.getStatus() == PaymentStatus.FAILED || paymentEntity.getStatus() == PaymentStatus.EXPIRED) {
+            log.error("Автоплатеж для пользователя {} не прошел: {}", email, confirmResult.getMessage());
+            throw new RuntimeException("Платеж не прошел");
+        }
+        emailService.sendAutoRenewalSuccessEmail(user.getEmail(), level, user.getSubscriptionExpiresAt());
+        log.info("Автопродление для {} успешно", email);
     }
 }

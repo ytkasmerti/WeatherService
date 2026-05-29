@@ -4,9 +4,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.urfu.webapplication.entity.User;
 import ru.urfu.webapplication.model.SubscriptionLevel;
 import ru.urfu.webapplication.repository.UserRepository;
-import ru.urfu.webapplication.entity.User;
 import ru.urfu.webapplication.repository.WeatherRequestRepository;
 
 import java.time.LocalDateTime;

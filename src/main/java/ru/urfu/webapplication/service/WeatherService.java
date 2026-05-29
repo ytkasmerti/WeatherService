@@ -1,5 +1,6 @@
 package ru.urfu.webapplication.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -11,18 +12,16 @@ import ru.urfu.webapplication.dto.WeatherResponse;
 import ru.urfu.webapplication.dto.visualcrossingapi.Day;
 import ru.urfu.webapplication.dto.visualcrossingapi.Hour;
 import ru.urfu.webapplication.dto.visualcrossingapi.VisualCrossingResponse;
+import ru.urfu.webapplication.entity.WeatherRequest;
+import ru.urfu.webapplication.model.SubscriptionLevel;
+import ru.urfu.webapplication.repository.WeatherRequestRepository;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
-
-import lombok.extern.slf4j.Slf4j;
-import ru.urfu.webapplication.entity.WeatherRequest;
-import ru.urfu.webapplication.model.SubscriptionLevel;
-import ru.urfu.webapplication.repository.WeatherRequestRepository;
 
 @Slf4j
 @Service

@@ -1,9 +1,9 @@
 package ru.urfu.webapplication.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 import ru.urfu.webapplication.model.PaymentStatus;
 
 import java.time.LocalDateTime;

@@ -3,6 +3,7 @@ package ru.urfu.webapplication.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 import ru.urfu.webapplication.model.SubscriptionLevel;
+
 import java.time.LocalDateTime;
 
 @Entity

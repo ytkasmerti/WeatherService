@@ -51,10 +51,6 @@ public class WeatherUserDetails implements UserDetails {
         return user.getIsActive();
     }
 
-    public SubscriptionLevel getSubscriptionLevel() {
-        return user.getSubscriptionLevel();
-    }
-
     public String getApiKey() {
         return user.getApiKey();
     }

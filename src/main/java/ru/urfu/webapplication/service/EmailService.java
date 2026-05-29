@@ -1,14 +1,13 @@
 package ru.urfu.webapplication.service;
 
-import org.springframework.beans.factory.annotation.Value;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
 
 import java.time.LocalDateTime;
 
@@ -198,21 +197,6 @@ public class EmailService {
             log.info("Уведомление об автопродлении отправлено на {}", toEmail);
         } catch (MessagingException e) {
             log.error("Ошибка при отправке уведомления об автопродлении: {}", e.getMessage());
-        }
-    }
-
-    public void sendCustomEmail(String toEmail, String subject, String text) {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, "UTF-8");
-            helper.setFrom(fromEmail);
-            helper.setTo(toEmail);
-            helper.setSubject(subject);
-            helper.setText(text);
-            mailSender.send(message);
-            log.info("Письмо отправлено на {}", toEmail);
-        } catch (MessagingException e) {
-            log.error("Ошибка при отправке письма: {}", e.getMessage());
         }
     }
 

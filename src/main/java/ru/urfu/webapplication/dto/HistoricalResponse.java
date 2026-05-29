@@ -1,10 +1,11 @@
 package ru.urfu.webapplication.dto;
 
-import lombok.Data;
-import java.util.List;
-import lombok.Builder;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 @Data
 @Builder

@@ -2,11 +2,11 @@ package ru.urfu.webapplication.service;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.urfu.webapplication.entity.PasswordResetCode;
 import ru.urfu.webapplication.entity.User;
 import ru.urfu.webapplication.model.SubscriptionLevel;
@@ -128,11 +128,6 @@ public class UserService {
     public void updateUser(User user) {
         userRepository.save(user);
         log.info("Пользователь {} обновлён", user.getEmail());
-    }
-
-    public User findByEmail(String email) {
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Пользователь не найден: " + email));
     }
 
     public Map<String, Object> getProfile(String email) {

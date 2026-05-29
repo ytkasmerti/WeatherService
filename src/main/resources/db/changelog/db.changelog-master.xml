@@ -303,5 +303,19 @@
             <column name="expires_at"/>
         </createIndex>
     </changeSet>
+
+    <!--
+        13 миграция - добавление колонки expires_at в таблицу payments
+    -->
+    <changeSet id="add_expires_at_to_payments" author="dev">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="payments" columnName="expires_at"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="payments">
+            <column name="expires_at" type="TIMESTAMP"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>
 

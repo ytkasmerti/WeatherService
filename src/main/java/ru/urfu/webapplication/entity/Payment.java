@@ -39,7 +39,10 @@ public class Payment {
     @Column(name = "confirmed_at")
     private LocalDateTime confirmedAt;
 
-    @Enumerated(EnumType.STRING)  // ← добавляем
+    @Column(name = "expires_at")
+    private LocalDateTime expiresAt;
+
+    @Enumerated(EnumType.STRING)
     @Column(name = "status")
     private PaymentStatus status;
 }

@@ -5,6 +5,7 @@ import org.springframework.stereotype.Repository;
 import ru.urfu.webapplication.entity.Payment;
 import ru.urfu.webapplication.model.PaymentStatus;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -12,7 +13,7 @@ import java.util.Optional;
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
     Optional<Payment> findByPaymentId(String paymentId);
 
-    Optional<Payment> findByApiKeyAndStatus(String apiKey, PaymentStatus status);
-
     List<Payment> findAllByEmailOrderByCreatedAtDesc(String email);
+
+    Optional<Payment> findByApiKeyAndStatusAndExpiresAtAfter(String apiKey, PaymentStatus status, LocalDateTime now);
 }

@@ -51,7 +51,7 @@ public class UserService {
         user.setCreatedAt(LocalDateTime.now());
         user.setIsActive(true);
         //Отправка письма
-        emailService.sendApiKeyEmail(email, apiKey, level.name());
+        emailService.sendApiKeyEmail(email, apiKey);
         userRepository.save(user);
 
         Map<String, String> response = new HashMap<>();

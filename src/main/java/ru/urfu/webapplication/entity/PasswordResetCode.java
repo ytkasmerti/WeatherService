@@ -1,0 +1,32 @@
+package ru.urfu.webapplication.entity;
+
+import jakarta.persistence.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "password_reset_codes")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class PasswordResetCode {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private String email;
+
+    @Column(nullable = false)
+    private String code;
+
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "expires_at", nullable = false)
+    private LocalDateTime expiresAt;
+}

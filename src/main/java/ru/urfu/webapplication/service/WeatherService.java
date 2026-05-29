@@ -90,6 +90,45 @@ public class WeatherService {
         return alert;
     }
 
+    //Общий метод для получения текущей погоды
+    private WeatherResponse fetchWeatherFromApi(String location, String lang) {
+        log.info("Вызов API для получения погоды по локации {}", location);
+        VisualCrossingResponse response = visualCrossingClient.getCurrentWeather(location, lang);
+        return mapper.toWeatherResponse(response, location, lang);
+    }
+
+    // Вспомогательный метод для получения ключевых слов фильтра
+    private List<String> getFilterKeywords(String filterCondition, Map<String, List<String>> synonyms) {
+        String normalizedCondition = filterCondition.toLowerCase().trim();
+        if (synonyms.containsKey(normalizedCondition)) {
+            return synonyms.get(normalizedCondition);
+        }
+
+        for (Map.Entry<String, List<String>> entry : synonyms.entrySet()) {
+            if (entry.getValue().contains(normalizedCondition)) {
+                return entry.getValue();
+            }
+        }
+        return List.of(normalizedCondition);
+    }
+
+    // Вспомогательный метод для проверки соответствия условий
+    private boolean matchesCondition(String conditions, List<String> keywords) {
+        if (conditions == null || conditions.isEmpty()) {
+            return false;
+        }
+
+        String conditionsLower = conditions.toLowerCase();
+
+        for (String keyword : keywords) {
+            if (conditionsLower.contains(keyword)) {
+                log.debug("Совпадение: '{}' содержит '{}'", conditions, keyword);
+                return true;
+            }
+        }
+        return false;
+    }
+
     //Проверка погодных условий для планировщика
     public String checkWeatherConditions(String city, int days, String lang) {
         ForecastResponse forecast = getForecast(city, days, apiKey, lang);
@@ -98,12 +137,6 @@ public class WeatherService {
                 today.getWindSpeed(), today.getConditions());
     }
 
-    //Общий метод для получения текущей погоды
-    private WeatherResponse fetchWeatherFromApi(String location, String lang) {
-        log.info("Вызов API для получения погоды по локации {}", location);
-        VisualCrossingResponse response = visualCrossingClient.getCurrentWeather(location, lang);
-        return mapper.toWeatherResponse(response, location, lang);
-    }
 
     //Текущая погода по городу (доступ free+)
     public WeatherResponse getCurrentWeatherByCity(String city, String apiKey, String lang) {
@@ -157,38 +190,6 @@ public class WeatherService {
         log.info("Фильтрация по условию '{}': из {} дней оставлено {}",
                 filterCondition, forecast.getDaily().size(), filtered.size());
         return filteredResponse;
-    }
-
-    // Вспомогательный метод для получения ключевых слов фильтра
-    private List<String> getFilterKeywords(String filterCondition, Map<String, List<String>> synonyms) {
-        String normalizedCondition = filterCondition.toLowerCase().trim();
-        if (synonyms.containsKey(normalizedCondition)) {
-            return synonyms.get(normalizedCondition);
-        }
-
-        for (Map.Entry<String, List<String>> entry : synonyms.entrySet()) {
-            if (entry.getValue().contains(normalizedCondition)) {
-                return entry.getValue();
-            }
-        }
-        return List.of(normalizedCondition);
-    }
-
-    // Вспомогательный метод для проверки соответствия условий
-    private boolean matchesCondition(String conditions, List<String> keywords) {
-        if (conditions == null || conditions.isEmpty()) {
-            return false;
-        }
-
-        String conditionsLower = conditions.toLowerCase();
-
-        for (String keyword : keywords) {
-            if (conditionsLower.contains(keyword)) {
-                log.debug("Совпадение: '{}' содержит '{}'", conditions, keyword);
-                return true;
-            }
-        }
-        return false;
     }
 
     //Прогноз на N дней (доступ basic+)

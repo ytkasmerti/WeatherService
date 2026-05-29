@@ -31,6 +31,7 @@ public class UserService {
     private final ApiKeyService apiKeyService;
     private final PasswordResetCodeRepository passwordResetCodeRepository;
     private final WeatherRequestRepository requestRepository;
+    private final WeatherSubscriptionService subscriptionService;
 
     //Генерация 6-значного кода для восстановления пароля
     private String generateCode() {
@@ -105,6 +106,8 @@ public class UserService {
         if (user.getSubscriptionExpiresAt().isBefore(LocalDateTime.now())) {
             SubscriptionLevel oldLevel = user.getSubscriptionLevel();
             SubscriptionLevel newLevel = SubscriptionLevel.FREE;
+            subscriptionService.unsubscribeAll(user.getEmail());
+            log.info("Удалены все подписки на уведомления для пользователя {}", user.getEmail());
             //обновление ключа
             String newApiKey = apiKeyService.generateApiKey(user.getEmail(), newLevel.name());
             apiKeyService.deactivateKey(apiKey);

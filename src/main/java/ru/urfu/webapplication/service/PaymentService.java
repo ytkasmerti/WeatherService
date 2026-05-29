@@ -69,7 +69,7 @@ public class PaymentService {
         payment.setLevel(levelUpper);
         payment.setAmount(price);
         payment.setCreatedAt(LocalDateTime.now());
-        payment.setExpiresAt(LocalDateTime.now().plusMinutes(1));
+        payment.setExpiresAt(LocalDateTime.now().plusMinutes(15));
         payment.setStatus(PaymentStatus.PENDING);
         paymentRepository.save(payment);
 
@@ -106,7 +106,7 @@ public class PaymentService {
 
         //Имитация оплаты (успех 80%)
         double random = Math.random();
-        boolean paymentSuccess = random < 0.0; // 80%
+        boolean paymentSuccess = random < 0.8; // 80%
         if (!paymentSuccess) {
             log.warn("Платеж {} отклонен", paymentId);
             payment.setStatus(PaymentStatus.FAILED);
@@ -133,6 +133,7 @@ public class PaymentService {
         user.setApiKey(newApiKey);
         user.setSubscriptionLevel(newLevel);
         user.setSubscriptionExpiresAt(LocalDateTime.now().plusMonths(1));
+//        user.setSubscriptionExpiresAt(LocalDateTime.now().plusMinutes(1));
         user.setIsActive(true);
         userRepository.save(user);
 

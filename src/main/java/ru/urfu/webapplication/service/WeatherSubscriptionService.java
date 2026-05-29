@@ -5,8 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.urfu.webapplication.entity.User;
 import ru.urfu.webapplication.entity.UserSubscription;
 import ru.urfu.webapplication.model.SubscriptionLevel;
+import ru.urfu.webapplication.repository.UserRepository;
 import ru.urfu.webapplication.repository.UserSubscriptionRepository;
 
 import java.util.List;
@@ -17,7 +19,7 @@ import java.util.List;
 public class WeatherSubscriptionService {
 
     private final UserSubscriptionRepository subscriptionRepository;
-    private final UserService userService;
+    private final UserRepository userRepository;
 
     //подписаться (BASIC - 1 подписка, PREMIUM- до 5 подписок)
     @Transactional
@@ -41,7 +43,9 @@ public class WeatherSubscriptionService {
         }
         // Проверка лимита подписок
         int currentCount = subscriptionRepository.findByEmail(subscription.getEmail()).size();
-        SubscriptionLevel level = userService.findByEmail(subscription.getEmail()).getSubscriptionLevel();
+        User user = userRepository.findByEmail(subscription.getEmail())
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+        SubscriptionLevel level = user.getSubscriptionLevel();
 
         if (level == SubscriptionLevel.BASIC && currentCount >= 1) {
             throw new RuntimeException("BASIC подписка позволяет иметь только 1 подписку");

@@ -3,12 +3,14 @@ package ru.urfu.webapplication.controller;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import ru.urfu.webapplication.entity.User;
 import ru.urfu.webapplication.repository.UserRepository;
+import ru.urfu.webapplication.service.UserService;
 
 import java.util.Map;
 
@@ -20,6 +22,7 @@ public class AuthController {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UserService userService;
 
     //curl -X POST "http://localhost:8080/auth/login?email=weatherservice26@gmail.com&password=123456" -c cookies.txt
     @PostMapping("/login")
@@ -82,5 +85,22 @@ public class AuthController {
                 "subscriptionLevel", user.getSubscriptionLevel(),
                 "apiKey", apiKey
         );
+    }
+
+    //Запрос на сброс и восстановление пароля
+    //POST http://localhost:8080/auth/forgot-password?email=weatherservice26@gmail.com
+    @PostMapping("/forgot-password")
+    public Map<String, String> forgotPassword(@RequestParam @NotBlank String email) {
+        return userService.forgotPassword(email);
+    }
+
+    //Подтверждение сброса пароля
+    //POST http://localhost:8080/auth/reset-password?email=weatherservice26@gmail.com&code=&newPassword=123456
+    @PostMapping("/reset-password")
+    public Map<String, String> resetPassword(
+            @RequestParam @NotBlank String email,
+            @RequestParam @NotBlank String code,
+            @RequestParam @NotBlank @Size(min = 6, message = "Пароль должен содержать минимум 6 символов") String newPassword) {
+        return userService.resetPassword(email, code, newPassword);
     }
 }

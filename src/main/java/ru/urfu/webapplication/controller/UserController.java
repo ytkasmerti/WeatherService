@@ -3,6 +3,7 @@ package ru.urfu.webapplication.controller;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -136,5 +137,15 @@ public class UserController {
                 "success", "true",
                 "message", "Аккаунт успешно удалён"
         );
+    }
+
+    //Смена пароля пользователя
+    //POST http://localhost:8080/user/change-password?oldPassword=123456&newPassword=123456
+    @PostMapping("/change-password")
+    public Map<String, String> changePassword(
+            @RequestParam @NotBlank String oldPassword,
+            @RequestParam @NotBlank @Size(min = 6, message = "Пароль должен содержать минимум 6 символов") String newPassword) {
+        User user = getCurrentUser();
+        return userService.changePassword(user.getEmail(), oldPassword, newPassword);
     }
 }

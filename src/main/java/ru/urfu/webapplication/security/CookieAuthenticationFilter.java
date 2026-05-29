@@ -31,7 +31,11 @@ public class CookieAuthenticationFilter extends OncePerRequestFilter {
 
         String path = request.getServletPath();
 
-        if (path.equals("/weather/register") || path.equals("/auth/login") || path.equals("/auth/logout")) {
+        if (path.equals("/weather/register") ||
+                path.equals("/auth/login") ||
+                path.equals("/auth/logout") ||
+                path.equals("/auth/forgot-password") ||
+                path.equals("/auth/reset-password")) {
             filterChain.doFilter(request, response);
             return;
         }

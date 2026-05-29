@@ -123,6 +123,7 @@ public class DtoMapperService {
                 .apiKey(payment.getApiKey())
                 .level(payment.getLevel())
                 .amount(payment.getAmount())
+                .status(payment.getStatus())
                 .createdAt(payment.getCreatedAt())
                 .message(getStatusMessage(payment.getStatus()))
                 .build();

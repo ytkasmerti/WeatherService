@@ -4,6 +4,8 @@ import lombok.Data;
 import lombok.Builder;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
+import ru.urfu.webapplication.model.PaymentStatus;
+
 import java.time.LocalDateTime;
 
 @Data
@@ -15,6 +17,7 @@ public class PaymentDto {
     private String apiKey;
     private String level;
     private Integer amount;
+    private PaymentStatus status;
     private LocalDateTime createdAt;
     private String message;
 }

@@ -209,4 +209,46 @@ public class EmailService {
             log.error("Ошибка при отправке письма об удалении аккаунта: {}", e.getMessage());
         }
     }
+
+    public void sendPasswordResetCode(String toEmail, String code) {
+        String subject = "Восстановление пароля для Weather Service";
+        String text = String.format("""
+                Здравствуйте! Вы запросили восстановление пароля для аккаунта.
+                Ваш код для сброса пароля: %s
+                Если вы не запрашивали восстановление пароля, просто проигнорируйте это письмо.
+                С уважением, команда Weather Service.""", code);
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, "UTF-8");
+            helper.setFrom(fromEmail);
+            helper.setTo(toEmail);
+            helper.setSubject(subject);
+            helper.setText(text);
+            mailSender.send(message);
+            log.info("Код восстановления пароля отправлен на {}", toEmail);
+        } catch (MessagingException e) {
+            log.error("Ошибка при отправке кода восстановления: {}", e.getMessage());
+            throw new RuntimeException("Не удалось отправить код на " + toEmail, e);
+        }
+    }
+
+    public void sendPasswordChangedEmail(String toEmail) {
+        String subject = "Пароль для Weather Service изменён";
+        String text = """
+                Здравствуйте! Ваш пароль для входа в Weather Service был успешно изменен.
+                Если вы не меняли пароль, пожалуйста, немедленно свяжитесь с поддержкой.
+                С уважением, команда Weather Service.""";
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, "UTF-8");
+            helper.setFrom(fromEmail);
+            helper.setTo(toEmail);
+            helper.setSubject(subject);
+            helper.setText(text);
+            mailSender.send(message);
+            log.info("Уведомление о смене пароля отправлено на {}", toEmail);
+        } catch (MessagingException e) {
+            log.error("Ошибка при отправке уведомления о смене пароля: {}", e.getMessage());
+        }
+    }
 }

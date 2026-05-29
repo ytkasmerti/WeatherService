@@ -5,13 +5,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import ru.urfu.webapplication.entity.PasswordResetCode;
 import ru.urfu.webapplication.entity.User;
 import ru.urfu.webapplication.model.SubscriptionLevel;
+import ru.urfu.webapplication.repository.PasswordResetCodeRepository;
 import ru.urfu.webapplication.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 import java.util.UUID;
 
 @Slf4j
@@ -23,6 +26,14 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
     private final ApiKeyService apiKeyService;
+    private final PasswordResetCodeRepository passwordResetCodeRepository;
+
+    //Генерация 6-значного кода для восстановления пароля
+    private String generateCode() {
+        Random random = new Random();
+        int code = 100000 + random.nextInt(900000);
+        return String.valueOf(code);
+    }
 
     public Map<String, String> registerUser(String email, String password, String confirmPassword) {
 
@@ -106,5 +117,76 @@ public class UserService {
     public void updateUser(User user) {
         userRepository.save(user);
         log.info("Пользователь {} обновлён", user.getEmail());
+    }
+
+    //Запрос на восстановление пароля
+    @Transactional
+    public Map<String, String> forgotPassword(String email) {
+        log.info("Запрос на сброс и восстановление пароля для пользователя {}", email);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Пользователь с таким email не найден"));
+        //Удаляем старые коды
+        passwordResetCodeRepository.deleteByEmail(email);
+        //Генерируем и сохраняем новый код
+        String resetCode = generateCode();
+        PasswordResetCode resetCodeEntity = new PasswordResetCode();
+        resetCodeEntity.setEmail(email);
+        resetCodeEntity.setCode(resetCode);
+        resetCodeEntity.setCreatedAt(LocalDateTime.now());
+        resetCodeEntity.setExpiresAt(LocalDateTime.now().plusMinutes(15));
+        passwordResetCodeRepository.save(resetCodeEntity);
+        log.info("Сгенерирован код сброса пароля для пользователя {}", email);
+        emailService.sendPasswordResetCode(email, resetCode);
+        return Map.of(
+                "message", "Код для сброса пароля отправлен на вашу почту.",
+                "email", email
+        );
+    }
+
+    //Сброс пароля с кодом подтверждения
+    @Transactional
+    public Map<String, String> resetPassword(String email, String code, String newPassword) {
+        log.info("Попытка сброса пароля для пользователя {}", email);
+        //Проверяем код
+        boolean isValid = passwordResetCodeRepository
+                .findByEmailAndCodeAndExpiresAtAfter(email, code, LocalDateTime.now())
+                .isPresent();
+        if (!isValid) {
+            throw new RuntimeException("Неверный или просроченный код подтверждения");
+        }
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+
+        //Меняем пароль
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        //Удаляем использованный код
+        passwordResetCodeRepository.deleteByEmail(email);
+        log.info("Пароль для пользователя {} был сброшен и восстановлен", email);
+        emailService.sendPasswordChangedEmail(email);
+        return Map.of(
+                "message", "Пароль успешно изменен. Используйте новый пароль для входа",
+                "success", "true"
+        );
+    }
+
+    //Смена пароля
+    @Transactional
+    public Map<String, String> changePassword(String email, String oldPassword, String newPassword) {
+        log.info("Попытка смены пароля для пользователя {}", email);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+            throw new RuntimeException("Неверный текущий пароль");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        log.info("Пароль для пользователя {} был изменен", email);
+        emailService.sendPasswordChangedEmail(email);
+        return Map.of(
+                "message", "Пароль успешно изменён",
+                "success", "true"
+        );
     }
 }

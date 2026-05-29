@@ -1,0 +1,76 @@
+package ru.urfu.webapplication.service;
+
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import ru.urfu.webapplication.entity.User;
+import ru.urfu.webapplication.repository.UserRepository;
+
+import java.util.Map;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class AuthService {
+
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    public Map<String, Object> login(String email, String password, HttpServletResponse response) {
+        log.info("Попытка входа пользователя {}", email);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> {
+                    log.error("Пользователь не найден: {}", email);
+                    return new RuntimeException("Неверный email или пароль");
+                });
+
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new RuntimeException("Неверный email или пароль");
+        }
+
+        log.info("Успешный вход пользователя {}", email);
+        String apiKey = user.getApiKey();
+
+        Cookie cookie = new Cookie("apiKey", apiKey);
+        cookie.setHttpOnly(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(60 * 60 * 24 * 30);
+        response.addCookie(cookie);
+
+        return Map.of(
+                "success", true,
+                "email", user.getEmail(),
+                "subscriptionLevel", user.getSubscriptionLevel(),
+                "apiKey", apiKey
+        );
+    }
+
+    public Map<String, String> logout(HttpServletResponse response) {
+        Cookie cookie = new Cookie("apiKey", null);
+        cookie.setPath("/");
+        cookie.setMaxAge(0);
+        response.addCookie(cookie);
+        return Map.of("message", "Вы вышли из системы");
+    }
+
+    public Map<String, Object> checkAuth(String apiKey) {
+        if (apiKey == null) {
+            return Map.of("authenticated", false, "message", "Не авторизован");
+        }
+
+        User user = userRepository.findByApiKey(apiKey).orElse(null);
+        if (user == null || !user.getIsActive()) {
+            return Map.of("authenticated", false, "message", "Неверный или неактивный API ключ");
+        }
+
+        return Map.of(
+                "authenticated", true,
+                "email", user.getEmail(),
+                "subscriptionLevel", user.getSubscriptionLevel(),
+                "apiKey", apiKey
+        );
+    }
+}

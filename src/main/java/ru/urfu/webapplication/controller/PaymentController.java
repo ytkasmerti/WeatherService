@@ -6,8 +6,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import ru.urfu.webapplication.dto.PaymentDto;
 import ru.urfu.webapplication.dto.PaymentHistoryDto;
-import ru.urfu.webapplication.entity.Payment;
-import ru.urfu.webapplication.repository.PaymentRepository;
 import ru.urfu.webapplication.security.WeatherUserDetails;
 import ru.urfu.webapplication.service.ApiKeyService;
 import ru.urfu.webapplication.service.PaymentService;

@@ -1,5 +1,7 @@
 package ru.urfu.webapplication.service;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,6 +12,7 @@ import ru.urfu.webapplication.entity.User;
 import ru.urfu.webapplication.model.SubscriptionLevel;
 import ru.urfu.webapplication.repository.PasswordResetCodeRepository;
 import ru.urfu.webapplication.repository.UserRepository;
+import ru.urfu.webapplication.repository.WeatherRequestRepository;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -27,12 +30,31 @@ public class UserService {
     private final EmailService emailService;
     private final ApiKeyService apiKeyService;
     private final PasswordResetCodeRepository passwordResetCodeRepository;
+    private final WeatherRequestRepository requestRepository;
 
     //Генерация 6-значного кода для восстановления пароля
     private String generateCode() {
         Random random = new Random();
         int code = 100000 + random.nextInt(900000);
         return String.valueOf(code);
+    }
+
+    private int getMaxRequests(SubscriptionLevel level) {
+        return switch (level) {
+            case FREE -> 10;
+            case BASIC -> 100;
+            case PREMIUM -> Integer.MAX_VALUE;
+        };
+    }
+
+    private String generateApiKey(String email, SubscriptionLevel level) {
+        String prefix = switch (level) {
+            case FREE -> "free";
+            case BASIC -> "basic";
+            case PREMIUM -> "premium";
+        };
+        String uniqueId = UUID.randomUUID().toString().substring(0, 8);
+        return prefix + "-" + uniqueId + "-" + Math.abs(email.hashCode());
     }
 
     public Map<String, String> registerUser(String email, String password, String confirmPassword) {
@@ -73,16 +95,6 @@ public class UserService {
         return response;
     }
 
-    private String generateApiKey(String email, SubscriptionLevel level) {
-        String prefix = switch (level) {
-            case FREE -> "free";
-            case BASIC -> "basic";
-            case PREMIUM -> "premium";
-        };
-        String uniqueId = UUID.randomUUID().toString().substring(0, 8);
-        return prefix + "-" + uniqueId + "-" + Math.abs(email.hashCode());
-    }
-
     //Понижение подписки при истечении срока
     @Transactional
     public void subscriptionReduction(String apiKey) {
@@ -108,15 +120,87 @@ public class UserService {
         }
     }
 
+    @Transactional
+    public void updateUser(User user) {
+        userRepository.save(user);
+        log.info("Пользователь {} обновлён", user.getEmail());
+    }
+
     public User findByEmail(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден: " + email));
     }
 
+    public Map<String, Object> getProfile(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+        int maxRequests = getMaxRequests(user.getSubscriptionLevel());
+        long usedRequests = 0;
+        int remainingRequests = maxRequests;
+        if (maxRequests != Integer.MAX_VALUE) {
+            LocalDateTime twentyFourHoursAgo = LocalDateTime.now().minusHours(24);
+            usedRequests = requestRepository.countRequestsByKeyInLast24Hours(user.getApiKey(), twentyFourHoursAgo);
+            remainingRequests = (int) Math.max(0, maxRequests - usedRequests);
+        }
+
+        Map<String, Object> profile = new HashMap<>();
+        profile.put("email", user.getEmail());
+        profile.put("apiKey", user.getApiKey());
+        profile.put("subscriptionLevel", user.getSubscriptionLevel());
+        profile.put("subscriptionExpiresAt", user.getSubscriptionExpiresAt());
+        profile.put("autoRenewal", user.getAutoRenewal());
+        profile.put("createdAt", user.getCreatedAt());
+
+        Map<String, Object> limits = new HashMap<>();
+        limits.put("dailyLimit", maxRequests == Integer.MAX_VALUE ? "Неограничено" : maxRequests);
+        limits.put("usedToday", usedRequests);
+        limits.put("remainingToday", remainingRequests == Integer.MAX_VALUE ? "Неограничено" : remainingRequests);
+        profile.put("limits", limits);
+
+        log.info("Пользователь {} получил информацию о своем профиле", user.getEmail());
+        return profile;
+    }
+
     @Transactional
-    public void updateUser(User user) {
-        userRepository.save(user);
-        log.info("Пользователь {} обновлён", user.getEmail());
+    public Map<String, Object> setAutoRenewal(String email, boolean enabled) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+        user.setAutoRenewal(enabled);
+        updateUser(user);
+
+        log.info("Пользователь {} изменил автопродление подписки на {}", email, enabled);
+        return Map.of(
+                "success", true,
+                "autoRenewal", enabled,
+                "message", String.format("Автопродление %s", enabled ? "включено" : "отключено")
+        );
+    }
+
+    public Map<String, String> deleteAccount(String email, String password, HttpServletResponse response) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Неверный пароль");
+            error.put("message", "Пароль не совпадает");
+            return error;
+        }
+
+        apiKeyService.deactivateKey(user.getApiKey());
+        userRepository.delete(user);
+        emailService.sendAccountDeletedEmail(email);
+
+        Cookie cookie = new Cookie("apiKey", null);
+        cookie.setPath("/");
+        cookie.setMaxAge(0);
+        response.addCookie(cookie);
+
+        log.info("Пользователь {} удалил аккаунт", email);
+        return Map.of(
+                "success", "true",
+                "message", "Аккаунт успешно удалён"
+        );
     }
 
     //Запрос на восстановление пароля

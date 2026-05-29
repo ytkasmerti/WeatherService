@@ -4,15 +4,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import ru.urfu.webapplication.entity.User;
 import ru.urfu.webapplication.entity.UserSubscription;
 import ru.urfu.webapplication.security.WeatherUserDetails;
-import ru.urfu.webapplication.service.WeatherSubscriptionService;
 import ru.urfu.webapplication.service.ApiKeyService;
-import ru.urfu.webapplication.service.UserService;
+import ru.urfu.webapplication.service.WeatherSubscriptionService;
 
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @RestController
@@ -61,7 +58,6 @@ public class SubscriptionController {
         sub.setNotifyWind(notifyWind);
         sub.setNotifyPrecipitation(notifyPrecipitation);
         weatherSubscriptionService.subscribe(sub);
-
         return "Вы подписались на уведомления о погоде в городе " + city;
     }
 

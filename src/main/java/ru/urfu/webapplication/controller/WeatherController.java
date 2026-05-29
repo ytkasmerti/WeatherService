@@ -23,6 +23,19 @@ public class WeatherController {
     private final WeatherService weatherService;
     private final UserService userService;
 
+    private String getApiKeyFromRequestOrAuth(String apiKeyParam) {
+        if (apiKeyParam != null && !apiKeyParam.isEmpty()) {
+            return apiKeyParam;
+        }
+
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof WeatherUserDetails userDetails) {
+            return userDetails.getApiKey();
+        }
+
+        throw new RuntimeException("API ключ не найден. Передайте apiKey в параметрах или войдите через /auth/login");
+    }
+
     public WeatherController(WeatherService weatherService, UserService userService) {
         this.weatherService = weatherService;
         this.userService = userService;
@@ -38,19 +51,6 @@ public class WeatherController {
                                         @Size(min = 6, message = "Пароль должен содержать минимум 6 символов") String password,
                                         @RequestParam @NotBlank String confirmPassword) {
         return userService.registerUser(email, password, confirmPassword);
-    }
-
-    private String getApiKeyFromRequestOrAuth(String apiKeyParam) {
-        if (apiKeyParam != null && !apiKeyParam.isEmpty()) {
-            return apiKeyParam;
-        }
-
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.getPrincipal() instanceof WeatherUserDetails userDetails) {
-            return userDetails.getApiKey();
-        }
-
-        throw new RuntimeException("API ключ не найден. Передайте apiKey в параметрах или войдите через /auth/login");
     }
 
     // Текущая погода по городу

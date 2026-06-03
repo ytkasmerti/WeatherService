@@ -2,6 +2,7 @@ package ru.urfu.webapplication.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.urfu.webapplication.entity.User;
@@ -18,10 +19,47 @@ import java.util.UUID;
 public class ApiKeyService {
     private final UserRepository userRepository;
     private final WeatherRequestRepository requestRepository;
+    @Value("${weather.limits.free}")
+    private int freeLimit;
+    @Value("${weather.limits.basic}")
+    private int basicLimit;
+    @Value("${weather.limits.premium}")
+    private int premiumLimit;
 
-    @Transactional
+    public int getMaxRequests(SubscriptionLevel level) {
+        return switch (level) {
+            case FREE -> freeLimit;
+            case BASIC -> basicLimit;
+            case PREMIUM -> premiumLimit == -1 ? Integer.MAX_VALUE : premiumLimit;
+        };
+    }
+
+    public String generateApiKey(String email, SubscriptionLevel level) {
+        String prefix = switch (level) {
+            case FREE -> "free";
+            case BASIC -> "basic";
+            case PREMIUM -> "premium";
+        };
+        String uniqueId = UUID.randomUUID().toString().substring(0, 8);
+        return prefix + "-" + uniqueId + "-" + Math.abs(email.hashCode());
+    }
+
+    public SubscriptionLevel validateAndGetLevel(String apiKey) {
+        if (!isValidKey(apiKey)) {
+            throw new RuntimeException("Неверный API ключ");
+        }
+        SubscriptionLevel level = getSubscriptionLevel(apiKey);
+        if (level == null) {
+            throw new RuntimeException("Неверный API ключ");
+        }
+        if (!canMakeRequest(apiKey)) {
+            throw new RuntimeException("Превышен лимит запросов на сегодня");
+        }
+        return level;
+    }
 
     // проверка существования ключа
+    @Transactional
     public boolean isValidKey(String apiKey) {
         return userRepository.findByApiKey(apiKey).map(User::getIsActive).orElse(false);
     }
@@ -37,19 +75,9 @@ public class ApiKeyService {
             return false;
         }
 
-        int maxRequests = switch (level) {
-            case FREE -> 10;
-            case BASIC -> 100;
-            case PREMIUM -> Integer.MAX_VALUE;
-        };
-
-        if (maxRequests == Integer.MAX_VALUE) {
-            return true;
-        }
-
         LocalDateTime twentyFourHoursAgo = LocalDateTime.now().minusHours(24);
         long requestCount = requestRepository.countRequestsByKeyInLast24Hours(apiKey, twentyFourHoursAgo);
-        return requestCount < maxRequests;
+        return requestCount < getMaxRequests(level);
     }
 
     // блокировка ключа
@@ -63,26 +91,6 @@ public class ApiKeyService {
                     return true;
                 })
                 .orElse(false);
-    }
-    // создание API ключа
-    public String generateApiKey(String email, String plan) {
-        SubscriptionLevel level;
-        try {
-            level = SubscriptionLevel.valueOf(plan.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            level = SubscriptionLevel.FREE;
-        }
-        return generateApiKey(email, level);
-    }
-
-    private String generateApiKey(String email, SubscriptionLevel level) {
-        String prefix = switch (level) {
-            case FREE -> "free";
-            case BASIC -> "basic";
-            case PREMIUM -> "premium";
-        };
-        String uniqueId = UUID.randomUUID().toString().substring(0, 8);
-        return prefix + "-" + uniqueId + "-" + Math.abs(email.hashCode());
     }
 
     //получение почты по апи ключу

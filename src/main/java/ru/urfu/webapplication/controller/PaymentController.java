@@ -1,11 +1,14 @@
 package ru.urfu.webapplication.controller;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import ru.urfu.webapplication.dto.PaymentDto;
 import ru.urfu.webapplication.dto.PaymentHistoryDto;
+import ru.urfu.webapplication.model.SubscriptionLevel;
 import ru.urfu.webapplication.security.WeatherUserDetails;
 import ru.urfu.webapplication.service.ApiKeyService;
 import ru.urfu.webapplication.service.PaymentService;
@@ -32,17 +35,15 @@ public class PaymentController {
     }
 
     // Создание платежа
-    //curl -X POST "http://localhost:8080/payment/create?level=BASIC" -b cookies.txt
     @PostMapping("/create")
     public PaymentDto createPayment(
             @RequestParam(required = false) String apiKey,
-            @RequestParam String level) {
+            @RequestParam SubscriptionLevel level) {
         String validApiKey = getApiKeyFromRequestOrAuth(apiKey);
         return paymentService.createPayment(validApiKey, level, false);
     }
 
     // Подтверждение оплаты
-    //curl -X POST "http://localhost:8080/payment/confirm/fb91e4ac-c539-44fa-b946-656290196ce0" -b cookies.txt
     @PostMapping("/confirm/{paymentId}")
     public PaymentDto confirmPayment(
             @PathVariable String paymentId,
@@ -52,18 +53,18 @@ public class PaymentController {
     }
 
     //Проверка статуса платежа
-    //GET http://localhost:8080/payment/status/fb91e4ac-c539-44fa-b946-656290196ce0
     @GetMapping("/status/{paymentId}")
     public PaymentDto getPaymentStatus(@PathVariable String paymentId) {
         return paymentService.getPaymentStatus(paymentId);
     }
 
     //Получить историю платежей
-    //GET http://localhost:8080/payment/history
     @GetMapping("/history")
-    public PaymentHistoryDto getPaymentHistory(@RequestParam(required = false) String apiKey) {
+    public PaymentHistoryDto getPaymentHistory(@RequestParam(required = false) String apiKey,
+                                               @RequestParam (defaultValue = "0") @Min(0) int page,
+                                               @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
         String validApiKey = getApiKeyFromRequestOrAuth(apiKey);
         String email = apiKeyService.getEmailByApiKey(validApiKey);
-        return paymentService.getPaymentHistoryByEmail(email);
+        return paymentService.getPaymentHistoryByEmail(email, page, size);
     }
 }

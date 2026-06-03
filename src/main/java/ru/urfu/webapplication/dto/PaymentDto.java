@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import ru.urfu.webapplication.model.PaymentStatus;
+import ru.urfu.webapplication.model.SubscriptionLevel;
 
 import java.time.LocalDateTime;
 
@@ -15,7 +16,7 @@ import java.time.LocalDateTime;
 public class PaymentDto {
     private String paymentId;
     private String apiKey;
-    private String level;
+    private SubscriptionLevel level;
     private Integer amount;
     private PaymentStatus status;
     private LocalDateTime createdAt;

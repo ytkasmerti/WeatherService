@@ -10,4 +10,7 @@ import java.util.List;
 public class PaymentHistoryDto {
     private List<PaymentInfoDto> payments;
     private int totalCount;
+    private int currentPage;
+    private int pageSize;
+    private int totalPages;
 }

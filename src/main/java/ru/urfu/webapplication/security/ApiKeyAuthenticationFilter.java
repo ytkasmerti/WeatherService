@@ -29,7 +29,7 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
 
         String path = request.getServletPath();
 
-        if (path.equals("/weather/register") ||
+        if (path.equals("/auth/register") ||
                 path.equals("/auth/login") ||
                 path.equals("/auth/logout") ||
                 path.equals("/auth/forgot-password") ||

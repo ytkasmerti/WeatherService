@@ -35,7 +35,6 @@ public class UserController {
     }
 
     //Получение профиля пользователя
-    //curl -X GET "http://localhost:8080/user/profile" -b cookies.txt
     @GetMapping("/profile")
     public Map<String, Object> getProfile() {
         User user = getCurrentUser();
@@ -43,8 +42,6 @@ public class UserController {
     }
 
     // Включить/отключить автопродление подписки
-    //http://localhost:8080/user/auto-renewal?enabled=true
-    //http://localhost:8080/user/auto-renewal?enabled=false
     @GetMapping("/auto-renewal")
     public Map<String, Object> setAutoRenewal(@RequestParam boolean enabled) {
         User user = getCurrentUser();
@@ -52,7 +49,6 @@ public class UserController {
     }
 
     //Удаление аккаунта с подтверждением пароля
-    //curl -X DELETE "http://localhost:8080/user/delete?password=123456" -b cookies.txt
     @DeleteMapping("/delete")
     public Map<String, String> deleteAccount(@RequestParam @NotBlank String password, HttpServletResponse response) {
         User user = getCurrentUser();
@@ -60,7 +56,6 @@ public class UserController {
     }
 
     //Смена пароля пользователя
-    //POST http://localhost:8080/user/change-password?oldPassword=123456&newPassword=123456
     @PostMapping("/change-password")
     public Map<String, String> changePassword(
             @RequestParam @NotBlank String oldPassword,

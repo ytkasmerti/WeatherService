@@ -4,9 +4,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import ru.urfu.webapplication.dto.WeatherSubscriptionDto;
 import ru.urfu.webapplication.entity.UserSubscription;
 import ru.urfu.webapplication.security.WeatherUserDetails;
 import ru.urfu.webapplication.service.ApiKeyService;
+import ru.urfu.webapplication.service.DtoMapperService;
 import ru.urfu.webapplication.service.WeatherSubscriptionService;
 
 import java.util.List;
@@ -19,6 +21,7 @@ public class SubscriptionController {
 
     private final WeatherSubscriptionService weatherSubscriptionService;
     private final ApiKeyService apiKeyService;
+    private final DtoMapperService dtoMapperService;
 
     private String getApiKeyFromRequestOrAuth(String apiKeyParam) {
         if (apiKeyParam != null && !apiKeyParam.isEmpty()) {
@@ -38,8 +41,6 @@ public class SubscriptionController {
     }
 
     //Подписаться
-    // http://localhost:8080/subscription/subscribe?city=Moscow&notifyWind=false
-    // http://localhost:8080/subscription/subscribe?city=Moscow
     @GetMapping("/subscribe")
     public String subscribe(@RequestParam(required = false) String apiKey,
                             @RequestParam String city,
@@ -48,21 +49,11 @@ public class SubscriptionController {
                             @RequestParam(required = false, defaultValue = "true") boolean notifyWind,
                             @RequestParam(required = false, defaultValue = "true") boolean notifyPrecipitation) {
         String validApiKey = getApiKeyFromRequestOrAuth(apiKey);
-        String email = getEmailFromApiKey(validApiKey);
-
-        UserSubscription sub = new UserSubscription();
-        sub.setEmail(email);
-        sub.setCity(city);
-        sub.setNotifyHeat(notifyHeat);
-        sub.setNotifyCold(notifyCold);
-        sub.setNotifyWind(notifyWind);
-        sub.setNotifyPrecipitation(notifyPrecipitation);
-        weatherSubscriptionService.subscribe(sub);
+        weatherSubscriptionService.subscribe(validApiKey, city, notifyHeat, notifyCold, notifyWind, notifyPrecipitation);
         return "Вы подписались на уведомления о погоде в городе " + city;
     }
 
     //Отписаться от всех
-    // http://localhost:8080/subscription/unsubscribe
     @GetMapping("/unsubscribe")
     public String unsubscribe(@RequestParam(required = false) String apiKey) {
         String validApiKey = getApiKeyFromRequestOrAuth(apiKey);
@@ -72,16 +63,17 @@ public class SubscriptionController {
     }
 
     //Получить все подписки
-    // http://localhost:8080/subscription/subscribtions
     @GetMapping("/subscribtions")
-    public List<UserSubscription> getSettings(@RequestParam(required = false) String apiKey) {
+    public List<WeatherSubscriptionDto> getSettings(@RequestParam(required = false) String apiKey) {
         String validApiKey = getApiKeyFromRequestOrAuth(apiKey);
         String email = getEmailFromApiKey(validApiKey);
-        return weatherSubscriptionService.getUserSubscriptions(email);
+        List<UserSubscription> subscriptions = weatherSubscriptionService.getUserSubscriptions(email);
+        return subscriptions.stream()
+                .map(dtoMapperService::toWeatherSubscriptionDto)
+                .toList();
     }
 
     //Отписаться по конкретному id
-    // http://localhost:8080/subscription/unsubscribe/3
     @GetMapping("/unsubscribe/{subscriptionId}")
     public String unsubscribeById(@RequestParam(required = false) String apiKey,
                                   @PathVariable Long subscriptionId) {

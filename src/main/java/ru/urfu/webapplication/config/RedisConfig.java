@@ -2,6 +2,7 @@ package ru.urfu.webapplication.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -19,6 +20,8 @@ import java.time.Duration;
 @Configuration
 @EnableCaching
 public class RedisConfig {
+    @Value("${redis.cache.ttl-minutes}")
+    private int redisCacheTtlMinutes;
 
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
@@ -44,7 +47,7 @@ public class RedisConfig {
     // автоматитческое кэщирование через аннотации
     public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
         RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
-                .entryTtl(Duration.ofMinutes(15)) // данные о погоде хранятся 15 минут, затем удаляются
+                .entryTtl(Duration.ofMinutes(redisCacheTtlMinutes))
                 .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(
                         new Jackson2JsonRedisSerializer<>(Object.class)

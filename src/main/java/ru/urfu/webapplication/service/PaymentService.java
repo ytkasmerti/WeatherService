@@ -2,6 +2,11 @@ package ru.urfu.webapplication.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.urfu.webapplication.dto.PaymentDto;
@@ -14,7 +19,6 @@ import ru.urfu.webapplication.repository.PaymentRepository;
 import ru.urfu.webapplication.repository.UserRepository;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -27,23 +31,31 @@ public class PaymentService {
     private final ApiKeyService apiKeyService;
     private final EmailService emailService;
     private final DtoMapperService mapper;
+    @Value("${payment.price.basic}")
+    private int basicPrice;
+    @Value("${payment.price.premium}")
+    private int premiumPrice;
+    @Value("${payment.success-probability}")
+    private double successProbability;
+    @Value("${payment.expire-minutes}")
+    private long paymentExpireMinutes;
 
     private int getPrice(String level) {
         return switch (level.toUpperCase()) {
-            case "BASIC" -> 500;
-            case "PREMIUM" -> 1000;
+            case "BASIC" -> basicPrice;
+            case "PREMIUM" -> premiumPrice;
             default -> 0;
         };
     }
 
     // Создание платежа
     @Transactional
-    public PaymentDto createPayment(String apiKey, String level, boolean isAutoRenewal) {
+    public PaymentDto createPayment(String apiKey, SubscriptionLevel level, boolean isAutoRenewal) {
         User user = userRepository.findByApiKey(apiKey)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
-        String levelUpper = level.toUpperCase();
-        int price = getPrice(levelUpper);
+        SubscriptionLevel levelUpper = level;
+        int price = getPrice(levelUpper.name());
 
         if (price == 0) {
             throw new RuntimeException("Неверный тариф. Доступны: BASIC, PREMIUM");
@@ -65,17 +77,16 @@ public class PaymentService {
         Payment payment = new Payment();
         payment.setPaymentId(paymentId);
         payment.setApiKey(apiKey);
-        payment.setEmail(user.getEmail());
         payment.setLevel(levelUpper);
         payment.setAmount(price);
         payment.setCreatedAt(LocalDateTime.now());
-        payment.setExpiresAt(LocalDateTime.now().plusMinutes(15));
+        payment.setExpiresAt(LocalDateTime.now().plusMinutes(paymentExpireMinutes));
         payment.setStatus(PaymentStatus.PENDING);
         paymentRepository.save(payment);
 
         log.info("Создан платеж {} для {} на сумму {} рублей", paymentId, apiKey, price);
         String message = String.format("Платеж на сумму %d рублей создан. Совершите оплату в течение 15 минут.", payment.getAmount());
-        return mapper.buildPaymentDto(payment, apiKey, message);
+        return mapper.toPaymentDto(payment, apiKey, message);
     }
 
     // Подтверждение платежа
@@ -87,12 +98,12 @@ public class PaymentService {
         if (payment.getExpiresAt() != null && payment.getExpiresAt().isBefore(LocalDateTime.now())) {
             payment.setStatus(PaymentStatus.EXPIRED);
             paymentRepository.save(payment);
-            return mapper.buildPaymentDto(payment, apiKey, "Платеж просрочен. Создайте новый платеж и попробуйте снова.");
+            return mapper.toPaymentDto(payment, apiKey, "Платеж просрочен. Создайте новый платеж и попробуйте снова.");
         }
 
         if (payment.getStatus().equals(PaymentStatus.CONFIRMED)) {
             log.info("Платеж {} уже был подтвержден ранее", paymentId);
-            return mapper.buildPaymentDto(payment, apiKey, "Платеж уже был подтвержден");
+            return mapper.toPaymentDto(payment, apiKey, "Платеж уже был подтвержден");
         }
 
         if (payment.getStatus().equals(PaymentStatus.FAILED)) {
@@ -103,18 +114,17 @@ public class PaymentService {
         User user = userRepository.findByApiKey(payment.getApiKey())
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
-        payment.setEmail(user.getEmail());
         paymentRepository.save(payment);
 
-        //Имитация оплаты (успех 80%)
+        //Имитация оплаты
         double random = Math.random();
-        boolean paymentSuccess = random < 0.8; // 80%
+        boolean paymentSuccess = random < successProbability;
         if (!paymentSuccess) {
             log.warn("Платеж {} отклонен", paymentId);
             payment.setStatus(PaymentStatus.FAILED);
             paymentRepository.save(payment);
             emailService.sendPaymentFailedEmail(user.getEmail(), payment.getLevel(), payment.getAmount());
-            return mapper.buildPaymentDto(payment, apiKey, "Платеж отклонен банком. Создайте новый платеж и попробуйте снова.");
+            return mapper.toPaymentDto(payment, apiKey, "Платеж отклонен банком. Создайте новый платеж и попробуйте снова.");
         }
 
         //Имитация обработки платежа
@@ -128,7 +138,7 @@ public class PaymentService {
         payment.setConfirmedAt(LocalDateTime.now());
         paymentRepository.save(payment);
 
-        SubscriptionLevel newLevel = SubscriptionLevel.valueOf(payment.getLevel());
+        SubscriptionLevel newLevel = payment.getLevel();
         String newApiKey = apiKeyService.generateApiKey(user.getEmail(), payment.getLevel());
         apiKeyService.deactivateKey(apiKey);
 
@@ -141,7 +151,7 @@ public class PaymentService {
         emailService.sendPaymentSuccessEmail(user.getEmail(), newApiKey, payment.getLevel());
         String message = String.format("Оплата успешна! Подписка %s активирована до %s. Пожалуйста, перезайдите в свой аккаунт.",
                 payment.getLevel(), user.getSubscriptionExpiresAt().toString());
-        return mapper.buildPaymentDto(payment, newApiKey, message);
+        return mapper.toPaymentDto(payment, newApiKey, message);
     }
 
     //Проверка статуса платежа
@@ -153,12 +163,13 @@ public class PaymentService {
     }
 
     //Получить историю платежей по email
-    public PaymentHistoryDto getPaymentHistoryByEmail(String email) {
-        log.info("Пользователь {} запросил историю своих платежей", email);
-        userRepository.findByEmail(email)
+    public PaymentHistoryDto getPaymentHistoryByEmail(String email, int page, int size) {
+        log.info("Пользователь {} запросил историю своих платежей, страница {}, размер {}", email, page, size);
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Пользователь с email " + email + " не найден"));
-        List<Payment> payments = paymentRepository.findAllByEmailOrderByCreatedAtDesc(email);
-        return mapper.toPaymentHistoryDto(email, payments);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<Payment> paymentsPage = paymentRepository.findAllByUserOrderByCreatedAtDesc(user, pageable);
+        return mapper.toPaymentHistoryDto(paymentsPage);
     }
 
     //Автопродление подписки
@@ -166,7 +177,7 @@ public class PaymentService {
     public void processAutoRenewal(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
-        String level = user.getSubscriptionLevel().name();
+        SubscriptionLevel level = user.getSubscriptionLevel();
         log.info("Начало автопродления для {}", email);
 
         PaymentDto payment = createPayment(user.getApiKey(), level, true);

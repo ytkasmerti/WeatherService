@@ -27,12 +27,13 @@ public class WeatherScheduler {
     private final UserService userService;
     private final PaymentService paymentService;
 
-    //Каждый день в 08:00 - "0 0 8 * * *"  (каждую минуту - "0 * * * * *")
+    //Каждый день в 08:00
     @Scheduled(cron = "0 0 8 * * *")
     public void sendDailyWeatherAlerts() {
         log.info("Запуск ежедневной рассылки погодных уведомлений");
         List<UserSubscription> subscriptions = weatherSubscriptionService.getAllSubscriptions();
         for (UserSubscription sub : subscriptions) {
+            String userEmail = sub.getUser().getEmail();
             String alertMessage = weatherService.checkWeatherConditions(sub.getCity(), 1, "ru");
             if (alertMessage != null) {
                 boolean shouldSend = false;
@@ -46,14 +47,14 @@ public class WeatherScheduler {
                     shouldSend = true;
                 }
                 if (shouldSend) {
-                    emailService.sendWeatherAlertEmail(sub.getEmail(), sub.getCity(), alertMessage);
+                    emailService.sendWeatherAlertEmail(userEmail, sub.getCity(), alertMessage);
                 }
             }
         }
     }
 
     // Проверка просроченных подписок каждый час
-    @Scheduled(cron = "0 0 * * * *") // Каждый час
+    @Scheduled(cron = "0 0 * * * *")
     public void processExpiredSubscriptions() {
         log.info("Запуск обработки просроченных подписок");
 
@@ -99,7 +100,7 @@ public class WeatherScheduler {
 
                 emailService.sendSubscriptionExpiringSoonEmail(
                         user.getEmail(),
-                        user.getSubscriptionLevel().name(),
+                        user.getSubscriptionLevel(),
                         user.getSubscriptionExpiresAt(),
                         daysUntilExpiry,
                         Boolean.TRUE.equals(user.getAutoRenewal())

@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import ru.urfu.webapplication.model.RequestType;
 
 import java.time.LocalDateTime;
 @Entity
@@ -19,20 +20,14 @@ public class WeatherRequest {
 
     // Поля для хранения информации о запросе
     private String city;
-    private String requestType; // "current", "forecast", "history"
+    @Enumerated(EnumType.STRING)
+    private RequestType requestType;
     private Double latitude;
     private Double longitude;
     private Integer forecastDays;
     private String startDate;
     private String endDate;
     private LocalDateTime requestTime;
-
     @Column(name = "api_key")
     private String apiKey;
-
-    public WeatherRequest(String city, String requestType, LocalDateTime requestTime) {
-        this.city = city;
-        this.requestType = requestType;
-        this.requestTime = requestTime;
-    }
 }

@@ -3,28 +3,29 @@ package ru.urfu.webapplication.controller;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import ru.urfu.webapplication.annotation.RequireBasicOrPremium;
+import ru.urfu.webapplication.annotation.RequirePremium;
 import ru.urfu.webapplication.dto.ForecastResponse;
 import ru.urfu.webapplication.dto.HistoricalResponse;
 import ru.urfu.webapplication.dto.HourlyForecastResponse;
 import ru.urfu.webapplication.dto.WeatherResponse;
 import ru.urfu.webapplication.security.WeatherUserDetails;
-import ru.urfu.webapplication.service.UserService;
 import ru.urfu.webapplication.service.WeatherService;
 
 import java.time.LocalDate;
-import java.util.Map;
 
 @Validated
 @RestController
 @RequestMapping("/weather")
 public class WeatherController {
     private final WeatherService weatherService;
-    private final UserService userService;
 
     private String getApiKeyFromRequestOrAuth(String apiKeyParam) {
         if (apiKeyParam != null && !apiKeyParam.isEmpty()) {
@@ -39,25 +40,11 @@ public class WeatherController {
         throw new RuntimeException("API ключ не найден. Передайте apiKey в параметрах или войдите через /auth/login");
     }
 
-    public WeatherController(WeatherService weatherService, UserService userService) {
+    public WeatherController(WeatherService weatherService) {
         this.weatherService = weatherService;
-        this.userService = userService;
-    }
-
-    // Регистрация
-    //curl -X POST "http://localhost:8080/weather/register?email=weatherservice26@gmail.com&password=123456&confirmPassword=123456"
-    //далее вход с куки
-    //curl -X POST "http://localhost:8080/auth/login?email=weatherservice26@gmail.com&password=123456" -c cookies.txt
-    @PostMapping("/register")
-    public Map<String, String> register(@RequestParam @NotBlank String email,
-                                        @RequestParam @NotBlank
-                                        @Size(min = 6, message = "Пароль должен содержать минимум 6 символов") String password,
-                                        @RequestParam @NotBlank String confirmPassword) {
-        return userService.registerUser(email, password, confirmPassword);
     }
 
     // Текущая погода по городу
-    //http://localhost:8080/weather/current?city=Moscow
     @GetMapping("/current")
     public WeatherResponse getCurrentWeather(@RequestParam @NotBlank String city,
                                              @RequestParam(required = false) String apiKey,
@@ -67,10 +54,6 @@ public class WeatherController {
     }
 
     // Текущая погода по координатам
-    //http://localhost:8080/weather/current?lat=59.93&lon=30.31
-    //ошибка валидации
-    //http://localhost:8080/weather/current?lat=100&lon=37.62
-    //http://localhost:8080/weather/current?lat=55.75&lon=200
     @GetMapping(value = "/current", params = {"lat", "lon"})
     public WeatherResponse getCurrentWeatherByCoordinates(@RequestParam @Min(-90) @Max(90) Double lat,
                                                           @RequestParam @Min(-180) @Max(180) Double lon,
@@ -80,14 +63,10 @@ public class WeatherController {
         return weatherService.getCurrentWeatherByCoordinates(lat, lon, validApiKey, lang);
     }
 
-    // Прогноз на N дней
-    //доступ BASIC и PREMIUM
-    //http://localhost:8080/weather/forecast?city=Moscow&days=3
-    //прогноз на максимальное количество дней
-    //http://localhost:8080/weather/forecast?city=Sochi&days=15
-    //ошибка валидации
-    //http://localhost:8080/weather/forecast?city=Moscow&days=0
+    // Прогноз на N дней (максимум до 15 дней)
+    // доступ BASIC и PREMIUM
     @GetMapping("/forecast")
+    @RequireBasicOrPremium
     public ForecastResponse getForecast(@RequestParam @NotBlank String city,
                                         @RequestParam(defaultValue = "7") @Min(1) @Max(90) int days,
                                         @RequestParam(required = false) String apiKey,
@@ -96,11 +75,10 @@ public class WeatherController {
         return weatherService.getForecast(city, days, validApiKey, lang);
     }
 
-    // Исторические данные за период
+    //Исторические данные за период
     //доступ BASIC(максимум 7 дней назад и максимум 7 дней периода) и PREMIUM (до 8 месяцев)
-    //http://localhost:8080/weather/history?city=Moscow&start=2026-05-23&end=2026-05-25
-    //http://localhost:8080/weather/history?city=Sochi&start=2026-04-25&end=2026-05-25 - только PREMIUM
     @GetMapping("/history")
+    @RequireBasicOrPremium
     public HistoricalResponse getHistoricalData(@RequestParam @NotBlank String city,
                                                 @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
                                                 @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end,
@@ -111,8 +89,8 @@ public class WeatherController {
     }
 
     // Исторические данные о погоде в конкретную дату (BASIC - максимум 7 дней назад, PREMIUM - до 5 лет назад)
-    //http://localhost:8080/weather/history/date?city=Moscow&date=2026-05-25
     @GetMapping("/history/date")
+    @RequireBasicOrPremium
     public HistoricalResponse getHistoricalDataByDate(@RequestParam @NotBlank String city,
                                                       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
                                                       @RequestParam(required = false) String apiKey,
@@ -123,8 +101,8 @@ public class WeatherController {
 
     // Погода в конкретное время
     //доступ только PREMIUM
-    //http://localhost:8080/weather/current/time?city=Moscow&datetime=2026-05-25T08:00:00
     @GetMapping("/current/time")
+    @RequirePremium
     public WeatherResponse getWeatherAtTime(@RequestParam @NotBlank String city,
                                             @RequestParam String datetime,
                                             @RequestParam(required = false) String apiKey,
@@ -135,8 +113,8 @@ public class WeatherController {
 
     // Почасовой прогноз погоды
     //доступ только PREMIUM
-    //http://localhost:8080/weather/forecast/hourly?city=Moscow&date=2026-05-25
     @GetMapping("/forecast/hourly")
+    @RequirePremium
     public HourlyForecastResponse getHourlyForecast(@RequestParam @NotBlank String city,
                                                     @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
                                                     @RequestParam(required = false) String apiKey,
@@ -147,9 +125,8 @@ public class WeatherController {
 
     // Фильтрация прогноза погоды по погодным условиям
     //доступ только PREMIUM
-    //http://localhost:8080/weather/forecast/filter?city=Moscow&days=7&filterCondition=sun
-    //http://localhost:8080/weather/forecast/filter?city=Moscow&days=14&filterCondition=cloud
     @GetMapping("/forecast/filter")
+    @RequirePremium
     public ForecastResponse getForecastWithFilter(
             @RequestParam @NotBlank String city,
             @RequestParam(defaultValue = "7") @Min(1) @Max(90) int days,

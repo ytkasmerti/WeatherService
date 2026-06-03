@@ -5,7 +5,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import ru.urfu.webapplication.entity.User;
-import ru.urfu.webapplication.model.SubscriptionLevel;
 
 import java.util.Collection;
 import java.util.List;

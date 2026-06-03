@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.urfu.webapplication.service.AuthService;
-import ru.urfu.webapplication.service.UserService;
 
 import java.util.Map;
 
@@ -17,10 +16,18 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final UserService userService;
     private final AuthService authService;
 
-    //curl -X POST "http://localhost:8080/auth/login?email=weatherservice26@gmail.com&password=123456" -c cookies.txt
+    // Регистрация
+    @PostMapping("/register")
+    public Map<String, String> register(@RequestParam @NotBlank String email,
+                                        @RequestParam @NotBlank
+                                        @Size(min = 6, message = "Пароль должен содержать минимум 6 символов") String password,
+                                        @RequestParam @NotBlank String confirmPassword) {
+        return authService.registerUser(email, password, confirmPassword);
+    }
+
+    //вход с куки
     @PostMapping("/login")
     public Map<String, Object> login(@RequestParam @NotBlank String email,
                                      @RequestParam @NotBlank String password,
@@ -28,7 +35,7 @@ public class AuthController {
         return authService.login(email, password, response);
     }
 
-    //curl -X POST "http://localhost:8080/auth/logout" -b cookies.txt
+    //выход из аккаунта
     @GetMapping("/logout")
     public Map<String, String> logout(HttpServletResponse response) {
         return authService.logout(response);
@@ -40,19 +47,17 @@ public class AuthController {
     }
 
     //Запрос на сброс и восстановление пароля
-    //POST http://localhost:8080/auth/forgot-password?email=weatherservice26@gmail.com
     @PostMapping("/forgot-password")
     public Map<String, String> forgotPassword(@RequestParam @NotBlank String email) {
-        return userService.forgotPassword(email);
+        return authService.forgotPassword(email);
     }
 
     //Подтверждение сброса пароля
-    //POST http://localhost:8080/auth/reset-password?email=weatherservice26@gmail.com&code=&newPassword=123456
     @PostMapping("/reset-password")
     public Map<String, String> resetPassword(
             @RequestParam @NotBlank String email,
             @RequestParam @NotBlank String code,
             @RequestParam @NotBlank @Size(min = 6, message = "Пароль должен содержать минимум 6 символов") String newPassword) {
-        return userService.resetPassword(email, code, newPassword);
+        return authService.resetPassword(email, code, newPassword);
     }
 }

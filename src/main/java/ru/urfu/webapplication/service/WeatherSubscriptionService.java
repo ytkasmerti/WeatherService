@@ -2,9 +2,9 @@ package ru.urfu.webapplication.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.urfu.webapplication.annotation.RequireBasicOrPremium;
 import ru.urfu.webapplication.entity.User;
 import ru.urfu.webapplication.entity.UserSubscription;
 import ru.urfu.webapplication.model.SubscriptionLevel;
@@ -23,28 +23,29 @@ public class WeatherSubscriptionService {
 
     //подписаться (BASIC - 1 подписка, PREMIUM- до 5 подписок)
     @Transactional
-    @PreAuthorize("hasRole('BASIC') or hasRole('PREMIUM')")
-    public void subscribe(UserSubscription subscription) {
+    @RequireBasicOrPremium
+    public void subscribe(String apiKey, String city, boolean notifyHeat, boolean notifyCold,
+                          boolean notifyWind, boolean notifyPrecipitation) {
+        User user = userRepository.findByApiKey(apiKey)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
         // Проверяем, нет ли уже подписки на этот город
-        if (subscriptionRepository.existsByEmailAndCity(subscription.getEmail(), subscription.getCity())) {
-            log.warn("Пользователь {} уже подписан на город {}", subscription.getEmail(), subscription.getCity());
+        if (subscriptionRepository.existsByUserAndCity(user, city)) {
+            log.warn("Пользователь {} уже подписан на город {}", user.getEmail(), city);
             // Обновляем существующую подписку
-            List<UserSubscription> existing = subscriptionRepository.findByEmail(subscription.getEmail());
+            List<UserSubscription> existing = subscriptionRepository.findByUser(user);
             for (UserSubscription sub : existing) {
-                if (sub.getCity().equals(subscription.getCity())) {
-                    sub.setNotifyHeat(subscription.isNotifyHeat());
-                    sub.setNotifyCold(subscription.isNotifyCold());
-                    sub.setNotifyWind(subscription.isNotifyWind());
-                    sub.setNotifyPrecipitation(subscription.isNotifyPrecipitation());
+                if (sub.getCity().equals(city)) {
+                    sub.setNotifyHeat(notifyHeat);
+                    sub.setNotifyCold(notifyCold);
+                    sub.setNotifyWind(notifyWind);
+                    sub.setNotifyPrecipitation(notifyPrecipitation);
                     subscriptionRepository.save(sub);
                     return;
                 }
             }
         }
         // Проверка лимита подписок
-        int currentCount = subscriptionRepository.findByEmail(subscription.getEmail()).size();
-        User user = userRepository.findByEmail(subscription.getEmail())
-                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+        int currentCount = subscriptionRepository.findByUser(user).size();
         SubscriptionLevel level = user.getSubscriptionLevel();
 
         if (level == SubscriptionLevel.BASIC && currentCount >= 1) {
@@ -54,16 +55,23 @@ public class WeatherSubscriptionService {
             throw new RuntimeException("PREMIUM подписка позволяет иметь не более 5 подписок");
         }
 
+        UserSubscription subscription = new UserSubscription();
+        subscription.setUser(user);
+        subscription.setCity(city);
+        subscription.setNotifyHeat(notifyHeat);
+        subscription.setNotifyCold(notifyCold);
+        subscription.setNotifyWind(notifyWind);
+        subscription.setNotifyPrecipitation(notifyPrecipitation);
         subscriptionRepository.save(subscription);
-        log.info("Пользователь {} подписался на уведомления о погоде в городе {}",
-                subscription.getEmail(), subscription.getCity());
-
+        log.info("Пользователь {} подписался на уведомления о погоде в городе {}", user.getEmail(), city);
     }
 
     //Отписаться по айди подписки
     @Transactional
     public void unsubscribe(Long subscriptionId, String email) {
-        UserSubscription subscription = subscriptionRepository.findByIdAndEmail(subscriptionId, email)
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+        UserSubscription subscription = subscriptionRepository.findByIdAndUser(subscriptionId, user)
                 .orElseThrow(() -> new RuntimeException("Подписка не найдена"));
         subscriptionRepository.delete(subscription);
         log.info("Пользователь {} отписался от уведомлений подписки {}", email, subscriptionId);
@@ -72,13 +80,17 @@ public class WeatherSubscriptionService {
     //Отписаться от всех подписок
     @Transactional
     public void unsubscribeAll(String email) {
-        subscriptionRepository.deleteByEmail(email);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+        subscriptionRepository.deleteByUser(user);
         log.info("Пользователь {} отписался от всех уведомлений", email);
     }
 
     //Получить все подписки пользователя
     public List<UserSubscription> getUserSubscriptions(String email) {
-        return subscriptionRepository.findByEmail(email);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+        return subscriptionRepository.findByUser(user);
     }
 
     //Получить все подписки всех пользователей

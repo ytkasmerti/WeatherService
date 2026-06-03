@@ -1,12 +1,14 @@
 package ru.urfu.webapplication.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import ru.urfu.webapplication.dto.*;
 import ru.urfu.webapplication.dto.visualcrossingapi.Day;
 import ru.urfu.webapplication.dto.visualcrossingapi.Hour;
 import ru.urfu.webapplication.dto.visualcrossingapi.VisualCrossingResponse;
 import ru.urfu.webapplication.entity.Payment;
+import ru.urfu.webapplication.entity.UserSubscription;
 import ru.urfu.webapplication.model.PaymentStatus;
 
 import java.time.LocalDateTime;
@@ -143,18 +145,21 @@ public class DtoMapperService {
                 .build();
     }
 
-    public PaymentHistoryDto toPaymentHistoryDto(String email, List<Payment> payments) {
-        List<PaymentInfoDto> paymentInfoList = payments.stream()
+    public PaymentHistoryDto toPaymentHistoryDto(Page<Payment> paymentsPage) {
+        List<PaymentInfoDto> paymentInfoList = paymentsPage.getContent().stream()
                 .map(this::toPaymentInfoDto)
                 .toList();
 
         return PaymentHistoryDto.builder()
                 .payments(paymentInfoList)
-                .totalCount(paymentInfoList.size())
+                .totalCount((int) paymentsPage.getTotalElements())
+                .currentPage(paymentsPage.getNumber())
+                .pageSize(paymentsPage.getSize())
+                .totalPages(paymentsPage.getTotalPages())
                 .build();
     }
 
-    public PaymentDto buildPaymentDto(Payment payment, String apiKey, String message) {
+    public PaymentDto toPaymentDto(Payment payment, String apiKey, String message) {
         if (payment == null) return null;
 
         return PaymentDto.builder()
@@ -164,6 +169,17 @@ public class DtoMapperService {
                 .amount(payment.getAmount())
                 .createdAt(payment.getCreatedAt())
                 .message(message)
+                .build();
+    }
+
+    public WeatherSubscriptionDto toWeatherSubscriptionDto(UserSubscription sub) {
+        return WeatherSubscriptionDto.builder()
+                .id(sub.getId())
+                .city(sub.getCity())
+                .notifyHeat(sub.isNotifyHeat())
+                .notifyCold(sub.isNotifyCold())
+                .notifyWind(sub.isNotifyWind())
+                .notifyPrecipitation(sub.isNotifyPrecipitation())
                 .build();
     }
 }

@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import ru.urfu.webapplication.model.PaymentStatus;
+import ru.urfu.webapplication.model.SubscriptionLevel;
 
 import java.time.LocalDateTime;
 
@@ -25,11 +26,13 @@ public class Payment {
     @Column(name = "api_key", nullable = false)
     private String apiKey;
 
-    @Column(name = "email", nullable = false)
-    private String email;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "level", nullable = false)
-    private String level;
+    private SubscriptionLevel level;
 
     private Integer amount;
 

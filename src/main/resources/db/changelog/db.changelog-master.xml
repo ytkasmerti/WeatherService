@@ -276,7 +276,12 @@
     <!--
         12 миграция - создание таблицы password_reset_codes
     -->
-    <changeSet id="add_password_reset_codes_table" author="dev">
+    <changeSet id="add_password_reset_codes_table" author="ytkasmerti">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="password_reset_codes"/>
+            </not>
+        </preConditions>
         <createTable tableName="password_reset_codes">
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
@@ -307,7 +312,7 @@
     <!--
         13 миграция - добавление колонки expires_at в таблицу payments
     -->
-    <changeSet id="add_expires_at_to_payments" author="dev">
+    <changeSet id="add_expires_at_to_payments" author="ytkasmerti">
         <preConditions onFail="MARK_RAN">
             <not>
                 <columnExists tableName="payments" columnName="expires_at"/>
@@ -316,6 +321,89 @@
         <addColumn tableName="payments">
             <column name="expires_at" type="TIMESTAMP"/>
         </addColumn>
+    </changeSet>
+
+    <!--
+        14 миграция - добавление user_id в таблицу payments
+    -->
+    <changeSet id="add_user_id_to_payments" author="ytkasmerti">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="payments" columnName="user_id"/>
+            </not>
+        </preConditions>
+
+        <addColumn tableName="payments">
+            <column name="user_id" type="BIGINT"/>
+        </addColumn>
+
+        <sql>
+            UPDATE payments p
+            SET user_id = (SELECT id FROM users u WHERE u.email = p.email)
+            WHERE p.user_id IS NULL
+        </sql>
+
+        <addNotNullConstraint tableName="payments" columnName="user_id"/>
+        <addForeignKeyConstraint
+                baseTableName="payments"
+                baseColumnNames="user_id"
+                referencedTableName="users"
+                referencedColumnNames="id"
+                constraintName="fk_payments_user_id"/>
+
+        <dropColumn tableName="payments" columnName="email"/>
+    </changeSet>
+
+    <!--
+        15 миграция - добавление user_id в таблицу user_subscriptions
+    -->
+    <changeSet id="add_user_id_to_user_subscriptions" author="ytkasmerti">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="user_subscriptions" columnName="user_id"/>
+            </not>
+        </preConditions>
+
+        <addColumn tableName="user_subscriptions">
+            <column name="user_id" type="BIGINT"/>
+        </addColumn>
+
+        <sql>
+            UPDATE user_subscriptions us
+            SET user_id = (SELECT id FROM users u WHERE u.email = us.email)
+            WHERE us.user_id IS NULL
+        </sql>
+
+        <addNotNullConstraint tableName="user_subscriptions" columnName="user_id"/>
+
+        <addForeignKeyConstraint
+                baseTableName="user_subscriptions"
+                baseColumnNames="user_id"
+                referencedTableName="users"
+                referencedColumnNames="id"
+                constraintName="fk_user_subscriptions_user_id"/>
+
+        <dropColumn tableName="user_subscriptions" columnName="email"/>
+    </changeSet>
+
+    <!--
+        16 миграция - удаление таблицы api_keys
+    -->
+    <changeSet id="drop_api_keys_table" author="ytkasmerti">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="api_keys"/>
+        </preConditions>
+        <dropTable tableName="api_keys"/>
+    </changeSet>
+
+    <!--
+        17 миграция - удаление таблицы weather_alerts
+    -->
+    <changeSet id="drop_weather_alerts_table" author="ytkasmerti">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="weather_alerts"/>
+        </preConditions>
+        <dropTable tableName="weather_alerts"/>
     </changeSet>
 </databaseChangeLog>
 

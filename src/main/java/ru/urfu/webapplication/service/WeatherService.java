@@ -2,7 +2,6 @@ package ru.urfu.webapplication.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import ru.urfu.webapplication.client.VisualCrossingClient;
 import ru.urfu.webapplication.dto.ForecastResponse;
@@ -13,6 +12,7 @@ import ru.urfu.webapplication.dto.visualcrossingapi.Day;
 import ru.urfu.webapplication.dto.visualcrossingapi.Hour;
 import ru.urfu.webapplication.dto.visualcrossingapi.VisualCrossingResponse;
 import ru.urfu.webapplication.entity.WeatherRequest;
+import ru.urfu.webapplication.model.RequestType;
 import ru.urfu.webapplication.model.SubscriptionLevel;
 import ru.urfu.webapplication.repository.WeatherRequestRepository;
 
@@ -30,35 +30,21 @@ public class WeatherService {
     private final ApiKeyService apiKeyService;
     private final DtoMapperService mapper;
     private final WeatherRequestRepository weatherRequestRepository;
+    private final WeatherAlertService weatherAlertService;
     @Value("${systemApiKey}")
     private String apiKey;
 
     public WeatherService(VisualCrossingClient visualCrossingClient,
                           ApiKeyService apiKeyService,
-                          DtoMapperService mapper, WeatherRequestRepository weatherRequestRepository) {
+                          DtoMapperService mapper, WeatherRequestRepository weatherRequestRepository, WeatherAlertService weatherAlertService) {
         this.visualCrossingClient = visualCrossingClient;
         this.apiKeyService = apiKeyService;
         this.mapper = mapper;
         this.weatherRequestRepository = weatherRequestRepository;
+        this.weatherAlertService = weatherAlertService;
     }
 
-    //Метод проверки ключа и уровня доступа
-    private SubscriptionLevel validateAndGetLevel(String apiKey) {
-        if (!apiKeyService.isValidKey(apiKey)) {
-            throw new RuntimeException("Неверный API ключ");
-        }
-        SubscriptionLevel level = apiKeyService.getSubscriptionLevel(apiKey);
-        if (level == null) {
-            throw new RuntimeException("Неверный API ключ");
-        }
-        //проверка лимитов
-        if (!apiKeyService.canMakeRequest(apiKey)) {
-            throw new RuntimeException("Превышен лимит запросов на сегодня");
-        }
-        return level;
-    }
-
-    private void saveRequest(String city, String requestType, String apiKey) {
+    private void saveRequest(String city, RequestType requestType, String apiKey) {
         WeatherRequest request = new WeatherRequest();
         request.setCity(city);
         request.setRequestType(requestType);
@@ -66,27 +52,6 @@ public class WeatherService {
         request.setApiKey(apiKey);
         weatherRequestRepository.save(request);
         log.debug("Сохранён запрос {} для города {}, ключ: {}", requestType, city, apiKey);
-    }
-
-    //Проверка погодных предупреждений
-    private String checkAlert(Double tempMax, Double tempMin, Double windSpeed, String conditions) {
-        String alert = null;
-        if (tempMax > 30) {
-            alert = "Жара: " + tempMax + "градусов";
-        } else if (tempMin < -20) {
-            alert = "Сильный мороз: " + tempMin + "градусов";
-        } else if (windSpeed > 15) {
-            alert = "Сильный ветер: " + windSpeed + " м/с";
-        } else if (conditions != null) {
-            String cond = conditions.toLowerCase();
-            if (cond.contains("rain") ||
-                    cond.contains("дождь") ||
-                    cond.contains("snow") ||
-                    cond.contains("снег")) {
-                alert = "Осадки: " + conditions;
-            }
-        }
-        return alert;
     }
 
     //Общий метод для получения текущей погоды
@@ -132,32 +97,30 @@ public class WeatherService {
     public String checkWeatherConditions(String city, int days, String lang) {
         ForecastResponse forecast = getForecast(city, days, apiKey, lang);
         ForecastResponse.DailyForecast today = forecast.getDaily().getFirst();
-        return checkAlert(today.getTempMax(), today.getTempMin(),
+        return weatherAlertService.checkAlert(today.getTempMax(), today.getTempMin(),
                 today.getWindSpeed(), today.getConditions());
     }
 
-
     //Текущая погода по городу (доступ free+)
     public WeatherResponse getCurrentWeatherByCity(String city, String apiKey, String lang) {
-        validateAndGetLevel(apiKey);
+        apiKeyService.validateAndGetLevel(apiKey);
         log.info("Запрос текущей погоды для города {}", city);
-        saveRequest(city, "current", apiKey);
+        saveRequest(city, RequestType.CURRENT, apiKey);
         return fetchWeatherFromApi(city, lang);
     }
 
     //Текущая погода по координатам (доступ free+)
     public WeatherResponse getCurrentWeatherByCoordinates(Double lat, Double lon, String apiKey, String lang) {
-        validateAndGetLevel(apiKey);
+        apiKeyService.validateAndGetLevel(apiKey);
         String location = lat + "," + lon;
         log.info("Запрос текущей погоды по координатам {}", location);
-        saveRequest(location, "current", apiKey);
+        saveRequest(location, RequestType.CURRENT, apiKey);
         return fetchWeatherFromApi(location, lang);
     }
 
     // фильтрация (доступ premium)
-    @PreAuthorize("hasRole('PREMIUM')")
     public ForecastResponse getForecastWithFilter(String city, int days, String apiKey, String lang, String filterCondition) {
-        validateAndGetLevel(apiKey);
+        apiKeyService.validateAndGetLevel(apiKey);
         ForecastResponse forecast = getForecast(city, days, apiKey, lang);
         if (filterCondition == null || filterCondition.trim().isEmpty()) {
             log.info("Фильтр не был указан, полный прогноз погоды для города {}", city);
@@ -192,9 +155,8 @@ public class WeatherService {
     }
 
     //Прогноз на N дней (доступ basic+)
-    @PreAuthorize("hasRole('BASIC') or hasRole('PREMIUM')")
     public ForecastResponse getForecast(String city, int days, String apiKey, String lang) {
-        validateAndGetLevel(apiKey);
+        apiKeyService.validateAndGetLevel(apiKey);
         //Ограничение прогноза 15 днями (максимум API)
         int validDays = Math.min(days, 15);
         if (days > 15) {
@@ -211,16 +173,13 @@ public class WeatherService {
             }
             log.info("Возвращено {} дней прогноза", dailyList.size());
         }
-        saveRequest(city, "filteredForecast", apiKey);
+        saveRequest(city, RequestType.FILTERED_FORECAST, apiKey);
         return mapper.toForecastResponse(response, dailyList);
     }
 
     //Исторические данные за период (доступ до 7 дней назад basic, доступ до 8 месяцев периода - premium)
     public HistoricalResponse getHistoricalData(String city, String startDate, String endDate, String apiKey, String lang) {
-        SubscriptionLevel level = validateAndGetLevel(apiKey);
-        if (level == SubscriptionLevel.FREE) {
-            throw new RuntimeException("Ваш тариф не позволяет использовать эту функцию. Повысьте уровень подписки");
-        }
+        SubscriptionLevel level = apiKeyService.validateAndGetLevel(apiKey);
         LocalDate requestedDate = LocalDate.parse(startDate);
         LocalDate today = LocalDate.now();
         if (requestedDate.isAfter(today)) {
@@ -247,24 +206,22 @@ public class WeatherService {
                 historyList.add(mapper.toDailyHistory(day));
             }
         }
-        saveRequest(city, "history", apiKey);
+        saveRequest(city, RequestType.HISTORY, apiKey);
         return mapper.toHistoricalResponse(response, startDate, endDate, historyList);
     }
 
     //Погода в конкретное время (доступ premium)
-    @PreAuthorize("hasRole('PREMIUM')")
     public WeatherResponse getWeatherAtTime(String city, String dateTime, String apiKey, String lang) {
-        validateAndGetLevel(apiKey);
+        apiKeyService.validateAndGetLevel(apiKey);
         log.info("Запрос погоды для города {} на время {}", city, dateTime);
         VisualCrossingResponse response = visualCrossingClient.getWeatherAtTime(city, dateTime, lang);
-        saveRequest(city, "weatherAtTime", apiKey);
+        saveRequest(city, RequestType.AT_TIME, apiKey);
         return mapper.toWeatherResponse(response, city, dateTime);
     }
 
     //Почасовой прогноз погоды (доступ premium)
-    @PreAuthorize("hasRole('PREMIUM')")
     public HourlyForecastResponse getHourlyForecast(String city, String date, String apiKey, String lang) {
-        validateAndGetLevel(apiKey);
+        apiKeyService.validateAndGetLevel(apiKey);
         log.info("Запрос почасового прогноза для города {} на {}", city, date);
         VisualCrossingResponse response = visualCrossingClient.getHourlyForecast(city, date, lang);
         List<HourlyForecastResponse.HourlyData> hourlyList = new ArrayList<>();
@@ -276,7 +233,7 @@ public class WeatherService {
                 }
             }
         }
-        saveRequest(city, "hourlyForecast", apiKey);
+        saveRequest(city, RequestType.FORECAST, apiKey);
         return mapper.toHourlyForecastResponse(response, date, hourlyList);
     }
 }

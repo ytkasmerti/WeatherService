@@ -48,7 +48,7 @@ public class PaymentService {
         };
     }
 
-    // Создание платежа
+    //Создание платежа
     @Transactional
     public PaymentDto createPayment(String apiKey, SubscriptionLevel level, boolean isAutoRenewal) {
         User user = userRepository.findByApiKey(apiKey)
@@ -65,7 +65,6 @@ public class PaymentService {
             throw new RuntimeException("У вас уже есть подписка " + levelUpper);
         }
 
-        //Проверяем, нет ли уже ожидающего непросроченного платежа
         paymentRepository.findByApiKeyAndStatusAndExpiresAtAfter(apiKey, PaymentStatus.PENDING, LocalDateTime.now())
                 .ifPresent(p -> {
                     throw new RuntimeException("У вас уже есть ожидающий платеж. PaymentId: " + p.getPaymentId() +
@@ -89,7 +88,7 @@ public class PaymentService {
         return mapper.toPaymentDto(payment, apiKey, message);
     }
 
-    // Подтверждение платежа
+    //Подтверждение платежа
     @Transactional
     public PaymentDto confirmPayment(String paymentId, String apiKey) {
         Payment payment = paymentRepository.findByPaymentId(paymentId)

@@ -62,6 +62,7 @@ public class UserService {
         log.info("Пользователь {} обновлён", user.getEmail());
     }
 
+    //Получение профиля
     public Map<String, Object> getProfile(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
@@ -92,6 +93,7 @@ public class UserService {
         return profile;
     }
 
+    //Изменение автопродления подписки
     @Transactional
     public Map<String, Object> setAutoRenewal(String email, boolean enabled) {
         User user = userRepository.findByEmail(email)
@@ -107,6 +109,7 @@ public class UserService {
         );
     }
 
+    //Удаление аккаунта
     public Map<String, String> deleteAccount(String email, String password, HttpServletResponse response) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));

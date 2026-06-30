@@ -14,7 +14,7 @@ class WeatherUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
 
-    // Загрузка пользователя
+    //Загрузка пользователя
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(email)

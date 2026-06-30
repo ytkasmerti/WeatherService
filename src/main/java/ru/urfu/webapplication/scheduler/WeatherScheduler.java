@@ -53,7 +53,7 @@ public class WeatherScheduler {
         }
     }
 
-    // Проверка просроченных подписок каждый час
+    //Проверка просроченных подписок каждый час
     @Scheduled(cron = "0 0 * * * *")
     public void processExpiredSubscriptions() {
         log.info("Запуск обработки просроченных подписок");
@@ -82,7 +82,7 @@ public class WeatherScheduler {
 
     }
 
-    // уведомление о скором истечении подписки (за 3 дня)
+    //Уведомление о скором истечении подписки (за 3 дня)
     @Scheduled(cron = "0 0 12 * * *") // Каждый день в 12:00
     public void notifyExpiringSoon() {
         log.info("Запуск проверки подписок, истекающих через 3 дня");

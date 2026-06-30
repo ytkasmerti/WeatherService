@@ -21,17 +21,15 @@ public class WeatherSubscriptionService {
     private final UserSubscriptionRepository subscriptionRepository;
     private final UserRepository userRepository;
 
-    //подписаться (BASIC - 1 подписка, PREMIUM- до 5 подписок)
+    //Подписаться (BASIC - 1 подписка, PREMIUM- до 5 подписок)
     @Transactional
     @RequireBasicOrPremium
     public void subscribe(String apiKey, String city, boolean notifyHeat, boolean notifyCold,
                           boolean notifyWind, boolean notifyPrecipitation) {
         User user = userRepository.findByApiKey(apiKey)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
-        // Проверяем, нет ли уже подписки на этот город
         if (subscriptionRepository.existsByUserAndCity(user, city)) {
             log.warn("Пользователь {} уже подписан на город {}", user.getEmail(), city);
-            // Обновляем существующую подписку
             List<UserSubscription> existing = subscriptionRepository.findByUser(user);
             for (UserSubscription sub : existing) {
                 if (sub.getCity().equals(city)) {
@@ -44,7 +42,6 @@ public class WeatherSubscriptionService {
                 }
             }
         }
-        // Проверка лимита подписок
         int currentCount = subscriptionRepository.findByUser(user).size();
         SubscriptionLevel level = user.getSubscriptionLevel();
 

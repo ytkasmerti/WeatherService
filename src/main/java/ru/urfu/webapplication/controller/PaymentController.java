@@ -34,7 +34,7 @@ public class PaymentController {
         throw new RuntimeException("API ключ не найден");
     }
 
-    // Создание платежа
+    //Создание платежа
     @PostMapping("/create")
     public PaymentDto createPayment(
             @RequestParam(required = false) String apiKey,
@@ -43,7 +43,7 @@ public class PaymentController {
         return paymentService.createPayment(validApiKey, level, false);
     }
 
-    // Подтверждение оплаты
+    //Подтверждение оплаты
     @PostMapping("/confirm/{paymentId}")
     public PaymentDto confirmPayment(
             @PathVariable String paymentId,

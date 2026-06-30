@@ -35,8 +35,8 @@ public class RedisConfig {
                 new Jackson2JsonRedisSerializer<>(Object.class);
         serializer.setObjectMapper(mapper);
 
-        template.setKeySerializer(new StringRedisSerializer()); // ключи хранятся как строки
-        template.setValueSerializer(serializer); // Значения хранятся как JSON
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(serializer);
         template.setHashKeySerializer(new StringRedisSerializer());
         template.setHashValueSerializer(serializer);
 
@@ -44,7 +44,7 @@ public class RedisConfig {
     }
 
     @Bean
-    // автоматитческое кэщирование через аннотации
+    //Автоматическое кэширование через аннотации
     public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
         RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofMinutes(redisCacheTtlMinutes))

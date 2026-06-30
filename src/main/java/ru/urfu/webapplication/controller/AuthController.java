@@ -18,7 +18,7 @@ public class AuthController {
 
     private final AuthService authService;
 
-    // Регистрация
+    //Регистрация
     @PostMapping("/register")
     public Map<String, String> register(@RequestParam @NotBlank String email,
                                         @RequestParam @NotBlank
@@ -27,7 +27,7 @@ public class AuthController {
         return authService.registerUser(email, password, confirmPassword);
     }
 
-    //вход с куки
+    //Вход с куки
     @PostMapping("/login")
     public Map<String, Object> login(@RequestParam @NotBlank String email,
                                      @RequestParam @NotBlank String password,
@@ -35,7 +35,7 @@ public class AuthController {
         return authService.login(email, password, response);
     }
 
-    //выход из аккаунта
+    //Выход из аккаунта
     @GetMapping("/logout")
     public Map<String, String> logout(HttpServletResponse response) {
         return authService.logout(response);

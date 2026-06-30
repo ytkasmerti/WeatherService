@@ -13,12 +13,9 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class WeatherRequest {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    // Поля для хранения информации о запросе
     private String city;
     @Enumerated(EnumType.STRING)
     private RequestType requestType;

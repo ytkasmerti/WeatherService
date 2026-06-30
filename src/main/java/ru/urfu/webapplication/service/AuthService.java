@@ -64,7 +64,6 @@ public class AuthService {
         user.setSubscriptionLevel(level);
         user.setCreatedAt(LocalDateTime.now());
         user.setIsActive(true);
-        //Отправка письма
         emailService.sendApiKeyEmail(email, apiKey);
         userRepository.save(user);
 

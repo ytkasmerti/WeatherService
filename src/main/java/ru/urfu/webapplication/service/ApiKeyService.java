@@ -58,17 +58,15 @@ public class ApiKeyService {
         return level;
     }
 
-    // проверка существования ключа
     @Transactional
     public boolean isValidKey(String apiKey) {
         return userRepository.findByApiKey(apiKey).map(User::getIsActive).orElse(false);
     }
 
-    // проверка уровня подписки
     public SubscriptionLevel getSubscriptionLevel(String apiKey) {
         return userRepository.findByApiKey(apiKey).map(User::getSubscriptionLevel).orElse(null);
     }
-    // проверка может ли пользователь делать запросы
+
     public boolean canMakeRequest(String apiKey) {
         SubscriptionLevel level = getSubscriptionLevel(apiKey);
         if (level == null) {
@@ -80,7 +78,6 @@ public class ApiKeyService {
         return requestCount < getMaxRequests(level);
     }
 
-    // блокировка ключа
     @Transactional
     public boolean deactivateKey(String apiKey) {
         return userRepository.findByApiKey(apiKey)
@@ -93,7 +90,6 @@ public class ApiKeyService {
                 .orElse(false);
     }
 
-    //получение почты по апи ключу
     public String getEmailByApiKey(String apiKey) {
         return userRepository.findByApiKey(apiKey)
                 .map(User::getEmail)

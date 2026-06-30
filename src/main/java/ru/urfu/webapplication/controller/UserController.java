@@ -41,7 +41,7 @@ public class UserController {
         return userService.getProfile(user.getEmail());
     }
 
-    // Включить/отключить автопродление подписки
+    //Включить/отключить автопродление подписки
     @GetMapping("/auto-renewal")
     public Map<String, Object> setAutoRenewal(@RequestParam boolean enabled) {
         User user = getCurrentUser();

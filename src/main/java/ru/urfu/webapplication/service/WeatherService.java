@@ -61,7 +61,7 @@ public class WeatherService {
         return mapper.toWeatherResponse(response, location, lang);
     }
 
-    // Вспомогательный метод для получения ключевых слов фильтра
+    //Вспомогательный метод для получения ключевых слов фильтра
     private List<String> getFilterKeywords(String filterCondition, Map<String, List<String>> synonyms) {
         String normalizedCondition = filterCondition.toLowerCase().trim();
         if (synonyms.containsKey(normalizedCondition)) {
@@ -76,7 +76,7 @@ public class WeatherService {
         return List.of(normalizedCondition);
     }
 
-    // Вспомогательный метод для проверки соответствия условий
+    //Вспомогательный метод для проверки соответствия условий
     private boolean matchesCondition(String conditions, List<String> keywords) {
         if (conditions == null || conditions.isEmpty()) {
             return false;

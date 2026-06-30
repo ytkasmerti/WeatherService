@@ -70,7 +70,7 @@ public class AuthService {
         Map<String, String> response = new HashMap<>();
         response.put("apiKey", apiKey);
         response.put("subscriptionLevel", level.name());
-        response.put("message", "Регистрация прошла успешно! Сохраните ваш API ключ!");
+        response.put("message", "Регистрация прошла успешно!");
         log.info("Новый пользователь успешно зарегистрирован: {} с FREE планом", email);
         return response;
     }

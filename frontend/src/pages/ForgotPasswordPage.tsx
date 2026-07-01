@@ -1,6 +1,10 @@
-import { useState } from 'react';
-import toast from 'react-hot-toast';
-import { authApi } from '../api/authService';
+import {useState} from 'react';
+import {FaEye, FaEyeSlash} from "react-icons/fa";
+import {authApi} from '../api/authService';
+import {Button} from '../components/Button/Button';
+import {Input} from '../components/Input/Input';
+import {Notification} from '../components/Notification/Notification';
+import '../App.css';
 
 export const ForgotPasswordPage = () => {
     const [step, setStep] = useState(1);
@@ -8,28 +12,43 @@ export const ForgotPasswordPage = () => {
     const [code, setCode] = useState('');
     const [password, setPassword] = useState('');
     const [confirm, setConfirm] = useState('');
-    const [show, setShow] = useState(false); // Состояние для показа пароля
+    const [showPass, setShowPass] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [notify, setNotify] = useState<string | null>(null);
 
     const handleSendCode = async () => {
+        setIsLoading(true);
         try {
             await authApi.forgotPassword(email);
             setStep(2);
-            toast.success("Код отправлен на почту");
+            setNotify("Код отправлен на почту");
         } catch (e: any) {
-            toast.error(e.message || "Ошибка отправки");
+            setNotify(e.message || "Ошибка отправки");
+        } finally {
+            setIsLoading(false);
         }
     };
 
     const handleReset = async () => {
-        if (code.length !== 6) return toast.error("Код должен состоять из 6 цифр");
-        if (password !== confirm) return toast.error("Пароли не совпадают");
+        if (code.length !== 6) {
+            setNotify("Код должен состоять из 6 цифр");
+            return;
+        }
+        if (password !== confirm) {
+            setNotify("Пароли не совпадают");
+            return;
+        }
 
+        setIsLoading(true);
         try {
             await authApi.resetPassword(email, code, password);
-            toast.success("Пароль успешно изменен!");
-            setStep(3);
+            setNotify("Пароль успешно изменен!");
+            setTimeout(() => setStep(3), 1000);
         } catch (e: any) {
-            toast.error(e.message || "Неверный код или ошибка");
+            setNotify(e.message || "Неверный код или ошибка");
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -37,65 +56,58 @@ export const ForgotPasswordPage = () => {
         <div style={{
             display: 'flex',
             flexDirection: 'column',
-            alignItems: 'center', // Центровка по горизонтали
-            justifyContent: 'center', // Центровка по вертикали
+            alignItems: 'center',
             gap: '20px',
             width: '100%',
-            maxWidth: '400px', // Ограничение ширины для красоты
+            maxWidth: '400px',
             margin: '50px auto',
-            textAlign: 'center' // Текст внутри блоков по центру
         }}>
+            {notify && <Notification message={notify} onClose={() => setNotify(null)}/>}
+
             {step === 1 && (
                 <>
-                    <h1 style={{
-                        width: '100%',
-                        margin: '10px 0',
-                        lineHeight: '1.2',
-                        fontSize: '40px',
-                        textAlign: 'center'
-                    }}>
-                        Восстановление пароля
-                    </h1>
-                    <input style={{ width: '100%', padding: '10px' }} placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
-                    <button style={{ width: '100%', padding: '10px' }} onClick={handleSendCode}>Получить код</button>
+                    <h1>Восстановление пароля</h1>
+                    <Input placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)}/>
+                    <Button text="Получить код" onClick={handleSendCode} isLoading={isLoading}/>
                 </>
             )}
 
             {step === 2 && (
                 <>
-                    <h1 style={{
-                        width: '100%',
-                        margin: '10px 0',
-                        lineHeight: '1.2',
-                        fontSize: '40px',
-                        textAlign: 'center'
-                    }}>
-                        Введите данные
-                    </h1>
-                    <input style={{ width: '100%', padding: '10px' }} placeholder="Код из письма" value={code} onChange={(e) => setCode(e.target.value)} />
-
-                    <div style={{ width: '100%', display: 'flex', gap: '5px' }}>
-                        <input style={{ flex: 1, padding: '10px' }} type={show ? "text" : "password"} placeholder="Новый пароль" value={password} onChange={(e) => setPassword(e.target.value)} />
-                        <button onClick={() => setShow(!show)}>{show ? "🙈" : "👁"}</button>
-                    </div>
-
-                    <input style={{ width: '100%', padding: '10px' }} type="password" placeholder="Повтор пароля" value={confirm} onChange={(e) => setConfirm(e.target.value)} />
-                    <button style={{ width: '100%', padding: '10px' }} onClick={handleReset}>Сменить пароль</button>
+                    <h1>Введите данные</h1>
+                    <Input placeholder="Код из письма" value={code} onChange={(e) => setCode(e.target.value)}/>
+                    <Input
+                        type={showPass ? "text" : "password"}
+                        placeholder="Новый пароль"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        rightIcon={
+                            <button type="button" onClick={() => setShowPass(!showPass)}
+                                    style={{background: 'none', border: 'none', cursor: 'pointer', display: 'flex'}}>
+                                {showPass ? <FaEyeSlash/> : <FaEye/>}
+                            </button>
+                        }
+                    />
+                    <Input
+                        type={showConfirm ? "text" : "password"}
+                        placeholder="Повтор пароля"
+                        value={confirm}
+                        onChange={(e) => setConfirm(e.target.value)}
+                        rightIcon={
+                            <button type="button" onClick={() => setShowConfirm(!showConfirm)}
+                                    style={{background: 'none', border: 'none', cursor: 'pointer', display: 'flex'}}>
+                                {showConfirm ? <FaEyeSlash/> : <FaEye/>}
+                            </button>
+                        }
+                    />
+                    <Button text="Сменить пароль" onClick={handleReset} isLoading={isLoading}/>
                 </>
             )}
 
             {step === 3 && (
                 <>
-                    <h1 style={{
-                        width: '100%',
-                        margin: '10px 0',
-                        lineHeight: '1.2',
-                        fontSize: '40px',
-                        textAlign: 'center'
-                    }}>
-                        Пароль успешно изменен!
-                    </h1>
-                    <a href="/login" style={{ fontSize: '18px' }}>Вернуться ко входу</a>
+                    <h1>Пароль успешно изменен!</h1>
+                    <a href="/login" style={{fontSize: '18px'}}>Вернуться ко входу</a>
                 </>
             )}
         </div>

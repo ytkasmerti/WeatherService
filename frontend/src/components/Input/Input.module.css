@@ -1,0 +1,62 @@
+.container {
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 8px;
+    background-color: #f0f4f7;
+    height: 56px;
+    width: 100%;
+    border-radius: 12px;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    overflow: visible;
+    position: relative;
+}
+
+.content {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+}
+
+.inputField {
+    border: none;
+    background: transparent;
+    outline: none;
+    width: 100%;
+    height: 100%;
+    font-size: 16px;
+    color: #333;
+    padding: 0;
+}
+
+.rightIconWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-left: 4px;
+}
+
+.rightIconWrapper button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    color: #666;
+}
+
+.rightIconWrapper button:hover {
+    color: #333;
+}
+
+.img {
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
+    flex-shrink: 0;
+}

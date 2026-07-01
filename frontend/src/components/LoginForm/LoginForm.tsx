@@ -20,7 +20,10 @@ export const LoginForm = ({onLoginSuccess, onForgotPassword, onGoToRegister}: Lo
 
     const handleLogin = async () => {
         try {
-            await authApi.login(email, password);
+            const data = await authApi.login(email, password);
+            localStorage.setItem('token', data.token);
+            window.dispatchEvent(new Event('authChange'));
+
             setNotify("Вход выполнен!");
             setTimeout(onLoginSuccess, 1000);
         } catch (e: any) {

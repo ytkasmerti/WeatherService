@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -89,17 +90,18 @@ public class AuthService {
 
         log.info("Успешный вход пользователя {}", email);
         String apiKey = user.getApiKey();
-
-        Cookie cookie = new Cookie("apiKey", apiKey);
-        cookie.setHttpOnly(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(60 * 60 * 24 * 30);
-        response.addCookie(cookie);
+        ResponseCookie cookie = ResponseCookie.from("apiKey", apiKey)
+                .httpOnly(true)
+                .path("/")
+                .maxAge(60 * 60 * 24 * 30)
+                .sameSite("Lax")
+                .build();
+        response.setHeader("Set-Cookie", cookie.toString());
 
         return Map.of(
                 "success", true,
                 "email", user.getEmail(),
-                "subscriptionLevel", user.getSubscriptionLevel(),
+                "subscriptionLevel", user.getSubscriptionLevel().name(),
                 "apiKey", apiKey
         );
     }

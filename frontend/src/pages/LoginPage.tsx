@@ -7,7 +7,7 @@ export const LoginPage = () => {
     return (
         <div style={{display: 'flex', justifyContent: 'center', marginTop: '50px'}}>
             <LoginForm
-                onLoginSuccess={() => navigate('/success')}
+                onLoginSuccess={() => navigate('/weather')}
                 onForgotPassword={() => navigate('/forgot-password')}
                 onGoToRegister={() => navigate('/register')}
             />

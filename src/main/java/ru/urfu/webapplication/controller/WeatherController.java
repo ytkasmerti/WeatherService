@@ -116,11 +116,11 @@ public class WeatherController {
     @GetMapping("/forecast/hourly")
     @RequirePremium
     public HourlyForecastResponse getHourlyForecast(@RequestParam @NotBlank String city,
-                                                    @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+                                                    @RequestParam String date,
                                                     @RequestParam(required = false) String apiKey,
                                                     @RequestParam(defaultValue = "ru") String lang) {
         String validApiKey = getApiKeyFromRequestOrAuth(apiKey);
-        return weatherService.getHourlyForecast(city, date.toString(), validApiKey, lang);
+        return weatherService.getHourlyForecast(city, date, validApiKey, lang);
     }
 
     //Фильтрация прогноза погоды по погодным условиям

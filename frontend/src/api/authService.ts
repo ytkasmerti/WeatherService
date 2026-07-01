@@ -1,33 +1,51 @@
 const BASE_URL = 'http://localhost:8080';
 
+const fetchWithCreds = async (url: string, options: RequestInit = {}) => {
+    const response = await fetch(url, {
+        ...options,
+        credentials: 'include',
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+        throw new Error(data.message || "Ошибка при запросе к серверу");
+    }
+    return data;
+};
+
 export const authApi = {
-    // Используем URLSearchParams для передачи данных через ?param=value
     login: async (email: string, password: string) => {
-        const params = new URLSearchParams({ email, password });
-        const res = await fetch(`${BASE_URL}/auth/login?${params}`, { method: 'POST' });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || "Ошибка входа");
-        return data;
+        const params = new URLSearchParams({email, password});
+        return fetchWithCreds(`${BASE_URL}/auth/login?${params}`, {method: 'POST'});
     },
     register: async (email: string, password: string, confirmPassword: string) => {
-        // Добавляем confirmPassword, так как твой бэк его требует
-        const params = new URLSearchParams({ email, password, confirmPassword });
-        const res = await fetch(`${BASE_URL}/auth/register?${params}`, { method: 'POST' });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || "Ошибка регистрации");
-        return data;
+        const params = new URLSearchParams({email, password, confirmPassword});
+        return fetchWithCreds(`${BASE_URL}/auth/register?${params}`, {method: 'POST'});
     },
     forgotPassword: async (email: string) => {
-        const res = await fetch(`${BASE_URL}/auth/forgot-password?email=${email}`, { method: 'POST' });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || "Ошибка отправки");
-        return data;
+        return fetchWithCreds(`${BASE_URL}/auth/forgot-password?email=${encodeURIComponent(email)}`, {method: 'POST'});
     },
     resetPassword: async (email: string, code: string, newPassword: string) => {
-        const params = new URLSearchParams({ email, code, newPassword });
-        const res = await fetch(`${BASE_URL}/auth/reset-password?${params}`, { method: 'POST' });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || "Ошибка сброса");
-        return data;
+        const params = new URLSearchParams({email, code, newPassword});
+        return fetchWithCreds(`${BASE_URL}/auth/reset-password?${params}`, {method: 'POST'});
     }
+};
+
+export const weatherApi = {
+    getCurrent: (city: string) => fetchWithCreds(`${BASE_URL}/weather/current?city=${city}`),
+    getByCoords: (lat: number, lon: number) => fetchWithCreds(`${BASE_URL}/weather/current?lat=${lat}&lon=${lon}`),
+    getForecast: (city: string, days: number) => fetchWithCreds(`${BASE_URL}/weather/forecast?city=${city}&days=${days}`),
+    getHistory: (city: string, start: string, end: string) => fetchWithCreds(`${BASE_URL}/weather/history?city=${city}&start=${start}&end=${end}`),
+    getByDate: (city: string, date: string) => fetchWithCreds(`${BASE_URL}/weather/history/date?city=${city}&date=${date}`),
+    getHourly: (city: string, date: string) => fetchWithCreds(`${BASE_URL}/weather/forecast/hourly?city=${city}&date=${date}`),
+    getFiltered: (city: string, days: number, filter: string) => fetchWithCreds(`${BASE_URL}/weather/forecast/filter?city=${city}&days=${days}&filterCondition=${filter}`),
+};
+
+export const userApi = {
+    getProfile: () => fetchWithCreds(`${BASE_URL}/user/profile`),
+    setAutoRenewal: (enabled: boolean) => fetchWithCreds(`${BASE_URL}/user/auto-renewal?enabled=${enabled}`),
+    changePassword: (oldPassword: string, newPassword: string) =>
+        fetchWithCreds(`${BASE_URL}/user/change-password?oldPassword=${oldPassword}&newPassword=${newPassword}`, {method: 'POST'}),
+    deleteAccount: (password: string) =>
+        fetchWithCreds(`${BASE_URL}/user/delete?password=${password}`, {method: 'DELETE'}),
 };

@@ -1,5 +1,7 @@
 package ru.urfu.webapplication.controller;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -43,7 +45,7 @@ public class SubscriptionController {
     //Подписаться
     @GetMapping("/subscribe")
     public String subscribe(@RequestParam(required = false) String apiKey,
-                            @RequestParam String city,
+                            @RequestParam @NotBlank String city,
                             @RequestParam(required = false, defaultValue = "true") boolean notifyHeat,
                             @RequestParam(required = false, defaultValue = "true") boolean notifyCold,
                             @RequestParam(required = false, defaultValue = "true") boolean notifyWind,

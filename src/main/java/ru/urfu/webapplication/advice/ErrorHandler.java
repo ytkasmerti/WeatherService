@@ -20,6 +20,13 @@ public class ErrorHandler {
     public ResponseEntity<Map<String, Object>> handleApiError(WebClientResponseException e) {
         log.error("Ошибка при вызове внешнего API: {} {}", e.getStatusCode(), e.getMessage());
         Map<String, Object> error = new HashMap<>();
+
+        if (e.getStatusCode().value() == 400) {
+            error.put("error", "Неверный запрос");
+            error.put("message", "Город не найден или указаны неверные координаты");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        }
+
         error.put("error", "Ошибка при получении данных от погодного сервиса");
         error.put("status", e.getStatusCode().value());
         error.put("message", "Сервис погоды временно недоступен");

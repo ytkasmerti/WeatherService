@@ -20,12 +20,19 @@ public class WeatherSubscriptionService {
 
     private final UserSubscriptionRepository subscriptionRepository;
     private final UserRepository userRepository;
+    private final ru.urfu.webapplication.client.VisualCrossingClient visualCrossingClient;
 
     //Подписаться (BASIC - 1 подписка, PREMIUM- до 5 подписок)
     @Transactional
     @RequireBasicOrPremium
     public void subscribe(String apiKey, String city, boolean notifyHeat, boolean notifyCold,
                           boolean notifyWind, boolean notifyPrecipitation) {
+        try {
+            visualCrossingClient.getCurrentWeather(city, "ru");
+        } catch (Exception e) {
+            log.error("Попытка подписки на несуществующий город: {}", city);
+            throw new RuntimeException("Город '" + city + "' не найден. Проверьте правильность написания.");
+        }
         User user = userRepository.findByApiKey(apiKey)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
         if (subscriptionRepository.existsByUserAndCity(user, city)) {

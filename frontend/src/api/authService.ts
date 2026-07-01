@@ -13,6 +13,19 @@ const fetchWithCreds = async (url: string, options: RequestInit = {}) => {
     return data;
 };
 
+const fetchText = async (url: string, options: RequestInit = {}) => {
+    const response = await fetch(url, {
+        ...options,
+        credentials: 'include',
+    });
+
+    const text = await response.text();
+    if (!response.ok) {
+        throw new Error(text || "Ошибка сервера");
+    }
+    return text;
+};
+
 export const authApi = {
     login: async (email: string, password: string) => {
         const params = new URLSearchParams({email, password});
@@ -48,4 +61,21 @@ export const userApi = {
         fetchWithCreds(`${BASE_URL}/user/change-password?oldPassword=${oldPassword}&newPassword=${newPassword}`, {method: 'POST'}),
     deleteAccount: (password: string) =>
         fetchWithCreds(`${BASE_URL}/user/delete?password=${password}`, {method: 'DELETE'}),
+};
+
+export const paymentApi = {
+    getHistory: (page: number, size: number) =>
+        fetchWithCreds(`${BASE_URL}/payment/history?page=${page}&size=${size}`),
+    createPayment: (level: string) =>
+        fetchWithCreds(`${BASE_URL}/payment/create?level=${level}`, {method: 'POST'}),
+    confirmPayment: (paymentId: string) =>
+        fetchWithCreds(`${BASE_URL}/payment/confirm/${paymentId}`, {method: 'POST'}),
+};
+
+export const subscriptionApi = {
+    getSubscriptions: () => fetchWithCreds(`${BASE_URL}/subscription/subscribtions`),
+    subscribe: (city: string, heat: boolean, cold: boolean, wind: boolean, precip: boolean) =>
+        fetchText(`${BASE_URL}/subscription/subscribe?city=${city}&notifyHeat=${heat}&notifyCold=${cold}&notifyWind=${wind}&notifyPrecipitation=${precip}`),
+    unsubscribe: (id: number) =>
+        fetchText(`${BASE_URL}/subscription/unsubscribe/${id}`),
 };

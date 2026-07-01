@@ -18,8 +18,8 @@ export const Header = () => {
             justifyContent: 'space-between',
             alignItems: 'center',
             padding: '15px 50px',
-            borderBottom: '1px solid #ddd',
-            background: '#fff'
+            borderBottom: '1px solid #adb5bd',
+            background: '#dee2e6'
         }}>
             <h2 style={{cursor: 'pointer', margin: 0}} onClick={() => navigate('/')}>
                 WeatherService
@@ -29,8 +29,7 @@ export const Header = () => {
                 {isAuth ? (
                     <>
                         <Button text="Прогноз погоды" onClick={() => navigate('/weather')}/>
-                        <Button text="История платежей" onClick={() => alert('Заглушка: История')}/>
-                        <Button text="Подписка" onClick={() => alert('Заглушка: Подписка')}/>
+                        <Button text="Подписки на предупреждения" onClick={() => navigate('/subscriptions')}/>
                         <Button text="Личный кабинет" onClick={() => navigate('/profile')}/>
                     </>
                 ) : (

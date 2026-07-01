@@ -61,8 +61,12 @@ public class PaymentService {
             throw new RuntimeException("Неверный тариф. Доступны: BASIC, PREMIUM");
         }
 
-        if (!isAutoRenewal && user.getSubscriptionLevel().name().equals(levelUpper)) {
-            throw new RuntimeException("У вас уже есть подписка " + levelUpper);
+        if (level.getPriority() < user.getSubscriptionLevel().getPriority()) {
+            throw new RuntimeException("Нельзя сменить подписку на более низкий уровень: " + level);
+        }
+
+        if (!isAutoRenewal && user.getSubscriptionLevel() == levelUpper) {
+            throw new RuntimeException("У вас уже есть активная подписка " + levelUpper);
         }
 
         paymentRepository.findByApiKeyAndStatusAndExpiresAtAfter(apiKey, PaymentStatus.PENDING, LocalDateTime.now())
@@ -76,13 +80,13 @@ public class PaymentService {
         Payment payment = new Payment();
         payment.setPaymentId(paymentId);
         payment.setApiKey(apiKey);
+        payment.setUser(user);
         payment.setLevel(levelUpper);
         payment.setAmount(price);
         payment.setCreatedAt(LocalDateTime.now());
         payment.setExpiresAt(LocalDateTime.now().plusMinutes(paymentExpireMinutes));
         payment.setStatus(PaymentStatus.PENDING);
         paymentRepository.save(payment);
-
         log.info("Создан платеж {} для {} на сумму {} рублей", paymentId, apiKey, price);
         String message = String.format("Платеж на сумму %d рублей создан. Совершите оплату в течение 15 минут.", payment.getAmount());
         return mapper.toPaymentDto(payment, apiKey, message);

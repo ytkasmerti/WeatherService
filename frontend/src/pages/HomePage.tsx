@@ -1,13 +1,12 @@
 export const HomePage = () => (
     <div style={{maxWidth: '900px', margin: '0 auto', fontFamily: 'sans-serif', color: '#333'}}>
         <main style={{padding: '40px 20px'}}>
-            <h1 style={{
-                textAlign: 'center', fontSize: '36px', marginBottom: '20px', width: '100%', margin: '0 auto'
-            }}>
-                Weather Service — ваш персональный метео-помощник
+            <h1 style={{textAlign: 'center', fontSize: '36px', marginBottom: '20px'}}>
+                Weather Service — ваш интеллектуальный метео-помощник
             </h1>
-            <p style={{textAlign: 'center', fontSize: '18px', color: '#666', marginBottom: '40px', marginTop: '40px'}}>
-                Получайте точные прогнозы, исторические данные и уведомления о погоде в любой точке мира.
+            <p style={{textAlign: 'center', fontSize: '18px', color: '#666', marginBottom: '40px'}}>
+                Доступ к актуальной погоде, точным прогнозам и глубокой исторической аналитике через современный REST
+                API.
             </p>
 
             <section style={{marginBottom: '50px'}}>
@@ -20,34 +19,38 @@ export const HomePage = () => (
                 }}>
                     <div style={{padding: '20px', border: '1px solid #ddd', borderRadius: '12px'}}>
                         <h3>FREE</h3>
-                        <p><strong>0 ₽/мес</strong></p>
-                        <ul style={{paddingLeft: '20px'}}>
-                            <li>10 запросов в день</li>
-                            <li>Текущая погода</li>
+                        <p style={{fontSize: '20px', fontWeight: 'bold'}}>0 ₽/мес</p>
+                        <ul style={{paddingLeft: '20px', lineHeight: '1.6'}}>
+                            <li>10 запросов к API в день</li>
+                            <li>Текущая погода по городу и координатам</li>
+                            <li>Базовый функционал доступа</li>
                         </ul>
                     </div>
+
                     <div style={{
                         padding: '20px',
-                        border: '1px solid #2f5bcf',
+                        border: '2px solid #2f5bcf',
                         borderRadius: '12px',
-                        backgroundColor: '#f0f4f7'
+                        backgroundColor: '#f8fbff'
                     }}>
                         <h3>BASIC</h3>
-                        <p><strong>500 ₽/мес</strong></p>
-                        <ul style={{paddingLeft: '20px'}}>
+                        <p style={{fontSize: '20px', fontWeight: 'bold'}}>500 ₽/мес</p>
+                        <ul style={{paddingLeft: '20px', lineHeight: '1.6'}}>
                             <li>100 запросов в день</li>
                             <li>Прогноз на 15 дней</li>
-                            <li>1 погодное уведомление</li>
+                            <li>История за 7 дней</li>
+                            <li>1 активная погодная подписка</li>
                         </ul>
                     </div>
+
                     <div style={{padding: '20px', border: '1px solid #ddd', borderRadius: '12px'}}>
                         <h3>PREMIUM</h3>
-                        <p><strong>1000 ₽/мес</strong></p>
-                        <ul style={{paddingLeft: '20px'}}>
-                            <li>Безлимитные запросы</li>
-                            <li>Почасовой прогноз и фильтры</li>
-                            <li>История до 5 лет</li>
-                            <li>5 погодных уведомлений</li>
+                        <p style={{fontSize: '20px', fontWeight: 'bold'}}>1000 ₽/мес</p>
+                        <ul style={{paddingLeft: '20px', lineHeight: '1.6'}}>
+                            <li>Безлимитные запросы к API</li>
+                            <li>Почасовой прогноз и фильтрация условий</li>
+                            <li>Глубокая история (до 5 лет)</li>
+                            <li>5 активных подписок с уведомлениями</li>
                         </ul>
                     </div>
                 </div>
@@ -57,25 +60,24 @@ export const HomePage = () => (
                 <h2 style={{borderBottom: '2px solid #2f5bcf', paddingBottom: '10px'}}>Почему выбирают нас?</h2>
                 <div style={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                    gap: '20px',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                    gap: '25px',
                     marginTop: '20px'
                 }}>
                     <div>
-                        <h4>⚡️ Быстро и надежно</h4>
-                        <p>Благодаря кэшированию в Redis, вы получаете данные практически мгновенно.</p>
+                        <h4>Погода по всему миру</h4>
+                        <p>Получайте данные о состоянии атмосферы в любой точке земного шара — от мегаполисов до самых
+                            удаленных уголков.</p>
                     </div>
                     <div>
-                        <h4>🔔 Умные уведомления</h4>
-                        <p>Получайте оповещения об экстремальных погодных явлениях (жара, мороз, ветер).</p>
+                        <h4>Интеллектуальные алерты</h4>
+                        <p>Система уведомлений о жаре, морозе, сильном ветре или осадках в выбранных вами локациях.
+                            Рассылка производится ежедневно в <b>08:00</b> по московскому времени.</p>
                     </div>
                     <div>
-                        <h4>🔒 Максимальная безопасность</h4>
-                        <p>Шифрование данных, двухфакторная аутентификация и надежное хранение паролей.</p>
-                    </div>
-                    <div>
-                        <h4>📊 Глубокая аналитика</h4>
-                        <p>Доступ к историческим данным за 5 лет для анализа погоды в прошлом.</p>
+                        <h4>Профессиональная аналитика</h4>
+                        <p>Широкий спектр исторических данных: от давления и влажности до UV-индекса и времени
+                            заката.</p>
                     </div>
                 </div>
             </section>

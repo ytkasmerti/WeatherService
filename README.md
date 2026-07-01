@@ -132,6 +132,7 @@ Email-уведомления:
 - redis.cache.ttl-minutes – время жизни кэша в минутах (по умолчанию 15)
 
 # Технологический стек
+Backend 
 - Фреймворк: Spring Boot 3.5.11
 - Язык программирования: Java 21 (Microsoft OpenJDK)
 - Сборщик: Maven 3.8.6
@@ -143,6 +144,13 @@ Email-уведомления:
 - Планировщик задач: Spring Scheduling
 - Работа с API: Rest Client
 - Внешний API: Visual Crossing Weather API
+
+Frontend
+- Фреймворк: React
+- Язык программирования: TypeScript
+- Стилизация: CSS Modules
+- Маршрутизация: React Router
+- Работа с API: Fetch API
 
 Авторы:   
 GitHub: ytkasmerti  

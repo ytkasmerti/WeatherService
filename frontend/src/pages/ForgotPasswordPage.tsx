@@ -1,4 +1,5 @@
 import {useState} from 'react';
+import {useNavigate} from 'react-router-dom';
 import {FaEye, FaEyeSlash} from "react-icons/fa";
 import {authApi} from '../api/authService';
 import {Button} from '../components/Button/Button';
@@ -7,6 +8,7 @@ import {Notification} from '../components/Notification/Notification';
 import '../App.css';
 
 export const ForgotPasswordPage = () => {
+    const navigate = useNavigate();
     const [step, setStep] = useState(1);
     const [email, setEmail] = useState('');
     const [code, setCode] = useState('');
@@ -64,6 +66,12 @@ export const ForgotPasswordPage = () => {
         }}>
             {notify && <Notification message={notify} onClose={() => setNotify(null)}/>}
 
+            {step < 3 && (
+                <div style={{width: '100%', display: 'flex', justifyContent: 'flex-start'}}>
+                    <Button text="← Назад" onClick={() => navigate('/login')}/>
+                </div>
+            )}
+
             {step === 1 && (
                 <>
                     <h1>Восстановление пароля</h1>
@@ -107,7 +115,7 @@ export const ForgotPasswordPage = () => {
             {step === 3 && (
                 <>
                     <h1>Пароль успешно изменен!</h1>
-                    <a href="/login" style={{fontSize: '18px'}}>Вернуться ко входу</a>
+                    <Button text="Вернуться ко входу" onClick={() => navigate('/login')}/>
                 </>
             )}
         </div>

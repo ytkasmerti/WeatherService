@@ -1,0 +1,14 @@
+.footer {
+    padding: 20px;
+    margin-top: auto;
+    border-top: 1px solid #444;
+    background: #333;
+    color: #ccc;
+    font-size: 14px;
+    text-align: center;
+}
+
+.emailLink {
+    margin-left: 5px;
+    color: #fff;
+}

@@ -1,0 +1,84 @@
+.modalOverlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 9999;
+}
+
+.modalContainer {
+    width: 500px;
+    padding-bottom: 30px;
+    border: 1px solid #e1e8ef;
+    border-radius: 12px;
+    background: #fff;
+    overflow: hidden;
+}
+
+.modalHeader {
+    display: flex;
+    align-items: center;
+    height: 70px;
+    margin-bottom: 20px;
+    padding-left: 30px;
+    background: #2f5bcf;
+}
+
+.titleText {
+    margin: 0;
+    font: 600 24px sans-serif;
+    color: #fff;
+}
+
+.bodyContent {
+    padding: 0 30px 30px;
+}
+
+.bodyText {
+    margin: 0;
+    font: 18px sans-serif;
+    color: #585f6a;
+}
+
+.buttonGroup {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    padding: 0 30px;
+}
+
+.customBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 130px;
+    height: 50px;
+    border: 1.5px solid;
+    border-radius: 8px;
+    cursor: pointer;
+    font: 16px sans-serif;
+    transition: opacity 0.2s;
+}
+
+.customBtn:hover {
+    opacity: 0.9;
+}
+
+.customBtn:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.btnDelete {
+    background: #2f5bcf;
+    border-color: #2f5bcf;
+    color: #fff;
+}
+
+.btnCancel {
+    background: #fff;
+    border-color: #e1e8ef;
+    color: #585f6a;
+}

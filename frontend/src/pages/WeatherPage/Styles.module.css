@@ -1,0 +1,67 @@
+.container {
+    padding: 20px;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.title {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.card {
+    padding: 20px;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background-color: #fff;
+}
+
+.cardDesc {
+    font-size: 15px;
+    color: #333;
+    line-height: 1.5;
+    margin: 0 0 8px 0;
+}
+
+.cardLevel {
+    margin: 0;
+    font-weight: bold;
+    color: #007bff;
+}
+
+.formContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.backButton {
+    margin-bottom: 20px;
+}
+
+.resultBox {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    overflow-x: auto;
+}
+
+.preResult {
+    margin: 0;
+}
+
+.calendarWrapper {
+    display: flex;
+    justify-content: center;
+    margin: 10px 0;
+}

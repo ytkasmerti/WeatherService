@@ -1,0 +1,42 @@
+.container {
+    padding: 20px;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.backButtonWrapper {
+    margin-bottom: 20px;
+}
+
+.section {
+    margin-bottom: 20px;
+}
+
+.label {
+    font-weight: bold;
+}
+
+.pickerWrapper {
+    margin-top: 8px;
+}
+
+.inputGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.row {
+    display: flex;
+    gap: 10px;
+}
+
+.rowItem {
+    flex: 1;
+}
+
+.buttonWrapper {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+}

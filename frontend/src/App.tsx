@@ -1,16 +1,16 @@
 import {BrowserRouter, Routes, Route} from 'react-router-dom';
 import {Toaster} from 'react-hot-toast';
-import {Header} from './components/Header';
-import {Footer} from './components/Footer';
-import {HomePage} from './pages/HomePage';
-import {LoginPage} from './pages/LoginPage';
-import {RegisterPage} from './pages/RegisterPage';
-import {ForgotPasswordPage} from './pages/ForgotPasswordPage';
-import {WeatherPage} from './pages/WeatherPage';
-import {ProfilePage} from './pages/ProfilePage';
-import {PaymentHistoryPage} from './pages/PaymentHistoryPage';
-import {UpgradePage} from './pages/UpgradePage';
-import {SubscriptionPage} from './pages/SubscriptionPage';
+import {Header} from './components/ui/Header/Header.tsx';
+import {Footer} from './components/ui/Footer/Footer.tsx';
+import {HomePage} from './pages/HomePage/HomePage.tsx';
+import {LoginPage} from './pages/LoginPage/LoginPage.tsx';
+import {RegisterPage} from './pages/RegisterPage/RegisterPage.tsx';
+import {ForgotPasswordPage} from './pages/ForgotPasswordPage/ForgotPasswordPage.tsx';
+import {WeatherPage} from './pages/WeatherPage/WeatherPage.tsx';
+import {ProfilePage} from './pages/ProfilePage/ProfilePage.tsx';
+import {PaymentHistoryPage} from './pages/PaymentHistoryPage/PaymentHistoryPage.tsx';
+import {UpgradePage} from './pages/UpgradePage/UpgradePage.tsx';
+import {SubscriptionPage} from './pages/SubscriptionPage/SubscriptionPage.tsx';
 
 export default function App() {
     return (

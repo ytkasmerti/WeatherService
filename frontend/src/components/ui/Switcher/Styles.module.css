@@ -1,0 +1,48 @@
+.switcher {
+    display: flex;
+    align-items: center;
+    padding: 2px;
+    background: #ccc;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.switcher.active {
+    background: #2f5bcf;
+    justify-content: flex-end;
+}
+
+.round {
+    border-radius: 20px;
+}
+
+.square {
+    border-radius: 4px;
+}
+
+.large {
+    width: 60px;
+    height: 30px;
+}
+
+.small {
+    width: 40px;
+    height: 20px;
+}
+
+.trigger {
+    background: #fff;
+    transition: 0.3s;
+}
+
+.large .trigger {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+}
+
+.small .trigger {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+}

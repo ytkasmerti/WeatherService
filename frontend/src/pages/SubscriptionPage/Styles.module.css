@@ -1,0 +1,71 @@
+.container {
+    padding: 20px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.infoBox {
+    padding: 15px;
+    background-color: #e7f3ff;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    color: #0056b3;
+    border: 1px solid #cce5ff;
+}
+
+.inputGroup {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    align-items: center;
+}
+
+.inputWrapper {
+    flex: 1;
+}
+
+.subscriptionCard {
+    padding: 15px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    background-color: #f9f9f9;
+}
+
+.cardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.cityName {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.switchersGroup {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    font-size: 14px;
+}
+
+.switcherItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.footerSection {
+    margin-top: 50px;
+    padding: 20px;
+    border-top: 2px solid #eee;
+    color: #666;
+}
+
+.instructionsList {
+    padding-left: 20px;
+    line-height: 1.8;
+}

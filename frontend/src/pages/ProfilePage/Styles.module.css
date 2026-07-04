@@ -1,0 +1,98 @@
+.container {
+    padding: 20px;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.loading {
+    padding: 20px;
+    text-align: center;
+}
+
+.profileInfo {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.textBase {
+    margin: 0;
+}
+
+.subscriptionRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.columnGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+}
+
+.card {
+    padding: 15px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.limitRow {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+
+.lastLimitRow {
+    display: flex;
+    justify-content: space-between;
+}
+
+.limitTitle {
+    margin: 0 0 10px 0;
+    font-weight: bold;
+}
+
+.autoRenewalRow {
+    padding: 15px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.centerBtn {
+    display: flex;
+    justify-content: center;
+    margin-top: 30px;
+}
+
+.section {
+    margin-top: 50px;
+}
+
+.actionRow {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.iconBtn {
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.logoutSection {
+    margin-top: 60px;
+    display: flex;
+    justify-content: center;
+}

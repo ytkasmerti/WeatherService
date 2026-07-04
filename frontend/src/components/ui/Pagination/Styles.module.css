@@ -1,0 +1,37 @@
+.paginationWrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 20px;
+}
+
+.pButton {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: #fff;
+    color: #585f6a;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.pButton:hover:not(.active) {
+    background: #f5f5f5;
+}
+
+.active {
+    background: #2f5bcf !important;
+    border-color: #2f5bcf !important;
+    color: #fff !important;
+}
+
+.ellipsis {
+    padding: 0 8px;
+    color: #585f6a;
+}

@@ -1,0 +1,25 @@
+.wrapper {
+    padding: 20px;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    text-align: left;
+}
+
+.table th,
+.table td {
+    padding: 12px;
+}
+
+.headerRow {
+    border-bottom: 2px solid #ddd;
+}
+
+.dataRow {
+    border-bottom: 1px solid #eee;
+}

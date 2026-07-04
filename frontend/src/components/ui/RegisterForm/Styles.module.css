@@ -1,0 +1,43 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 600px;
+    padding: 30px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.title {
+    margin: 0;
+    text-align: center;
+    font: 600 40px 'Inter', sans-serif;
+    color: #181818;
+}
+
+.fields {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.iconButton {
+    display: flex;
+    padding: 4px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: #666;
+}
+
+.iconButton:hover {
+    color: #333;
+}

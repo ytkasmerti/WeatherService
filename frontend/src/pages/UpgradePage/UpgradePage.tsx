@@ -4,7 +4,7 @@ import {Controller, useForm} from 'react-hook-form';
 import {Button} from '../../components/ui/Button/Button.tsx';
 import {Input} from '../../components/ui/Input/Input.tsx';
 import {Notification} from '../../components/ui/Notification/Notification.tsx';
-import {paymentApi} from '../../api/authService.ts';
+import {paymentApi, authApi} from '../../api/authService.ts';
 import {SubscriptionPicker} from "../../components/ui/SubscriptionPicker/SubscriptionPicker.tsx";
 import {useNotification} from '../../hooks/useNotification.ts';
 import {upgradeSchema} from './schema.ts';
@@ -22,26 +22,27 @@ export const UpgradePage = () => {
     const [level, setLevel] = useState('BASIC');
     const [isLoading, setIsLoading] = useState(false);
     const {notify, setNotify, clearNotify} = useNotification();
-    const {control, handleSubmit, getValues} = useForm<UpgradeForm>({
+    const {control, handleSubmit, getValues, reset} = useForm<UpgradeForm>({
         defaultValues: {cardNumber: '', expiry: '', cvc: ''}
     });
 
     const handleUpgrade = async () => {
         try {
-            const {cardNumber, expiry, cvc} = getValues();
-            await upgradeSchema.validate({cardNumber, expiry, cvc});
+            const { cardNumber, expiry, cvc } = getValues();
+            await upgradeSchema.validate({ cardNumber, expiry, cvc });
             setIsLoading(true);
             const payment = await paymentApi.createPayment(level);
             const result = await paymentApi.confirmPayment(payment.paymentId);
             if (result && (result.status === 'CONFIRMED' || result.status === 'SUCCESS')) {
                 setNotify("Оплата прошла успешно! Пожалуйста, перезайдите в аккаунт.");
-                localStorage.removeItem('token');
+                reset();
+                await authApi.logout();
                 window.dispatchEvent(new Event('authChange'));
                 setTimeout(() => {
-                    navigate('/login');
-                }, 2000);
+                    window.location.href = '/login';
+                }, 1000);
             } else {
-                throw new Error(result.message || "Оплата отклонена банком. Попробуйте снова.");
+                throw new Error(result.message || "Оплата отклонена банком. Попробуйте снова или повторите позднее.");
             }
         } catch (e: any) {
             const errorMsg = e.errors ? e.errors[0] : (e.message || "Ошибка при оплате. Попробуйте позднее.");
@@ -70,7 +71,6 @@ export const UpgradePage = () => {
             </div>
 
             <div className={styles.inputGroup}>
-
                 <Controller
                     name="cardNumber"
                     control={control}
@@ -85,7 +85,9 @@ export const UpgradePage = () => {
                             name="expiry"
                             control={control}
                             render={({field}) => (
-                                <Input placeholder="ММ/ГГ" value={field.value} onChange={field.onChange}/>)}/>
+                                <Input placeholder="ММ/ГГ" value={field.value} onChange={field.onChange}/>
+                            )}
+                        />
                     </div>
 
                     <div className={styles.rowItem}>

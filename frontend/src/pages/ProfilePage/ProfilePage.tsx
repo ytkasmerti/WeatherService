@@ -5,7 +5,7 @@ import {FaEye, FaEyeSlash} from "react-icons/fa";
 import {Button} from '../../components/ui/Button/Button.tsx';
 import {Input} from '../../components/ui/Input/Input.tsx';
 import {Notification} from '../../components/ui/Notification/Notification.tsx';
-import {userApi} from '../../api/authService.ts';
+import {authApi, userApi} from '../../api/authService.ts';
 import {Switcher} from '../../components/ui/Switcher/Switcher.tsx';
 import {DeleteModal} from '../../components/ui/DeleteModal/DeleteModal.tsx';
 import {usePasswordVisibility} from '../../hooks/usePasswordVisibility.ts';
@@ -27,8 +27,17 @@ export const ProfilePage = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        userApi.getProfile().then(setProfile).catch(e => setNotify(e.message));
+        userApi.getProfile()
+            .then(setProfile)
+            .catch(e => {
+                setNotify(e.message);
+                setProfile({error: true});
+            });
     }, []);
+
+    if (!profile) {
+        return <div className={styles.loading}>Загрузка...</div>;
+    }
 
     const handleAutoRenewal = async (enabled: boolean) => {
         try {
@@ -62,7 +71,7 @@ export const ProfilePage = () => {
             setIsDeleteLoading(true);
             await userApi.deleteAccount(data.delPass);
             setNotify("Ваш аккаунт был успешно удален");
-            localStorage.removeItem('token');
+            await authApi.logout();
             window.dispatchEvent(new Event('authChange'));
             setTimeout(() => navigate('/'), 1500);
         } catch (e: any) {
@@ -73,15 +82,15 @@ export const ProfilePage = () => {
         }
     };
 
-    const handleLogout = () => {
-        localStorage.removeItem('token');
-        window.dispatchEvent(new Event('authChange'));
-        navigate('/');
+    const handleLogout = async () => {
+        try {
+            await authApi.logout();
+            window.dispatchEvent(new Event('authChange'));
+            navigate('/');
+        } catch (e) {
+            setNotify("Ошибка при выходе");
+        }
     };
-
-    if (!profile) {
-        return <div className={styles.loading}>Загрузка...</div>;
-    }
 
     return (
         <div className={styles.container}>

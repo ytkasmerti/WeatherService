@@ -72,6 +72,9 @@ export const ForgotPasswordPage = () => {
 
     return (
         <div className={styles.container}>
+            <div className={styles.headerWrapper}>
+                <Button text="← Назад" onClick={() => step === 2 ? setStep(1) : navigate('/login')}/>
+            </div>
             {notify && <Notification message={notify} onClose={clearNotify}/>}
             {step === 1 && (
                 <>

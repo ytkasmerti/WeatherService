@@ -29,8 +29,7 @@ export const LoginForm = ({onLoginSuccess, onForgotPassword, onGoToRegister}: Lo
     const handleLogin = async (data: any) => {
         setIsLoading(true);
         try {
-            const response = await authApi.login(data.email, data.password);
-            localStorage.setItem('token', response.token);
+            await authApi.login(data.email, data.password);
             window.dispatchEvent(new Event('authChange'));
             setNotify("Вход выполнен!");
             setTimeout(onLoginSuccess, 1000);

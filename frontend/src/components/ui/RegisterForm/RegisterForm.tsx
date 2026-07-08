@@ -67,9 +67,8 @@ export const RegisterForm = ({onCancel, onSuccess}: RegisterFormProps) => {
             )}/>
 
             <div className={styles.actions}>
-                <Button text="Назад" onClick={onCancel}/>
-                <Button text="Зарегистрироваться" onClick={handleSubmit(handleRegister, onError)}
-                        isLoading={isLoading}/>
+                <Button text="Войти" onClick={onCancel}/>
+                <Button text="Зарегистрироваться" onClick={handleSubmit(handleRegister, onError)} isLoading={isLoading}/>
             </div>
         </div>
     );

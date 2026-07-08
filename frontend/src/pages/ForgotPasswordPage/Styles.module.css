@@ -24,3 +24,13 @@
     display: flex;
     padding: 0;
 }
+
+.headerWrapper {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 20px;
+}
+
+.headerWrapper button {
+    width: auto;
+}

@@ -22,3 +22,13 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+#Зависимости и сборка
+node_modules/
+dist/
+dist-ssr/
+
+#Переменные окружения
+.env
+.env.*
+!.env.example

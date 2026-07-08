@@ -41,6 +41,12 @@ export const authApi = {
     resetPassword: async (email: string, code: string, newPassword: string) => {
         const params = new URLSearchParams({email, code, newPassword});
         return fetchWithCreds(`${BASE_URL}/auth/reset-password?${params}`, {method: 'POST'});
+    },
+    check: async () => {
+        return fetchWithCreds(`${BASE_URL}/auth/check`);
+    },
+    logout: async () => {
+        return fetch(`${BASE_URL}/auth/logout`, { credentials: 'include' });
     }
 };
 

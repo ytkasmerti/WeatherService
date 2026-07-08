@@ -5,6 +5,7 @@ import {Notification} from '../../components/ui/Notification/Notification.tsx';
 import {Switcher} from '../../components/ui/Switcher/Switcher.tsx';
 import {subscriptionApi} from '../../api/authService.ts';
 import {useNotification} from '../../hooks/useNotification.ts';
+import {subscriptionSchema} from './schema.ts'; // Импорт схемы
 import styles from './Styles.module.css';
 import '../../App.css';
 
@@ -37,7 +38,14 @@ export const SubscriptionPage = () => {
     };
 
     const handleSubscribe = async () => {
-        if (!city.trim()) return;
+        try {
+            // Валидация через схему
+            await subscriptionSchema.validate({ city });
+        } catch (e: any) {
+            setNotify(e.errors[0]);
+            return;
+        }
+
         setIsLoading(true);
         try {
             const message = await subscriptionApi.subscribe(city, true, true, true, true);
@@ -52,7 +60,7 @@ export const SubscriptionPage = () => {
             } catch (err) {
             }
             if (errorMessage.toLowerCase().includes("limit") || errorMessage.toLowerCase().includes("лимит")) {
-                errorMessage = "Превышен лимит подписок на уведомления";
+                errorMessage = "Вы превысили лимит подписок на уведомления!";
             }
             setNotify(errorMessage);
         } finally {

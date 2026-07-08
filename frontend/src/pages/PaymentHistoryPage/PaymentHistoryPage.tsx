@@ -1,30 +1,29 @@
-import {useState, useEffect} from 'react';
-import {useNavigate} from 'react-router-dom';
-import {Notification} from '../../components/ui/Notification/Notification.tsx';
-import {Pagination} from '../../components/ui/Pagination/Pagination.tsx';
-import {Button} from '../../components/ui/Button/Button.tsx';
-import {paymentApi} from '../../api/authService.ts';
-import {useNotification} from '../../hooks/useNotification.ts';
-import {useApiAction} from '../../hooks/useApiAction.ts';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Notification } from '../../components/ui/Notification/Notification.tsx';
+import { Pagination } from '../../components/ui/Pagination/Pagination.tsx';
+import { Button } from '../../components/ui/Button/Button.tsx';
+import { paymentApi } from '../../api/authService.ts';
+import { useNotification } from '../../hooks/useNotification.ts';
 import styles from './Styles.module.css';
 import '../../App.css';
 
 export const PaymentHistoryPage = () => {
     const [history, setHistory] = useState<any>(null);
     const [page, setPage] = useState(0);
-    const {notify, setNotify, clearNotify} = useNotification();
-    const {execute, isLoading} = useApiAction();
+    const [isLoading, setIsLoading] = useState(false); // Заменили useApiAction
+    const { notify, setNotify, clearNotify } = useNotification();
     const navigate = useNavigate();
 
     const loadHistory = async (pageIdx: number) => {
-        const data = await execute(async () => {
-            return await paymentApi.getHistory(pageIdx, 10);
-        });
-
-        if (data) {
+        setIsLoading(true);
+        try {
+            const data = await paymentApi.getHistory(pageIdx, 10);
             setHistory(data);
-        } else {
-            setNotify("Ошибка загрузки истории");
+        } catch (e: any) {
+            setNotify(e.message || "Ошибка загрузки истории");
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -39,7 +38,9 @@ export const PaymentHistoryPage = () => {
             <Button text="← Назад в профиль" onClick={() => navigate('/profile')}/>
             <h1>История платежей</h1>
 
-            {history ? (
+            {isLoading && !history ? (
+                <p>Загрузка данных...</p>
+            ) : history ? (
                 <>
                     <table className={styles.table}>
                         <thead>
@@ -66,9 +67,7 @@ export const PaymentHistoryPage = () => {
                         onPageChange={(p) => setPage(p)}
                     />
                 </>
-            ) : (
-                isLoading ? <p>Загрузка данных...</p> : null
-            )}
+            ) : null}
         </div>
     );
 };

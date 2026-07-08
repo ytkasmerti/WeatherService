@@ -1,0 +1,45 @@
+import * as yup from 'yup';
+
+export const weatherSchema = yup.object({
+    days: yup.string().when('$type', {
+        is: (type: string) => type === 'forecast' || type === 'filter',
+        then: (schema) => schema
+            .required('Укажите количество дней')
+            .test('is-number', 'Должно быть числом', val => !isNaN(parseInt(val!)))
+            .test('range', 'От 1 до 14 дней', val => {
+                const num = parseInt(val!);
+                return num >= 1 && num <= 14;
+            }),
+        otherwise: (schema) => schema.optional()
+    }),
+    city: yup.string().when('$type', {
+        is: (type: string) => type !== 'coords',
+        then: (schema) => schema
+            .required('Название города обязательно')
+            .min(2, 'Минимум 2 символа')
+            .matches(/^[a-zA-Zа-яёА-ЯЁ\s-]+$/, 'Название города может содержать только буквы'),
+        otherwise: (schema) => schema.optional()
+    }),
+    lon: yup.string().when('$type', {
+        is: 'coords',
+        then: (schema) => schema
+            .required('Укажите долготу')
+            .test('is-number', 'Долгота должна быть числом', val => !isNaN(parseFloat(val!)))
+            .test('range', 'Значения долготы должны быть от -180 до 180', val => {
+                const num = parseFloat(val!);
+                return num >= -180 && num <= 180;
+            }),
+        otherwise: (schema) => schema.optional()
+    }),
+    lat: yup.string().when('$type', {
+        is: 'coords',
+        then: (schema) => schema
+            .required('Укажите широту')
+            .test('is-number', 'Широта должна быть числом', val => !isNaN(parseFloat(val!)))
+            .test('range', 'Значения широты должны быть от -90 до 90', val => {
+                const num = parseFloat(val!);
+                return num >= -90 && num <= 90;
+            }),
+        otherwise: (schema) => schema.optional()
+    })
+});

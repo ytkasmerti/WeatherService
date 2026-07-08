@@ -15,7 +15,7 @@
     height: 60px;
     padding: 0 20px;
     border-radius: 11px;
-    background: rgba(113, 46, 255, 0.8);
+    background: #2f5bcf;
     backdrop-filter: blur(8px);
     color: #fff;
     font: 500 16px sans-serif;
@@ -27,7 +27,7 @@
     margin-right: -2px;
     border-top: 22px solid transparent;
     border-bottom: 22px solid transparent;
-    border-right: 22px solid rgba(113, 46, 255, 0.8);
+    border-right: 22px solid #2f5bcf;
 }
 
 @keyframes slideIn {

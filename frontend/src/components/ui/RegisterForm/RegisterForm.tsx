@@ -1,6 +1,7 @@
 import {useState} from 'react';
 import {FaEye, FaEyeSlash} from "react-icons/fa";
 import {authApi} from '../../../api/authService.ts';
+import {registerSchema} from './schema.ts';
 import {Input} from '../Input/Input.tsx';
 import {Button} from '../Button/Button.tsx';
 import {Notification} from '../Notification/Notification.tsx';
@@ -18,25 +19,20 @@ export const RegisterForm = ({onCancel, onSuccess}: RegisterFormProps) => {
     const [password, setPassword] = useState('');
     const [confirm, setConfirm] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-
     const pass = usePasswordVisibility();
     const conf = usePasswordVisibility();
     const {notify, setNotify, clearNotify} = useNotification();
 
     const handleRegister = async () => {
-        if (password !== confirm) {
-            setNotify("Пароли не совпадают");
-            return;
-        }
-        setIsLoading(true);
         try {
+            await registerSchema.validate({email, password, confirm}, {abortEarly: false});
+            setIsLoading(true);
             await authApi.register(email, password, confirm);
             setNotify("Регистрация успешна!");
-            setTimeout(() => {
-                onSuccess();
-            }, 2000);
+            setTimeout(onSuccess, 2000);
         } catch (e: any) {
-            setNotify(e.message || "Ошибка регистрации");
+            const message = e.errors ? e.errors[0] : (e.message || "Ошибка регистрации");
+            setNotify(message);
         } finally {
             setIsLoading(false);
         }
@@ -44,14 +40,9 @@ export const RegisterForm = ({onCancel, onSuccess}: RegisterFormProps) => {
 
     return (
         <div className={styles.container}>
-            {notify && (
-                <Notification message={notify} onClose={clearNotify}/>
-            )}
-
+            {notify && <Notification message={notify} onClose={clearNotify}/>}
             <h2 className={styles.title}>Регистрация</h2>
-
             <Input placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)}/>
-
             <Input
                 type={pass.show ? "text" : "password"}
                 placeholder="Пароль"
@@ -63,7 +54,6 @@ export const RegisterForm = ({onCancel, onSuccess}: RegisterFormProps) => {
                     </button>
                 }
             />
-
             <Input
                 type={conf.show ? "text" : "password"}
                 placeholder="Повтор пароля"
@@ -75,7 +65,6 @@ export const RegisterForm = ({onCancel, onSuccess}: RegisterFormProps) => {
                     </button>
                 }
             />
-
             <div className={styles.actions}>
                 <Button text="Назад" onClick={onCancel}/>
                 <Button text="Зарегистрироваться" onClick={handleRegister} isLoading={isLoading}/>

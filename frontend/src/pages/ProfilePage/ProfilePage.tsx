@@ -7,29 +7,25 @@ import {Notification} from '../../components/ui/Notification/Notification.tsx';
 import {userApi} from '../../api/authService.ts';
 import {Switcher} from '../../components/ui/Switcher/Switcher.tsx';
 import {DeleteModal} from '../../components/ui/DeleteModal/DeleteModal.tsx';
-import {useApiAction} from '../../hooks/useApiAction.ts';
 import {usePasswordVisibility} from '../../hooks/usePasswordVisibility.ts';
 import {useNotification} from '../../hooks/useNotification.ts';
+import {profileSchema} from './schema.ts';
 import styles from './Styles.module.css';
 import '../../App.css';
 
 export const ProfilePage = () => {
     const [profile, setProfile] = useState<any>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
-
+    const [isChangeLoading, setIsChangeLoading] = useState(false);
+    const [isDeleteLoading, setIsDeleteLoading] = useState(false);
     const [oldPass, setOldPass] = useState('');
     const [newPass, setNewPass] = useState('');
     const [delPass, setDelPass] = useState('');
-
     const passOld = usePasswordVisibility();
     const passNew = usePasswordVisibility();
     const passDel = usePasswordVisibility();
-
     const {notify, setNotify, clearNotify} = useNotification();
     const navigate = useNavigate();
-
-    const changePassAction = useApiAction();
-    const deleteAccountAction = useApiAction();
 
     useEffect(() => {
         userApi.getProfile().then(setProfile).catch(e => setNotify(e.message));
@@ -47,27 +43,37 @@ export const ProfilePage = () => {
     };
 
     const handleChangePassword = async () => {
-        if (!oldPass || !newPass) {
-            setNotify("Заполните оба поля пароля");
-            return;
-        }
-        const result = await changePassAction.execute(() => userApi.changePassword(oldPass, newPass), "Пароль успешно изменен!");
-        if (result) {
+        try {
+            await profileSchema.validateAt('oldPass', { oldPass });
+            await profileSchema.validateAt('newPass', { newPass });
+
+            setIsChangeLoading(true);
+            await userApi.changePassword(oldPass, newPass);
+            setNotify("Пароль успешно изменен!");
             setOldPass('');
             setNewPass('');
-        } else {
-            setNotify(changePassAction.error);
+        } catch (e: any) {
+            setNotify(e.message || "Ошибка смены пароля");
+        } finally {
+            setIsChangeLoading(false);
         }
     };
 
     const handleDeleteAccount = async () => {
-        const result = await deleteAccountAction.execute(() => userApi.deleteAccount(delPass));
-        if (result) {
+        try {
+            await profileSchema.validateAt('delPass', { delPass });
+            setIsDeleteLoading(true);
+            await userApi.deleteAccount(delPass);
+            setNotify("Ваш аккаунт был успешно удален");
             localStorage.removeItem('token');
             window.dispatchEvent(new Event('authChange'));
+
             setTimeout(() => navigate('/'), 1500);
-        } else {
-            setNotify(deleteAccountAction.error || "Ошибка при удалении");
+        } catch (e: any) {
+            setNotify(e.message || "Ошибка при удалении аккаунта");
+        } finally {
+            setIsDeleteLoading(false);
+            setIsModalOpen(false);
         }
     };
 
@@ -134,7 +140,7 @@ export const ProfilePage = () => {
                            <FaEye/>}</button>}/>
                 <div className={styles.actionRow}>
                     <Button text="Сохранить пароль" onClick={handleChangePassword}
-                            isLoading={changePassAction.isLoading}/>
+                            isLoading={isChangeLoading}/>
                 </div>
             </div>
 
@@ -146,10 +152,15 @@ export const ProfilePage = () => {
                                           className={styles.iconBtn}>{passDel.show ? <FaEyeSlash/> :
                            <FaEye/>}</button>}/>
                 <div className={styles.actionRow}>
-                    <Button text="Удалить аккаунт" onClick={() => setIsModalOpen(true)}
-                            isLoading={deleteAccountAction.isLoading}/>
+                    <Button text="Удалить аккаунт" onClick={() => setIsModalOpen(true)}/>
                 </div>
-                {isModalOpen && <DeleteModal onCancel={() => setIsModalOpen(false)} onConfirm={handleDeleteAccount}/>}
+                {isModalOpen && (
+                    <DeleteModal
+                        onCancel={() => setIsModalOpen(false)}
+                        onConfirm={handleDeleteAccount}
+                        isLoading={isDeleteLoading}
+                    />
+                )}
             </div>
 
             <div className={styles.logoutSection}>

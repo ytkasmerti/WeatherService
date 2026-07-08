@@ -5,8 +5,8 @@ import {Notification} from '../../components/ui/Notification/Notification.tsx';
 import {CalendarPicker} from '../../components/ui/CalendarPicker/CalendarPicker.tsx';
 import {FilterPicker} from '../../components/ui/FilterPicker/FilterPicker.tsx';
 import {menuMapping, type RequestType} from '../../constants/weatherRequests.ts';
-import {useApiAction} from '../../hooks/useApiAction.ts';
 import {fetchWeatherData} from '../../utils/weather.ts';
+import {weatherSchema} from './schema.ts';
 import styles from './Styles.module.css';
 import '../../App.css';
 
@@ -27,11 +27,31 @@ export const WeatherPage = () => {
         city: '', lat: '', lon: '', date: '', start: '', end: '', days: '7', filter: ''
     });
     const [result, setResult] = useState<any>(null);
-    const {execute, isLoading, error, setError} = useApiAction();
+
+    // Заменяем useApiAction на локальные стейты
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const handleRequest = async () => {
-        const data = await execute(async () => await fetchWeatherData(activeRequest, params), "Данные успешно получены!");
-        if (data) setResult(data);
+        try {
+            // Валидация
+            await weatherSchema.validate(params, {context: {type: activeRequest}});
+
+            setIsLoading(true);
+            setError(null);
+
+            const data = await fetchWeatherData(activeRequest, params);
+            setResult(data);
+        } catch (e: any) {
+            // Если ошибка валидации yup, берем первую ошибку
+            if (e.name === 'ValidationError') {
+                setError(e.errors[0]);
+            } else {
+                setError(e.message || "Ошибка при выполнении запроса");
+            }
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -58,6 +78,7 @@ export const WeatherPage = () => {
                         <Button text="← Назад" onClick={() => {
                             setActiveRequest(null);
                             setResult(null);
+                            setError(null); // Очищаем ошибку при выходе
                         }}/>
                     </div>
 

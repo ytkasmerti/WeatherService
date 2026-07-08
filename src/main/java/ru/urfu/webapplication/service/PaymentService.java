@@ -127,7 +127,7 @@ public class PaymentService {
             payment.setStatus(PaymentStatus.FAILED);
             paymentRepository.save(payment);
             emailService.sendPaymentFailedEmail(user.getEmail(), payment.getLevel(), payment.getAmount());
-            return mapper.toPaymentDto(payment, apiKey, "Платеж отклонен банком. Создайте новый платеж и попробуйте снова.");
+            return mapper.toPaymentDto(payment, apiKey, "Платеж отклонен банком. Попробуйте снова или повторите операцию позднее.");
         }
 
         //Имитация обработки платежа

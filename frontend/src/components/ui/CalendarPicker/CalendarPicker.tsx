@@ -9,7 +9,7 @@ interface CalendarProps {
 }
 
 export const CalendarPicker = ({onSelect, onRangeSelect}: CalendarProps) => {
-    const {currentDate, days, changeMonth} = useCalendar(); // Хук для логики дат
+    const {currentDate, days, changeMonth} = useCalendar();
     const [startDate, setStartDate] = useState<Date | null>(null);
     const [endDate, setEndDate] = useState<Date | null>(null);
 
@@ -19,16 +19,21 @@ export const CalendarPicker = ({onSelect, onRangeSelect}: CalendarProps) => {
             onSelect(formatDate(day));
             return;
         }
-
         if (onRangeSelect) {
             if (!startDate || (startDate && endDate)) {
                 setStartDate(day);
                 setEndDate(null);
+                onSelect?.(formatDate(day));
             } else if (day < startDate) {
                 setStartDate(day);
+                setEndDate(null);
+                onSelect?.(formatDate(day));
             } else {
                 setEndDate(day);
-                onRangeSelect(formatDate(startDate), formatDate(day));
+                onRangeSelect(
+                    formatDate(startDate),
+                    formatDate(day)
+                );
             }
         }
     };
@@ -40,18 +45,17 @@ export const CalendarPicker = ({onSelect, onRangeSelect}: CalendarProps) => {
                 <span>{currentDate.toLocaleString('ru', {month: 'long', year: 'numeric'})}</span>
                 <button type="button" onClick={() => changeMonth(1)}>{'>'}</button>
             </div>
+
             <div className={styles.grid}>
                 {days.map((day) => {
                     const time = day.getTime();
                     const isStart = startDate?.getTime() === time;
                     const isEnd = endDate?.getTime() === time;
                     const inRange = startDate && endDate && day > startDate && day < endDate;
-
                     return (
-                        <div
-                            key={time}
-                            className={`${styles.day} ${isStart || isEnd ? styles.selected : ''} ${inRange ? styles.inRange : ''}`}
-                            onClick={() => handleDateClick(day)}
+                        <div key={time}
+                             className={`${styles.day} ${isStart || isEnd ? styles.selected : ''} ${inRange ? styles.inRange : ''}`}
+                             onClick={() => handleDateClick(day)}
                         >
                             {day.getDate()}
                         </div>

@@ -15,15 +15,13 @@ export const Input = ({placeholder, icon, rightIcon, value, onChange, type = "te
         <div className={styles.container}>
             <div className={styles.content}>
                 {icon && <img src={icon} className={styles.img} alt="icon"/>}
-                <input
-                    className={styles.inputField}
-                    type={type}
-                    placeholder={placeholder}
-                    value={value}
-                    onChange={onChange}
+                <input className={styles.inputField}
+                       type={type}
+                       placeholder={placeholder}
+                       value={value}
+                       onChange={onChange}
                 />
-            </div>
-            {rightIcon && <div className={styles.rightIconWrapper}>{rightIcon}</div>}
+            </div>{rightIcon && <div className={styles.rightIconWrapper}>{rightIcon}</div>}
         </div>
     );
 };

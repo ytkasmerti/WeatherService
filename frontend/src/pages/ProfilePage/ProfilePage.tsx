@@ -1,5 +1,6 @@
 import {useState, useEffect} from 'react';
 import {useNavigate} from 'react-router-dom';
+import {useForm, Controller} from 'react-hook-form';
 import {FaEye, FaEyeSlash} from "react-icons/fa";
 import {Button} from '../../components/ui/Button/Button.tsx';
 import {Input} from '../../components/ui/Input/Input.tsx';
@@ -18,9 +19,7 @@ export const ProfilePage = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isChangeLoading, setIsChangeLoading] = useState(false);
     const [isDeleteLoading, setIsDeleteLoading] = useState(false);
-    const [oldPass, setOldPass] = useState('');
-    const [newPass, setNewPass] = useState('');
-    const [delPass, setDelPass] = useState('');
+    const {control, handleSubmit, reset} = useForm({defaultValues: {oldPass: '', newPass: '', delPass: ''}});
     const passOld = usePasswordVisibility();
     const passNew = usePasswordVisibility();
     const passDel = usePasswordVisibility();
@@ -42,16 +41,14 @@ export const ProfilePage = () => {
         }
     };
 
-    const handleChangePassword = async () => {
+    const handleChangePassword = async (data: any) => {
         try {
-            await profileSchema.validateAt('oldPass', { oldPass });
-            await profileSchema.validateAt('newPass', { newPass });
-
+            await profileSchema.validateAt('oldPass', {oldPass: data.oldPass});
+            await profileSchema.validateAt('newPass', {newPass: data.newPass});
             setIsChangeLoading(true);
-            await userApi.changePassword(oldPass, newPass);
+            await userApi.changePassword(data.oldPass, data.newPass);
             setNotify("Пароль успешно изменен!");
-            setOldPass('');
-            setNewPass('');
+            reset({oldPass: '', newPass: ''});
         } catch (e: any) {
             setNotify(e.message || "Ошибка смены пароля");
         } finally {
@@ -59,15 +56,14 @@ export const ProfilePage = () => {
         }
     };
 
-    const handleDeleteAccount = async () => {
+    const handleDeleteAccount = async (data: any) => {
         try {
-            await profileSchema.validateAt('delPass', { delPass });
+            await profileSchema.validateAt('delPass', {delPass: data.delPass});
             setIsDeleteLoading(true);
-            await userApi.deleteAccount(delPass);
+            await userApi.deleteAccount(data.delPass);
             setNotify("Ваш аккаунт был успешно удален");
             localStorage.removeItem('token');
             window.dispatchEvent(new Event('authChange'));
-
             setTimeout(() => navigate('/'), 1500);
         } catch (e: any) {
             setNotify(e.message || "Ошибка при удалении аккаунта");
@@ -90,9 +86,7 @@ export const ProfilePage = () => {
     return (
         <div className={styles.container}>
             {notify && <Notification message={notify} onClose={clearNotify}/>}
-
             <h1>Личный кабинет</h1>
-
             <div className={styles.profileInfo}>
                 <p className={styles.textBase}>Email: {profile.email}</p>
                 <p className={styles.textBase}>Дата регистрации: {new Date(profile.createdAt).toLocaleDateString()}</p>
@@ -128,36 +122,51 @@ export const ProfilePage = () => {
 
             <div className={styles.section}>
                 <h3>Смена пароля</h3>
-                <Input type={passOld.show ? "text" : "password"} placeholder="Старый пароль" value={oldPass}
-                       onChange={(e: any) => setOldPass(e.target.value)}
-                       rightIcon={<button type="button" onClick={passOld.toggle}
-                                          className={styles.iconBtn}>{passOld.show ? <FaEyeSlash/> :
-                           <FaEye/>}</button>}/>
-                <Input type={passNew.show ? "text" : "password"} placeholder="Новый пароль" value={newPass}
-                       onChange={(e: any) => setNewPass(e.target.value)}
-                       rightIcon={<button type="button" onClick={passNew.toggle}
-                                          className={styles.iconBtn}>{passNew.show ? <FaEyeSlash/> :
-                           <FaEye/>}</button>}/>
+                <Controller
+                    name="oldPass"
+                    control={control}
+                    render={({field}) => (
+                        <Input {...field} type={passOld.show ? "text" : "password"} placeholder="Старый пароль"
+                               rightIcon={<button type="button" onClick={passOld.toggle}
+                                                  className={styles.iconBtn}>{passOld.show ? <FaEyeSlash/> :
+                                   <FaEye/>}</button>}/>
+                    )}
+                />
+                <Controller
+                    name="newPass"
+                    control={control}
+                    render={({field}) => (
+                        <Input {...field} type={passNew.show ? "text" : "password"} placeholder="Новый пароль"
+                               rightIcon={<button type="button" onClick={passNew.toggle}
+                                                  className={styles.iconBtn}>{passNew.show ? <FaEyeSlash/> :
+                                   <FaEye/>}</button>}/>
+                    )}
+                />
                 <div className={styles.actionRow}>
-                    <Button text="Сохранить пароль" onClick={handleChangePassword}
+                    <Button text="Сохранить пароль" onClick={handleSubmit(handleChangePassword)}
                             isLoading={isChangeLoading}/>
                 </div>
             </div>
 
             <div className={styles.section}>
                 <h3>Удаление аккаунта</h3>
-                <Input type={passDel.show ? "text" : "password"} placeholder="Текущий пароль" value={delPass}
-                       onChange={(e: any) => setDelPass(e.target.value)}
-                       rightIcon={<button type="button" onClick={passDel.toggle}
-                                          className={styles.iconBtn}>{passDel.show ? <FaEyeSlash/> :
-                           <FaEye/>}</button>}/>
+                <Controller
+                    name="delPass"
+                    control={control}
+                    render={({field}) => (
+                        <Input {...field} type={passDel.show ? "text" : "password"} placeholder="Текущий пароль"
+                               rightIcon={<button type="button" onClick={passDel.toggle}
+                                                  className={styles.iconBtn}>{passDel.show ? <FaEyeSlash/> :
+                                   <FaEye/>}</button>}/>
+                    )}
+                />
                 <div className={styles.actionRow}>
                     <Button text="Удалить аккаунт" onClick={() => setIsModalOpen(true)}/>
                 </div>
                 {isModalOpen && (
                     <DeleteModal
                         onCancel={() => setIsModalOpen(false)}
-                        onConfirm={handleDeleteAccount}
+                        onConfirm={handleSubmit(handleDeleteAccount)}
                         isLoading={isDeleteLoading}
                     />
                 )}

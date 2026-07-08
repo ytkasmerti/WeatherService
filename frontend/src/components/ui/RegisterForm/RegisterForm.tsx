@@ -1,4 +1,6 @@
 import {useState} from 'react';
+import {useForm, Controller} from 'react-hook-form';
+import {yupResolver} from '@hookform/resolvers/yup';
 import {FaEye, FaEyeSlash} from "react-icons/fa";
 import {authApi} from '../../../api/authService.ts';
 import {registerSchema} from './schema.ts';
@@ -15,26 +17,32 @@ interface RegisterFormProps {
 }
 
 export const RegisterForm = ({onCancel, onSuccess}: RegisterFormProps) => {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [confirm, setConfirm] = useState('');
+    const {control, handleSubmit} = useForm({
+        resolver: yupResolver(registerSchema),
+        defaultValues: {email: '', password: '', confirm: ''}
+    });
+
     const [isLoading, setIsLoading] = useState(false);
     const pass = usePasswordVisibility();
     const conf = usePasswordVisibility();
     const {notify, setNotify, clearNotify} = useNotification();
-
-    const handleRegister = async () => {
+    const handleRegister = async (data: any) => {
+        setIsLoading(true);
         try {
-            await registerSchema.validate({email, password, confirm}, {abortEarly: false});
-            setIsLoading(true);
-            await authApi.register(email, password, confirm);
+            await authApi.register(data.email, data.password, data.confirm);
             setNotify("Регистрация успешна!");
             setTimeout(onSuccess, 2000);
         } catch (e: any) {
-            const message = e.errors ? e.errors[0] : (e.message || "Ошибка регистрации");
-            setNotify(message);
+            setNotify(e.message || "Ошибка регистрации");
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const onError = (errors: any) => {
+        const firstError = Object.values(errors)[0] as any;
+        if (firstError?.message) {
+            setNotify(firstError.message);
         }
     };
 
@@ -42,32 +50,26 @@ export const RegisterForm = ({onCancel, onSuccess}: RegisterFormProps) => {
         <div className={styles.container}>
             {notify && <Notification message={notify} onClose={clearNotify}/>}
             <h2 className={styles.title}>Регистрация</h2>
-            <Input placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)}/>
-            <Input
-                type={pass.show ? "text" : "password"}
-                placeholder="Пароль"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                rightIcon={
-                    <button type="button" className={styles.iconButton} onClick={pass.toggle}>
-                        {pass.show ? <FaEyeSlash/> : <FaEye/>}
-                    </button>
-                }
-            />
-            <Input
-                type={conf.show ? "text" : "password"}
-                placeholder="Повтор пароля"
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
-                rightIcon={
-                    <button type="button" className={styles.iconButton} onClick={conf.toggle}>
-                        {conf.show ? <FaEyeSlash/> : <FaEye/>}
-                    </button>
-                }
-            />
+
+            <Controller name="email" control={control} render={({field}) =>
+                <Input {...field} placeholder="Email"/>}/>
+
+            <Controller name="password" control={control} render={({field}) => (
+                <Input {...field} type={pass.show ? "text" : "password"} placeholder="Пароль"
+                       rightIcon={<button type="button" className={styles.iconButton} onClick={pass.toggle}>{pass.show ?
+                           <FaEyeSlash/> : <FaEye/>}</button>}/>
+            )}/>
+
+            <Controller name="confirm" control={control} render={({field}) => (
+                <Input {...field} type={conf.show ? "text" : "password"} placeholder="Повтор пароля"
+                       rightIcon={<button type="button" className={styles.iconButton} onClick={conf.toggle}>{conf.show ?
+                           <FaEyeSlash/> : <FaEye/>}</button>}/>
+            )}/>
+
             <div className={styles.actions}>
                 <Button text="Назад" onClick={onCancel}/>
-                <Button text="Зарегистрироваться" onClick={handleRegister} isLoading={isLoading}/>
+                <Button text="Зарегистрироваться" onClick={handleSubmit(handleRegister, onError)}
+                        isLoading={isLoading}/>
             </div>
         </div>
     );

@@ -8,7 +8,6 @@ interface DropdownProps {
 
 export const Dropdown = ({value, children}: DropdownProps) => {
     const {isOpen, toggle, arrow} = useDropdown();
-
     return (
         <div className={styles.container}>
             <button className={styles.button} onClick={toggle} type="button">

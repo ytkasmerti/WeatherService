@@ -10,7 +10,6 @@ interface SwitcherProps {
 
 export const Switcher = ({isOn = false, size = 'large', form = 'round', onToggle}: SwitcherProps) => {
     const [active, setActive] = useState(isOn);
-
     useEffect(() => {
         setActive(isOn);
     }, [isOn]);
@@ -21,13 +20,7 @@ export const Switcher = ({isOn = false, size = 'large', form = 'round', onToggle
         if (onToggle) onToggle(newValue);
     };
 
-    const className = [
-        styles.switcher,
-        styles[size],
-        styles[form],
-        active ? styles.active : ''
-    ].join(' ');
-
+    const className = [styles.switcher, styles[size], styles[form], active ? styles.active : ''].join(' ');
     return (
         <div className={className} onClick={handleClick}>
             <div className={styles.trigger}/>

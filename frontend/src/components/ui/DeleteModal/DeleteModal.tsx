@@ -15,25 +15,22 @@ export const DeleteModal = ({onCancel, onConfirm, isLoading}: DeleteModalProps) 
                 </div>
 
                 <div className={styles.bodyContent}>
-                    <p className={styles.bodyText}>Вы уверены, что хотите удалить аккаунт? Это действие нельзя
-                        отменить.</p>
+                    <p className={styles.bodyText}>Вы уверены, что хотите удалить аккаунт? Это действие нельзя будет отменить.</p>
                 </div>
 
                 <div className={styles.buttonGroup}>
-                    <button
-                        className={`${styles.customBtn} ${styles.btnCancel}`}
-                        onClick={onCancel}
-                        type="button"
-                        disabled={isLoading}
+                    <button className={`${styles.customBtn} ${styles.btnCancel}`}
+                            onClick={onCancel}
+                            type="button"
+                            disabled={isLoading}
                     >
                         <span className={styles.btnTextBlack}>Отмена</span>
                     </button>
 
-                    <button
-                        className={`${styles.customBtn} ${styles.btnDelete}`}
-                        onClick={onConfirm}
-                        type="button"
-                        disabled={isLoading}
+                    <button className={`${styles.customBtn} ${styles.btnDelete}`}
+                            onClick={onConfirm}
+                            type="button"
+                            disabled={isLoading}
                     >
                         <span className={styles.btnTextWhite}>
                             {isLoading ? 'Удаление...' : 'Удалить'}

@@ -7,7 +7,6 @@ const fetchWithCreds = async (url: string, options: RequestInit = {}) => {
     });
 
     const data = await response.json();
-
     if (!response.ok || data.error) {
         throw new Error(data.message || "Ошибка операции");
     }

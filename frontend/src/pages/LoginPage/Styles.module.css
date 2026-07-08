@@ -3,3 +3,21 @@
     justify-content: center;
     margin-top: 50px;
 }
+
+.wrapper {
+    padding: 20px;
+    max-width: 400px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.headerWrapper {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 20px;
+}
+
+.headerWrapper button {
+    width: auto;
+}

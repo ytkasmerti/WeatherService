@@ -1,32 +1,46 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { authApi } from '../../api/authService.ts';
-import { Button } from '../../components/ui/Button/Button.tsx';
-import { Input } from '../../components/ui/Input/Input.tsx';
-import { Notification } from '../../components/ui/Notification/Notification.tsx';
-import { usePasswordVisibility } from '../../hooks/usePasswordVisibility.ts';
-import { useNotification } from '../../hooks/useNotification.ts';
-import { forgotPasswordSchema } from './schema.ts';
+import {useState} from 'react';
+import {useNavigate} from 'react-router-dom';
+import {useForm, Controller} from 'react-hook-form';
+import {yupResolver} from '@hookform/resolvers/yup';
+import {FaEye, FaEyeSlash} from "react-icons/fa";
+import {authApi} from '../../api/authService.ts';
+import {Button} from '../../components/ui/Button/Button.tsx';
+import {Input} from '../../components/ui/Input/Input.tsx';
+import {Notification} from '../../components/ui/Notification/Notification.tsx';
+import {usePasswordVisibility} from '../../hooks/usePasswordVisibility.ts';
+import {useNotification} from '../../hooks/useNotification.ts';
+import {forgotPasswordSchema} from './schema.ts';
 import styles from './Styles.module.css';
 import '../../App.css';
 
 export const ForgotPasswordPage = () => {
     const navigate = useNavigate();
     const [step, setStep] = useState(1);
-    const [email, setEmail] = useState('');
-    const [code, setCode] = useState('');
-    const [password, setPassword] = useState('');
-    const [confirm, setConfirm] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const {control, getValues, trigger, formState: {errors}} = useForm({
+        resolver: yupResolver(forgotPasswordSchema),
+        defaultValues: {email: '', code: '', password: '', confirm: ''}
+    });
+
     const pass = usePasswordVisibility();
     const conf = usePasswordVisibility();
-    const { notify, setNotify, clearNotify } = useNotification();
+    const {notify, setNotify, clearNotify} = useNotification();
+    const showValidationError = () => {
+        const firstError = Object.values(errors)[0];
+        if (firstError?.message) {
+            setNotify(firstError.message as string);
+        }
+    };
 
     const handleSendCode = async () => {
+        const isEmailValid = await trigger('email');
+        if (!isEmailValid) {
+            showValidationError();
+            return;
+        }
+        const email = getValues('email');
+        setIsLoading(true);
         try {
-            await forgotPasswordSchema.validateAt('email', { email });
-            setIsLoading(true);
             await authApi.forgotPassword(email);
             setNotify("Код отправлен на почту");
             setStep(2);
@@ -38,21 +52,19 @@ export const ForgotPasswordPage = () => {
     };
 
     const handleReset = async () => {
+        const isValid = await trigger(['email', 'code', 'password', 'confirm']);
+        if (!isValid) {
+            showValidationError();
+            return;
+        }
+        const {email, code, password} = getValues();
+        setIsLoading(true);
         try {
-            await forgotPasswordSchema.validate({ email, code, password, confirm });
-            setIsLoading(true);
             await authApi.resetPassword(email, code, password);
             setNotify("Пароль успешно изменен!");
             setTimeout(() => navigate('/login'), 2000);
         } catch (err: any) {
-            // ЭТА СТРОКА РЕШИТ ПРОБЛЕМУ:
-            // Если err.inner существует (это массив ошибок yup), берем первую.
-            // Если нет — берем err.message.
-            const message = err.inner && err.inner.length > 0
-                ? err.inner[0].message
-                : (err.message || "Ошибка смены пароля");
-
-            setNotify(message);
+            setNotify(err.message || "Ошибка смены пароля");
         } finally {
             setIsLoading(false);
         }
@@ -60,46 +72,62 @@ export const ForgotPasswordPage = () => {
 
     return (
         <div className={styles.container}>
-            {notify && <Notification message={notify} onClose={clearNotify} />}
-
+            {notify && <Notification message={notify} onClose={clearNotify}/>}
             {step === 1 && (
                 <>
                     <h1 className={styles.title}>Восстановление пароля</h1>
-                    <Input placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                    <Controller
+                        name="email"
+                        control={control}
+                        render={({field}) => <Input {...field} placeholder="Email"/>}
+                    />
                     <div className={styles.buttonWrapper}>
-                        <Button text="Получить код" onClick={handleSendCode} isLoading={isLoading} />
+                        <Button text="Получить код" onClick={handleSendCode} isLoading={isLoading}/>
                     </div>
                 </>
             )}
-
             {step === 2 && (
                 <>
                     <h1 className={styles.title}>Введите данные</h1>
-                    <Input placeholder="Код из письма" value={code} onChange={(e) => setCode(e.target.value)} />
-                    <Input
-                        type={pass.show ? "text" : "password"}
-                        placeholder="Новый пароль"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        rightIcon={
-                            <button type="button" onClick={pass.toggle} className={styles.iconButton}>
-                                {pass.show ? <FaEyeSlash /> : <FaEye />}
-                            </button>
-                        }
+                    <Controller
+                        name="code"
+                        control={control}
+                        render={({field}) => <Input {...field} placeholder="Код из письма"/>}
                     />
-                    <Input
-                        type={conf.show ? "text" : "password"}
-                        placeholder="Повтор пароля"
-                        value={confirm}
-                        onChange={(e) => setConfirm(e.target.value)}
-                        rightIcon={
-                            <button type="button" onClick={conf.toggle} className={styles.iconButton}>
-                                {conf.show ? <FaEyeSlash /> : <FaEye />}
-                            </button>
-                        }
+                    <Controller
+                        name="password"
+                        control={control}
+                        render={({field}) => (
+                            <Input
+                                {...field}
+                                type={pass.show ? "text" : "password"}
+                                placeholder="Новый пароль"
+                                rightIcon={
+                                    <button type="button" onClick={pass.toggle} className={styles.iconButton}>
+                                        {pass.show ? <FaEyeSlash/> : <FaEye/>}
+                                    </button>
+                                }
+                            />
+                        )}
+                    />
+                    <Controller
+                        name="confirm"
+                        control={control}
+                        render={({field}) => (
+                            <Input
+                                {...field}
+                                type={conf.show ? "text" : "password"}
+                                placeholder="Повтор пароля"
+                                rightIcon={
+                                    <button type="button" onClick={conf.toggle} className={styles.iconButton}>
+                                        {conf.show ? <FaEyeSlash/> : <FaEye/>}
+                                    </button>
+                                }
+                            />
+                        )}
                     />
                     <div className={styles.buttonWrapper}>
-                        <Button text="Сменить пароль" onClick={handleReset} isLoading={isLoading} />
+                        <Button text="Сменить пароль" onClick={handleReset} isLoading={isLoading}/>
                     </div>
                 </>
             )}

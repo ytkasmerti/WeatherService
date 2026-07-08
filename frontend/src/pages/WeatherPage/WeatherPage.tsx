@@ -1,4 +1,5 @@
 import {useState} from 'react';
+import {useForm, Controller} from 'react-hook-form';
 import {Button} from '../../components/ui/Button/Button.tsx';
 import {Input} from '../../components/ui/Input/Input.tsx';
 import {Notification} from '../../components/ui/Notification/Notification.tsx';
@@ -23,27 +24,24 @@ interface WeatherParams {
 
 export const WeatherPage = () => {
     const [activeRequest, setActiveRequest] = useState<RequestType | null>(null);
-    const [params, setParams] = useState<WeatherParams>({
-        city: '', lat: '', lon: '', date: '', start: '', end: '', days: '7', filter: ''
-    });
     const [result, setResult] = useState<any>(null);
-
-    // Заменяем useApiAction на локальные стейты
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const {control, getValues, setValue, reset} = useForm<WeatherParams>({
+        defaultValues: {city: '', lat: '', lon: '', date: '', start: '', end: '', days: '7', filter: ''}
+    });
 
     const handleRequest = async () => {
         try {
-            // Валидация
-            await weatherSchema.validate(params, {context: {type: activeRequest}});
-
+            const params = getValues();
+            await weatherSchema.validate(params, {
+                context: {type: activeRequest}
+            });
             setIsLoading(true);
             setError(null);
-
             const data = await fetchWeatherData(activeRequest, params);
             setResult(data);
         } catch (e: any) {
-            // Если ошибка валидации yup, берем первую ошибку
             if (e.name === 'ValidationError') {
                 setError(e.errors[0]);
             } else {
@@ -57,9 +55,7 @@ export const WeatherPage = () => {
     return (
         <div className={styles.container}>
             {error && <Notification message={error} onClose={() => setError(null)}/>}
-
             <h1 className={styles.title}>WeatherService</h1>
-
             {!activeRequest ? (
                 <div className={styles.grid}>
                     {(Object.keys(menuMapping) as RequestType[]).map(type => (
@@ -75,56 +71,91 @@ export const WeatherPage = () => {
             ) : (
                 <div className={styles.formContainer}>
                     <div className={styles.backButton}>
-                        <Button text="← Назад" onClick={() => {
-                            setActiveRequest(null);
-                            setResult(null);
-                            setError(null); // Очищаем ошибку при выходе
-                        }}/>
+                        <Button text="← Назад"
+                                onClick={() => {
+                                    setActiveRequest(null);
+                                    setResult(null);
+                                    setError(null);
+                                    reset();
+                                }}
+                        />
                     </div>
 
                     {activeRequest !== 'coords' && (
-                        <Input placeholder="Название города" value={params.city}
-                               onChange={(e: any) => setParams({...params, city: e.target.value})}/>
+                        <Controller name="city" control={control} render={({field}) => (
+                            <Input placeholder="Название города" value={field.value} onChange={field.onChange}/>
+                        )}
+                        />
                     )}
 
                     {activeRequest === 'coords' && (
                         <>
-                            <Input placeholder="Широта (lat)" value={params.lat}
-                                   onChange={(e: any) => setParams({...params, lat: e.target.value})}/>
-                            <Input placeholder="Долгота (lon)" value={params.lon}
-                                   onChange={(e: any) => setParams({...params, lon: e.target.value})}/>
+                            <Controller
+                                name="lat"
+                                control={control}
+                                render={({field}) => (
+                                    <Input placeholder="Широта (lat)" value={field.value} onChange={field.onChange}/>
+                                )}
+                            />
+
+                            <Controller
+                                name="lon"
+                                control={control}
+                                render={({field}) => (
+                                    <Input placeholder="Долгота (lon)" value={field.value} onChange={field.onChange}/>
+                                )}
+                            />
                         </>
                     )}
 
                     {(activeRequest === 'forecast' || activeRequest === 'filter') && (
-                        <Input placeholder="Количество дней" value={params.days}
-                               onChange={(e: any) => setParams({...params, days: e.target.value})}/>
+                        <Controller
+                            name="days"
+                            control={control}
+                            render={({field}) => (
+                                <Input placeholder="Количество дней" value={field.value} onChange={field.onChange}/>
+                            )}
+                        />
                     )}
 
                     {activeRequest === 'filter' && (
-                        <FilterPicker onSelect={(val) => setParams({...params, filter: val})}/>
+                        <Controller
+                            name="filter"
+                            control={control}
+                            render={({field}) => (
+                                <FilterPicker value={field.value} onSelect={field.onChange}/>
+                            )}
+                        />
                     )}
 
-                    {(activeRequest === 'hourly') && (
+                    {activeRequest === 'hourly' && (
                         <div className={styles.calendarWrapper}>
-                            <CalendarPicker onSelect={(d) => setParams({...params, date: d})}/>
+                            <CalendarPicker onSelect={(d) => setValue('date', d)}/>
                         </div>
                     )}
 
                     {activeRequest === 'history' && (
                         <div className={styles.calendarWrapper}>
                             <CalendarPicker
-                                onSelect={(d) => setParams({...params, date: d, start: '', end: ''})}
-                                onRangeSelect={(start, end) => setParams({...params, start, end, date: ''})}
+                                onSelect={(d) => {
+                                    setValue('date', d);
+                                    setValue('start', '');
+                                    setValue('end', '');
+                                }}
+                                onRangeSelect={(start, end) => {
+                                    setValue('start', start);
+                                    setValue('end', end);
+                                    setValue('date', '');
+                                }}
                             />
                         </div>
                     )}
-
                     <Button text="Отправить запрос" onClick={handleRequest} isLoading={isLoading}/>
-
                     {result && (
                         <div className={styles.resultBox}>
-                            <pre className={styles.preResult}>{JSON.stringify(result, null, 2)}</pre>
+                            <pre className={styles.preResult}>
+                                {JSON.stringify(result, null, 2)}
+                            </pre>
                         </div>
                     )}
                 </div>

@@ -1,20 +1,19 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Notification } from '../../components/ui/Notification/Notification.tsx';
-import { Pagination } from '../../components/ui/Pagination/Pagination.tsx';
-import { Button } from '../../components/ui/Button/Button.tsx';
-import { paymentApi } from '../../api/authService.ts';
-import { useNotification } from '../../hooks/useNotification.ts';
+import {useState, useEffect} from 'react';
+import {useNavigate} from 'react-router-dom';
+import {Notification} from '../../components/ui/Notification/Notification.tsx';
+import {Pagination} from '../../components/ui/Pagination/Pagination.tsx';
+import {Button} from '../../components/ui/Button/Button.tsx';
+import {paymentApi} from '../../api/authService.ts';
+import {useNotification} from '../../hooks/useNotification.ts';
 import styles from './Styles.module.css';
 import '../../App.css';
 
 export const PaymentHistoryPage = () => {
     const [history, setHistory] = useState<any>(null);
     const [page, setPage] = useState(0);
-    const [isLoading, setIsLoading] = useState(false); // Заменили useApiAction
-    const { notify, setNotify, clearNotify } = useNotification();
+    const [isLoading, setIsLoading] = useState(false);
+    const {notify, setNotify, clearNotify} = useNotification();
     const navigate = useNavigate();
-
     const loadHistory = async (pageIdx: number) => {
         setIsLoading(true);
         try {
@@ -34,10 +33,8 @@ export const PaymentHistoryPage = () => {
     return (
         <div className={styles.wrapper}>
             {notify && <Notification message={notify} onClose={clearNotify}/>}
-
             <Button text="← Назад в профиль" onClick={() => navigate('/profile')}/>
             <h1>История платежей</h1>
-
             {isLoading && !history ? (
                 <p>Загрузка данных...</p>
             ) : history ? (

@@ -19,10 +19,9 @@ export const Button = ({
                            isLoading = false
                        }: ButtonProps) => {
     return (
-        <button
-            className={`${styles.button} ${isLoading ? styles.loading : ''}`}
-            onClick={onClick}
-            disabled={isLoading}
+        <button className={`${styles.button} ${isLoading ? styles.loading : ''}`}
+                onClick={onClick}
+                disabled={isLoading}
         >
             {isLoading ? (
                 <>

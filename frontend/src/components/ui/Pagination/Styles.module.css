@@ -26,9 +26,9 @@
 }
 
 .active {
-    background: #2f5bcf !important;
-    border-color: #2f5bcf !important;
-    color: #fff !important;
+    background: #2f5bcf;
+    border-color: #2f5bcf;
+    color: #fff;
 }
 
 .ellipsis {

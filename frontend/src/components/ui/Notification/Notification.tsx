@@ -11,7 +11,6 @@ export const Notification = ({message, onClose}: NotificationProps) => {
         const timer = setTimeout(onClose, 3000);
         return () => clearTimeout(timer);
     }, [onClose]);
-
     return (
         <div className={styles.wrapper}>
             <div className={styles.polygon}/>

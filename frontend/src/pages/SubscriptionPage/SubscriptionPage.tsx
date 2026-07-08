@@ -1,19 +1,26 @@
 import {useState, useEffect} from 'react';
+import {useForm, Controller} from 'react-hook-form';
 import {Button} from '../../components/ui/Button/Button.tsx';
 import {Input} from '../../components/ui/Input/Input.tsx';
 import {Notification} from '../../components/ui/Notification/Notification.tsx';
 import {Switcher} from '../../components/ui/Switcher/Switcher.tsx';
 import {subscriptionApi} from '../../api/authService.ts';
 import {useNotification} from '../../hooks/useNotification.ts';
-import {subscriptionSchema} from './schema.ts'; // Импорт схемы
+import {subscriptionSchema} from './schema.ts';
 import styles from './Styles.module.css';
 import '../../App.css';
 
+interface SubscriptionForm {
+    city: string;
+}
+
 export const SubscriptionPage = () => {
-    const [city, setCity] = useState('');
     const [subs, setSubs] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const {notify, setNotify, clearNotify} = useNotification();
+    const {control, handleSubmit, reset} = useForm<SubscriptionForm>({
+        defaultValues: {city: ''}
+    });
 
     useEffect(() => {
         loadSubs();
@@ -37,30 +44,29 @@ export const SubscriptionPage = () => {
         }
     };
 
-    const handleSubscribe = async () => {
+    const handleSubscribe = async (data: SubscriptionForm) => {
         try {
-            // Валидация через схему
-            await subscriptionSchema.validate({ city });
-        } catch (e: any) {
-            setNotify(e.errors[0]);
-            return;
-        }
-
-        setIsLoading(true);
-        try {
-            const message = await subscriptionApi.subscribe(city, true, true, true, true);
+            await subscriptionSchema.validate(data);
+            setIsLoading(true);
+            const message = await subscriptionApi.subscribe(data.city, true, true, true, true);
             setNotify(message);
-            setCity('');
+            reset({city: ''});
             await loadSubs();
+
         } catch (e: any) {
+            if (e.name === 'ValidationError') {
+                setNotify(e.message);
+                return;
+            }
             let errorMessage = e.message;
             try {
                 const parsed = JSON.parse(e.message);
                 errorMessage = parsed.message || parsed.error || e.message;
-            } catch (err) {
+            } catch {
             }
-            if (errorMessage.toLowerCase().includes("limit") || errorMessage.toLowerCase().includes("лимит")) {
-                errorMessage = "Вы превысили лимит подписок на уведомления!";
+            if (errorMessage.toLowerCase().includes("limit") ||
+                errorMessage.toLowerCase().includes("лимит")) {
+                errorMessage = "Превышен лимит подписок на уведомления";
             }
             setNotify(errorMessage);
         } finally {
@@ -81,32 +87,38 @@ export const SubscriptionPage = () => {
     return (
         <div className={styles.container}>
             {notify && <Notification message={notify} onClose={clearNotify}/>}
-
             <h1>Подписки на погодные предупреждения</h1>
-
             <div className={styles.infoBox}>
-                <b>Как это работает:</b> Мы проверяем погоду в ваших городах ежедневно в <b>08:00</b>. Если условия
-                соответствуют настройкам, вы получите письмо на email.
+                <b>Как это работает:</b> Мы проверяем погоду в ваших городах ежедневно в <b>08:00</b>.
+                Если условия соответствуют настройкам, вы получите письмо на email.
             </div>
 
             <div className={styles.inputGroup}>
                 <div className={styles.inputWrapper}>
-                    <Input placeholder="Название города" value={city} onChange={(e: any) => setCity(e.target.value)}/>
+                    <Controller
+                        name="city"
+                        control={control}
+                        render={({field}) => (
+                            <Input placeholder="Название города" {...field}/>
+                        )}
+                    />
                 </div>
-                <Button text="Подписаться" onClick={handleSubscribe} isLoading={isLoading}/>
+                <Button
+                    text="Подписаться"
+                    onClick={handleSubmit(handleSubscribe)}
+                    isLoading={isLoading}
+                />
             </div>
 
             <div>
                 <h3>Ваши подписки:</h3>
-                {subs.length === 0 ? <p>У вас пока нет активных подписок.</p> : null}
-
+                {subs.length === 0 && <p>У вас пока нет активных подписок.</p>}
                 {subs.map((s: any) => (
                     <div key={s.id} className={styles.subscriptionCard}>
                         <div className={styles.cardHeader}>
                             <span className={styles.cityName}>{s.city}</span>
                             <Button text="Удалить" onClick={() => handleUnsubscribe(s.id)}/>
                         </div>
-
                         <div className={styles.switchersGroup}>
                             {[
                                 {label: 'Жара', key: 'notifyHeat', val: s.notifyHeat},

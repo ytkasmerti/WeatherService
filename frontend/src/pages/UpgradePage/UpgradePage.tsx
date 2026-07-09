@@ -4,9 +4,10 @@ import {Controller, useForm} from 'react-hook-form';
 import {Button} from '../../components/ui/Button/Button.tsx';
 import {Input} from '../../components/ui/Input/Input.tsx';
 import {Notification} from '../../components/ui/Notification/Notification.tsx';
-import {paymentApi, authApi} from '../../api/authService.ts';
-import {SubscriptionPicker} from "../../components/ui/SubscriptionPicker/SubscriptionPicker.tsx";
+import {paymentApi} from '../../api/authService.ts';
+import {SubscriptionPicker} from "../../components/widgets/SubscriptionPicker/SubscriptionPicker.tsx";
 import {useNotification} from '../../hooks/useNotification.ts';
+import {useAuth} from '../../hooks/useAuth';
 import {upgradeSchema} from './schema.ts';
 import styles from './Styles.module.css';
 import '../../App.css';
@@ -22,25 +23,25 @@ export const UpgradePage = () => {
     const [level, setLevel] = useState('BASIC');
     const [isLoading, setIsLoading] = useState(false);
     const {notify, setNotify, clearNotify} = useNotification();
+    const {logout} = useAuth();
     const {control, handleSubmit, getValues, reset} = useForm<UpgradeForm>({
         defaultValues: {cardNumber: '', expiry: '', cvc: ''}
     });
 
     const handleUpgrade = async () => {
         try {
-            const { cardNumber, expiry, cvc } = getValues();
-            await upgradeSchema.validate({ cardNumber, expiry, cvc });
+            const {cardNumber, expiry, cvc} = getValues();
+            await upgradeSchema.validate({cardNumber, expiry, cvc});
             setIsLoading(true);
             const payment = await paymentApi.createPayment(level);
             const result = await paymentApi.confirmPayment(payment.paymentId);
             if (result && (result.status === 'CONFIRMED' || result.status === 'SUCCESS')) {
                 setNotify("Оплата прошла успешно! Пожалуйста, перезайдите в аккаунт.");
                 reset();
-                await authApi.logout();
-                window.dispatchEvent(new Event('authChange'));
+                await logout();
                 setTimeout(() => {
-                    window.location.href = '/login';
-                }, 1000);
+                    navigate('/login');
+                }, 2000);
             } else {
                 throw new Error(result.message || "Оплата отклонена банком. Попробуйте снова или повторите позднее.");
             }

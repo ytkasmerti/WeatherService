@@ -1,4 +1,4 @@
-import {Dropdown} from '../Dropdown/Dropdown';
+import {Dropdown} from '../../ui/Dropdown/Dropdown.tsx';
 import styles from './Styles.module.css';
 
 export const SubscriptionPicker = ({value, onSelect}: { value: string, onSelect: (l: string) => void }) => {

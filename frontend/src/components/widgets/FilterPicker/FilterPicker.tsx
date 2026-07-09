@@ -1,4 +1,4 @@
-import {Dropdown} from '../Dropdown/Dropdown';
+import {Dropdown} from '../../ui/Dropdown/Dropdown.tsx';
 import {WEATHER_FILTERS} from '../../../constants/weatherFilters.ts';
 import styles from './Styles.module.css';
 

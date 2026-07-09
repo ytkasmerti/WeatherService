@@ -1,6 +1,6 @@
 import {Outlet} from 'react-router-dom';
-import {Header} from '../components/ui/Header/Header.tsx';
-import {Footer} from '../components/ui/Footer/Footer.tsx';
+import {Header} from '../components/widgets/Header/Header.tsx';
+import {Footer} from '../components/widgets/Footer/Footer.tsx';
 
 export const MainLayout = () => {
     return (

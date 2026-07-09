@@ -2,13 +2,13 @@ import {useState} from 'react';
 import {useForm, Controller} from 'react-hook-form';
 import {yupResolver} from '@hookform/resolvers/yup';
 import {FaEye, FaEyeSlash} from "react-icons/fa";
-import {authApi} from '../../../api/authService.ts';
 import {loginSchema} from './schema.ts';
-import {Input} from '../Input/Input.tsx';
-import {Button} from '../Button/Button.tsx';
-import {Notification} from '../Notification/Notification.tsx';
+import {Input} from '../../ui/Input/Input.tsx';
+import {Button} from '../../ui/Button/Button.tsx';
+import {Notification} from '../../ui/Notification/Notification.tsx';
 import {usePasswordVisibility} from '../../../hooks/usePasswordVisibility.ts';
 import {useNotification} from '../../../hooks/useNotification.ts';
+import {useAuth} from '../../../hooks/useAuth';
 import styles from './Styles.module.css';
 
 interface LoginFormProps {
@@ -22,15 +22,16 @@ export const LoginForm = ({onLoginSuccess, onForgotPassword, onGoToRegister}: Lo
         resolver: yupResolver(loginSchema),
         defaultValues: {email: '', password: ''}
     });
+
     const [isLoading, setIsLoading] = useState(false);
     const {show, toggle} = usePasswordVisibility();
     const {notify, setNotify, clearNotify} = useNotification();
+    const {login} = useAuth();
 
     const handleLogin = async (data: any) => {
         setIsLoading(true);
         try {
-            await authApi.login(data.email, data.password);
-            window.dispatchEvent(new Event('authChange'));
+            await login(data.email, data.password);
             setNotify("Вход выполнен!");
             setTimeout(onLoginSuccess, 1000);
         } catch (e: any) {

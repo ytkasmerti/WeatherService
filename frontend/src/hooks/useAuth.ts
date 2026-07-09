@@ -1,20 +1,33 @@
-import {useState, useEffect} from 'react';
+import {useEffect} from 'react';
 import {authApi} from '../api/authService';
+import {useAppDispatch, useAppSelector} from './redux';
+import {setAuth} from '../store/authSlice';
 
 export const useAuth = () => {
-    const [isAuth, setIsAuth] = useState<boolean | null>(null);
+    const dispatch = useAppDispatch();
+    const isAuth = useAppSelector((state) => state.auth.isAuth);
     const checkAuthStatus = async () => {
         try {
             await authApi.check();
-            setIsAuth(true);
+            dispatch(setAuth(true));
         } catch {
-            setIsAuth(false);
+            dispatch(setAuth(false));
         }
     };
+
     useEffect(() => {
         checkAuthStatus();
-        window.addEventListener('authChange', checkAuthStatus);
-        return () => window.removeEventListener('authChange', checkAuthStatus);
     }, []);
-    return {isAuth};
+
+    const login = async (email: string, pass: string) => {
+        await authApi.login(email, pass);
+        dispatch(setAuth(true));
+    };
+
+    const logout = async () => {
+        await authApi.logout();
+        dispatch(setAuth(false));
+    };
+
+    return {isAuth, login, logout, checkAuthStatus};
 };

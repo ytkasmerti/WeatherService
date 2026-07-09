@@ -1,5 +1,5 @@
 import {useNavigate} from 'react-router-dom';
-import {Button} from "../Button/Button.tsx";
+import {Button} from "../../ui/Button/Button.tsx";
 import {useAuth} from '../../../hooks/useAuth.ts';
 import styles from './Styles.module.css';
 

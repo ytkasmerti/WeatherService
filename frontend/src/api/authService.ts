@@ -46,7 +46,7 @@ export const authApi = {
         return fetchWithCreds(`${BASE_URL}/auth/check`);
     },
     logout: async () => {
-        return fetch(`${BASE_URL}/auth/logout`, { credentials: 'include' });
+        return fetch(`${BASE_URL}/auth/logout`, {credentials: 'include'});
     }
 };
 
@@ -57,31 +57,24 @@ export const weatherApi = {
     getHistory: (city: string, start: string, end: string) => fetchWithCreds(`${BASE_URL}/weather/history?city=${city}&start=${start}&end=${end}`),
     getByDate: (city: string, date: string) => fetchWithCreds(`${BASE_URL}/weather/history/date?city=${city}&date=${date}`),
     getHourly: (city: string, date: string) => fetchWithCreds(`${BASE_URL}/weather/forecast/hourly?city=${city}&date=${date}`),
-    getFiltered: (city: string, days: number, filter: string) => fetchWithCreds(`${BASE_URL}/weather/forecast/filter?city=${city}&days=${days}&filterCondition=${filter}`),
+    getFiltered: (city: string, days: number, filter: string) => fetchWithCreds(`${BASE_URL}/weather/forecast/filter?city=${city}&days=${days}&filterCondition=${filter}`)
 };
 
 export const userApi = {
     getProfile: () => fetchWithCreds(`${BASE_URL}/user/profile`),
     setAutoRenewal: (enabled: boolean) => fetchWithCreds(`${BASE_URL}/user/auto-renewal?enabled=${enabled}`),
-    changePassword: (oldPassword: string, newPassword: string) =>
-        fetchWithCreds(`${BASE_URL}/user/change-password?oldPassword=${oldPassword}&newPassword=${newPassword}`, {method: 'POST'}),
-    deleteAccount: (password: string) =>
-        fetchWithCreds(`${BASE_URL}/user/delete?password=${password}`, {method: 'DELETE'}),
+    changePassword: (oldPassword: string, newPassword: string) => fetchWithCreds(`${BASE_URL}/user/change-password?oldPassword=${oldPassword}&newPassword=${newPassword}`, {method: 'POST'}),
+    deleteAccount: (password: string) => fetchWithCreds(`${BASE_URL}/user/delete?password=${password}`, {method: 'DELETE'}),
 };
 
 export const paymentApi = {
-    getHistory: (page: number, size: number) =>
-        fetchWithCreds(`${BASE_URL}/payment/history?page=${page}&size=${size}`),
-    createPayment: (level: string) =>
-        fetchWithCreds(`${BASE_URL}/payment/create?level=${level}`, {method: 'POST'}),
-    confirmPayment: (paymentId: string) =>
-        fetchWithCreds(`${BASE_URL}/payment/confirm/${paymentId}`, {method: 'POST'}),
+    getHistory: (page: number, size: number) => fetchWithCreds(`${BASE_URL}/payment/history?page=${page}&size=${size}`),
+    createPayment: (level: string) => fetchWithCreds(`${BASE_URL}/payment/create?level=${level}`, {method: 'POST'}),
+    confirmPayment: (paymentId: string) => fetchWithCreds(`${BASE_URL}/payment/confirm/${paymentId}`, {method: 'POST'}),
 };
 
 export const subscriptionApi = {
     getSubscriptions: () => fetchWithCreds(`${BASE_URL}/subscription/subscribtions`),
-    subscribe: (city: string, heat: boolean, cold: boolean, wind: boolean, precip: boolean) =>
-        fetchText(`${BASE_URL}/subscription/subscribe?city=${city}&notifyHeat=${heat}&notifyCold=${cold}&notifyWind=${wind}&notifyPrecipitation=${precip}`),
-    unsubscribe: (id: number) =>
-        fetchText(`${BASE_URL}/subscription/unsubscribe/${id}`),
+    subscribe: (city: string, heat: boolean, cold: boolean, wind: boolean, precip: boolean) => fetchText(`${BASE_URL}/subscription/subscribe?city=${city}&notifyHeat=${heat}&notifyCold=${cold}&notifyWind=${wind}&notifyPrecipitation=${precip}`),
+    unsubscribe: (id: number) => fetchText(`${BASE_URL}/subscription/unsubscribe/${id}`),
 };

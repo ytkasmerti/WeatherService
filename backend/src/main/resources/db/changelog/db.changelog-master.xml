@@ -355,7 +355,33 @@
     </changeSet>
 
     <!--
-        15 миграция - добавление user_id в таблицу user_subscriptions
+        15 миграция: создание таблицы user_subscriptions
+    -->
+    <changeSet id="create_user_subscriptions_table" author="ytkasmerti">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="user_subscriptions"/>
+            </not>
+        </preConditions>
+        <createTable tableName="user_subscriptions">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false" foreignKeyName="fk_user_subscriptions_user" references="users(id)"/>
+            </column>
+            <column name="city" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="notify_heat" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="notify_cold" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="notify_wind" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="notify_precip" type="BOOLEAN" defaultValueBoolean="false"/>
+        </createTable>
+    </changeSet>
+
+    <!--
+        16 миграция - добавление user_id в таблицу user_subscriptions
     -->
     <changeSet id="add_user_id_to_user_subscriptions" author="ytkasmerti">
         <preConditions onFail="MARK_RAN">
@@ -387,7 +413,7 @@
     </changeSet>
 
     <!--
-        16 миграция - удаление таблицы api_keys
+        17 миграция - удаление таблицы api_keys
     -->
     <changeSet id="drop_api_keys_table" author="ytkasmerti">
         <preConditions onFail="MARK_RAN">
@@ -397,13 +423,55 @@
     </changeSet>
 
     <!--
-        17 миграция - удаление таблицы weather_alerts
+        18 миграция - удаление таблицы weather_alerts
     -->
     <changeSet id="drop_weather_alerts_table" author="ytkasmerti">
         <preConditions onFail="MARK_RAN">
             <tableExists tableName="weather_alerts"/>
         </preConditions>
         <dropTable tableName="weather_alerts"/>
+    </changeSet>
+
+    <!--
+        19 миграция - вставка данных тестового аккаунта для демонстрации
+    -->
+    <changeSet id="insert_full_user_and_payments" author="ytkasmerti">
+        <sql>
+            INSERT INTO users (id, email, password, api_key, subscription_level, created_at, is_active, auto_renewal, subscription_expires_at)
+            VALUES (37, 'weatherservice26@gmail.com', '$2a$10$V6f0MHXcJsieJ0JqRntTbOauEyuyeFhawH0uRpBr2DP2kVD/urj/e', 'premium-b27efd2c-1468544522', 'PREMIUM', '2026-05-08 12:47:01.226663', true, false, '2026-08-08 14:46:00.163367')
+                ON CONFLICT (id) DO NOTHING;
+        </sql>
+        <sql>
+            INSERT INTO payments (id, payment_id, api_key, level, amount, created_at, confirmed_at, expires_at, status, user_id)
+            VALUES
+                (1, 'dc2ba8c0-5495-441d-a023-a6f4db8348d2', 'basic-a1b2c3d4e5', 'BASIC', 500, '2026-05-08 10:14:23.123', '2026-05-08 10:17:47.456', NULL, 'CONFIRMED', 37),
+                (2, '395b7ebc-de90-4635-aa6c-5f1858869355', 'basic-f5g6h7i8j9', 'BASIC', 500, '2026-05-08 10:41:02.888', NULL, '2026-05-08 10:56:02.888', 'FAILED', 37),
+                (3, '5c29d2e9-f3c4-4243-a1c8-5a430992737f', 'premium-k1l2m3n4o5', 'PREMIUM', 1000, '2026-05-15 14:09:18.555', NULL, '2026-05-15 14:24:18.555', 'EXPIRED', 37),
+                (4, 'aaf3fcea-debe-42f1-a176-cd14800d124f', 'premium-p6q7r8s9t0', 'PREMIUM', 1000, '2026-05-15 14:35:33.211', '2026-05-15 14:38:01.999', NULL, 'CONFIRMED', 37),
+                (5, 'b8d2e1a3-4c5f-4a6b-9d8e-7f6a5b4c3d2e', 'basic-u1v2w3x4y5', 'BASIC', 500, '2026-05-22 16:12:45.345', '2026-05-22 16:15:12.777', NULL, 'CONFIRMED', 37),
+                (6, 'f9a8b7c6-d5e4-4c3b-a2f1-0e9d8c7b6a5f', 'basic-z6a5b4c3d2', 'BASIC', 500, '2026-05-22 16:40:09.111', NULL, '2026-05-22 16:55:09.111', 'FAILED', 37),
+                (7, 'e1d2c3b4-a5f6-4e7d-8c9b-0a1b2c3d4e5f', 'premium-e5f4g3h2i1', 'PREMIUM', 1000, '2026-05-30 11:27:51.666', '2026-05-30 11:31:19.432', NULL, 'CONFIRMED', 37),
+                (8, 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d', 'premium-j1k2l3m4n5', 'PREMIUM', 1000, '2026-05-30 11:55:37.888', NULL, '2026-05-30 12:10:37.888', 'EXPIRED', 37),
+                (9, 'd4c3b2a1-f6e5-4d7c-8b9a-0e1f2a3b4c5d', 'basic-o6p5q4r3s2', 'BASIC', 500, '2026-06-29 13:48:22.567', '2026-06-29 13:52:55.123', NULL, 'CONFIRMED', 37),
+                (10, 'c5b4a3d2-e1f6-4g5h-4i3j-2k1l0m9n8o7p', 'basic-t1u2v3w4x5', 'BASIC', 500, '2026-06-29 14:15:11.909', NULL, '2026-06-29 14:30:11.909', 'FAILED', 37),
+                (11, 'f6e5d4c3-b2a1-40e9-8d7c-6b5a4f3e2d1c', 'premium-y6z5a4b3c2', 'PREMIUM', 1000, '2026-07-01 16:16:44.222', '2026-07-01 16:19:30.333', NULL, 'CONFIRMED', 37),
+                (12, '1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d', 'basic-d1e2f3g4h5', 'BASIC', 500, '2026-07-01 16:40:05.444', '2026-07-01 16:45:22.678', NULL, 'CONFIRMED', 37),
+                (13, '2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e', 'premium-i6j5k4l3m2', 'PREMIUM', 1000, '2026-07-03 23:50:19.999', NULL, '2026-07-04 00:05:19.999', 'FAILED', 37),
+                (14, '3c4d5e6f-7a8b-4c9d-0e1f-2a3b4c5d6e7f', 'premium-n1o2p3q4r5', 'PREMIUM', 1000, '2026-07-03 23:59:56.101', '2026-07-04 00:06:41.202', NULL, 'CONFIRMED', 37),
+                (15, '4d5e6f7a-8b9c-4d0e-1f2a-3b4c5d6e7f8a', 'basic-s6t5u4v3w2', 'BASIC', 500, '2026-07-05 14:37:12.333', NULL, '2026-07-05 14:52:12.333', 'EXPIRED', 37),
+                (16, '5e6f7a8b-9c0d-4e1f-2a3b-4c5d6e7f8a9b', 'premium-x1y2z3a4b5', 'PREMIUM', 1000, '2026-07-05 15:10:48.555', '2026-07-05 15:22:15.666', NULL, 'CONFIRMED', 37),
+                (17, '6f7a8b9c-0d1e-4f2a-3b4c-5d6e7f8a9b0c', 'basic-c6d5e4f3g2', 'BASIC', 500, '2026-07-07 13:26:01.777', '2026-07-07 13:29:33.888', NULL, 'CONFIRMED', 37),
+                (18, '7a8b9c0d-1e2f-4a3b-4c5d-6e7f8a9b0c1d', 'premium-h1i2j3k4l5', 'PREMIUM', 1000, '2026-07-07 13:50:29.121', NULL, '2026-07-07 14:05:29.121', 'FAILED', 37),
+                (19, '8b9c0d1e-2f3a-4b4c-5d6e-7f8a9b0c1d2e', 'basic-m6n5o4p3q2', 'BASIC', 500, '2026-07-08 10:11:50.333', '2026-07-08 10:15:08.444', NULL, 'CONFIRMED', 37),
+                (20, '9c0d1e2f-3a4b-4c5d-6e7f-8a9b0c1d2e3f', 'premium-r1s2t3u4v5', 'PREMIUM', 1000, '2026-07-08 10:45:10.555', '2026-07-08 10:48:55.666', NULL, 'CONFIRMED', 37),
+                (21, '0d1e2f3a-4b5c-4d6e-7f8a-9b0c1d2e3f4a', 'basic-w6x5y4z3a2', 'BASIC', 500, '2026-07-08 11:20:01.777', NULL, '2026-07-08 11:35:01.777', 'FAILED', 37),
+                (22, '1e2f3a4b-5c6d-4e7f-8a9b-0c1d2e3f4a5b', 'premium-b1c2d3e4f5', 'PREMIUM', 1000, '2026-07-08 11:58:22.888', '2026-07-08 12:01:12.999', NULL, 'CONFIRMED', 37),
+                (23, '2f3a4b5c-6d7e-4f8a-9b0c-1d2e3f4a5b6c', 'basic-g6h5i4j3k2', 'BASIC', 500, '2026-07-08 12:30:45.123', NULL, '2026-07-08 12:45:45.123', 'EXPIRED', 37),
+                (24, '3a4b5c6d-7e8f-4a9b-0c1d-2e3f4a5b6c7d', 'premium-l1m2n3o4p5', 'PREMIUM', 1000, '2026-07-08 13:00:15.456', '2026-07-08 13:03:05.789', NULL, 'CONFIRMED', 37),
+                (25, '4b5c6d7e-8f9a-4b0c-1d2e-3f4a5b6c7d8e', 'basic-q6r5s4t3u2', 'BASIC', 500, '2026-07-08 14:02:30.999', '2026-07-08 14:05:55.111', NULL, 'CONFIRMED', 37),
+                (26, '99c3f047-8224-4be6-85ef-7fa204c6daec', 'basic-4dec7827-1468544522', 'PREMIUM', 1000, '2026-07-08 14:45:59.1235', NULL, '2026-07-08 15:00:59.1235', 'CONFIRMED', 37)
+                ON CONFLICT (id) DO NOTHING;
+        </sql>
     </changeSet>
 </databaseChangeLog>
 

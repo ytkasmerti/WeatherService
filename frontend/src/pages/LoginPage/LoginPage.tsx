@@ -12,7 +12,7 @@ export const LoginPage = () => {
                 <Button text="← На главную" onClick={() => navigate('/')}/>
             </div>
             <LoginForm
-                onLoginSuccess={() => navigate('/weather')}
+                onLoginSuccess={() => navigate('/')}
                 onForgotPassword={() => navigate('/forgot-password')}
                 onGoToRegister={() => navigate('/register')}
             />

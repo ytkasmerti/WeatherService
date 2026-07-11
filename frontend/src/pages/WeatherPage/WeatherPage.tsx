@@ -10,6 +10,8 @@ import {fetchWeatherData} from '../../utils/weather.ts';
 import {weatherSchema} from './schema.ts';
 import styles from './Styles.module.css';
 import '../../App.css';
+import locationIcon from '../../assets/ui/location.svg';
+import calendarIcon from '../../assets/ui/calendar.svg';
 
 interface WeatherParams {
     city: string;
@@ -82,40 +84,52 @@ export const WeatherPage = () => {
                     </div>
 
                     {activeRequest !== 'coords' && (
-                        <Controller name="city" control={control} render={({field}) => (
-                            <Input placeholder="Название города" value={field.value} onChange={field.onChange}/>
-                        )}
-                        />
+                        <div className={styles.inputWrapper}>
+                            <img src={locationIcon} className={styles.inputIcon} alt="locationIcon"/>
+                            <Controller name="city" control={control} render={({field}) => (
+                                <Input placeholder="Название города" value={field.value} onChange={field.onChange}/>
+                            )}/>
+                        </div>
                     )}
 
                     {activeRequest === 'coords' && (
                         <>
-                            <Controller
-                                name="lat"
-                                control={control}
-                                render={({field}) => (
-                                    <Input placeholder="Широта (lat)" value={field.value} onChange={field.onChange}/>
-                                )}
-                            />
-
-                            <Controller
-                                name="lon"
-                                control={control}
-                                render={({field}) => (
-                                    <Input placeholder="Долгота (lon)" value={field.value} onChange={field.onChange}/>
-                                )}
-                            />
+                            <div className={styles.inputWrapper}>
+                                <img src={locationIcon} className={styles.inputIcon} alt="locationIcon"/>
+                                <Controller
+                                    name="lat"
+                                    control={control}
+                                    render={({field}) => (
+                                        <Input placeholder="Широта (lat)" value={field.value}
+                                               onChange={field.onChange}/>
+                                    )}
+                                />
+                            </div>
+                            <div className={styles.inputWrapper}>
+                                <img src={locationIcon} className={styles.inputIcon} alt="locationIcon"/>
+                                <Controller
+                                    name="lon"
+                                    control={control}
+                                    render={({field}) => (
+                                        <Input placeholder="Долгота (lon)" value={field.value}
+                                               onChange={field.onChange}/>
+                                    )}
+                                />
+                            </div>
                         </>
                     )}
 
                     {(activeRequest === 'forecast' || activeRequest === 'filter') && (
-                        <Controller
-                            name="days"
-                            control={control}
-                            render={({field}) => (
-                                <Input placeholder="Количество дней" value={field.value} onChange={field.onChange}/>
-                            )}
-                        />
+                        <div className={styles.inputWrapper}>
+                            <img src={calendarIcon} className={styles.inputIcon} alt="calendarIcon"/>
+                            <Controller
+                                name="days"
+                                control={control}
+                                render={({field}) => (
+                                    <Input placeholder="Количество дней" value={field.value} onChange={field.onChange}/>
+                                )}
+                            />
+                        </div>
                     )}
 
                     {activeRequest === 'filter' && (

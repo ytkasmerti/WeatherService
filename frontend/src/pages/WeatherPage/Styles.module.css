@@ -65,3 +65,21 @@
     justify-content: center;
     margin: 10px 0;
 }
+
+.inputWrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.inputIcon {
+    position: absolute;
+    left: 10px;
+    width: 20px;
+    height: 20px;
+    pointer-events: none;
+}
+
+.inputWrapper input {
+    padding-left: 35px;
+}

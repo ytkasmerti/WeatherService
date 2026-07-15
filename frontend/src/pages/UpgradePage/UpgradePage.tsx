@@ -4,12 +4,12 @@ import {Controller, useForm} from 'react-hook-form';
 import {Button} from '../../components/ui/Button/Button.tsx';
 import {Input} from '../../components/ui/Input/Input.tsx';
 import {Notification} from '../../components/ui/Notification/Notification.tsx';
-import {paymentApi} from '../../api/authService.ts';
+import {paymentApi} from '../../api/paymentApi.ts';
 import {SubscriptionPicker} from "../../components/widgets/SubscriptionPicker/SubscriptionPicker.tsx";
 import {useNotification} from '../../hooks/useNotification.ts';
 import {useAuth} from '../../hooks/useAuth';
 import {upgradeSchema} from './schema.ts';
-import styles from './Styles.module.css';
+import styles from './styles.module.css';
 import '../../App.css';
 
 interface UpgradeForm {

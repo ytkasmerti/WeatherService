@@ -17,8 +17,8 @@ export const weatherSchema = yup.object({
         is: (type: string) => type === 'forecast' || type === 'filter',
         then: (schema) => schema
             .required('Укажите количество дней')
-            .test('is-number', 'Должно быть числом', val => !isNaN(parseInt(val!)))
-            .test('range', 'От 1 до 14 дней', val => {
+            .test('is-number', 'Количество дней должно быть числом', val => !isNaN(parseInt(val!)))
+            .test('range', 'Количество дней должно быть от 1 до 14', val => {
                 const num = parseInt(val!);
                 return num >= 1 && num <= 14;
             }),
@@ -28,7 +28,6 @@ export const weatherSchema = yup.object({
         is: (type: string) => type !== 'coords',
         then: (schema) => schema
             .required('Название города обязательно')
-            .min(2, 'Минимум 2 символа')
             .matches(/^[a-zA-Zа-яёА-ЯЁ\s-]+$/, 'Название города может содержать только буквы'),
         otherwise: (schema) => schema.optional()
     }),

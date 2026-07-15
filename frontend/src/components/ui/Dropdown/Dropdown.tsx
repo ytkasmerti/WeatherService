@@ -1,5 +1,5 @@
 import {useDropdown} from '../../../hooks/useDropdown.ts';
-import styles from './Styles.module.css';
+import styles from './styles.module.css';
 
 interface DropdownProps {
     value: string;

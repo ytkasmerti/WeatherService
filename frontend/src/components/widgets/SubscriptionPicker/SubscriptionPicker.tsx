@@ -1,5 +1,5 @@
 import {Dropdown} from '../../ui/Dropdown/Dropdown.tsx';
-import styles from './Styles.module.css';
+import styles from './styles.module.css';
 
 export const SubscriptionPicker = ({value, onSelect}: { value: string, onSelect: (l: string) => void }) => {
     const options = ['BASIC', 'PREMIUM'];

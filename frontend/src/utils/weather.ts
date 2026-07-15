@@ -1,4 +1,4 @@
-import {weatherApi} from '../api/authService';
+import {weatherApi} from '../api/weatherApi.ts';
 import {type RequestType} from '../constants/weatherRequests';
 
 export const fetchWeatherData = async (type: RequestType | null, params: any) => {

@@ -10,7 +10,7 @@ export const forgotPasswordSchema = yup.object({
         .required('Подтвердите пароль'),
 
     password: yup.string()
-        .min(6, 'Пароль должен быть не менее 6 символов')
+        .min(6, 'Пароль yне может быть меньше 6 символов')
         .max(50, 'Пароль не может быть больше 50 символов')
         .required('Введите новый пароль'),
 

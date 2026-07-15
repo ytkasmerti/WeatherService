@@ -1,4 +1,4 @@
-import styles from './Styles.module.css';
+import styles from './styles.module.css';
 import {formatDate} from '../../../utils/date.ts';
 import {useCalendar} from '../../../hooks/useCalendar.ts';
 import {useState} from 'react';

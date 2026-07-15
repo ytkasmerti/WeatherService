@@ -1,6 +1,6 @@
 import {useNavigate} from 'react-router-dom';
 import {RegisterForm} from '../../components/widgets/RegisterForm/RegisterForm';
-import styles from './Styles.module.css';
+import styles from './styles.module.css';
 import '../../App.css';
 
 export const RegisterPage = () => {

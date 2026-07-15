@@ -1,7 +1,7 @@
 import {useNavigate} from 'react-router-dom';
 import {Button} from "../../ui/Button/Button.tsx";
 import {useAuth} from '../../../hooks/useAuth.ts';
-import styles from './Styles.module.css';
+import styles from './styles.module.css';
 
 interface HeaderProps {
     variant?: 'default' | 'minimal';

@@ -1,5 +1,5 @@
 import {useEffect} from 'react';
-import {authApi} from '../api/authService';
+import {authApi} from '../api/authApi.ts';
 import {useAppDispatch, useAppSelector} from './redux';
 import {setAuth} from '../store/authSlice';
 

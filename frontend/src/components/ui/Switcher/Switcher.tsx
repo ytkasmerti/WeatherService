@@ -1,5 +1,5 @@
 import {useState, useEffect} from 'react';
-import styles from './Styles.module.css';
+import styles from './styles.module.css';
 
 interface SwitcherProps {
     isOn?: boolean;

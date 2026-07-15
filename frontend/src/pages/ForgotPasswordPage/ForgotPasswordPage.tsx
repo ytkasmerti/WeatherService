@@ -3,14 +3,14 @@ import {useNavigate} from 'react-router-dom';
 import {useForm, Controller} from 'react-hook-form';
 import {yupResolver} from '@hookform/resolvers/yup';
 import {FaEye, FaEyeSlash} from "react-icons/fa";
-import {authApi} from '../../api/authService.ts';
+import {authApi} from '../../api/authApi.ts';
 import {Button} from '../../components/ui/Button/Button.tsx';
 import {Input} from '../../components/ui/Input/Input.tsx';
 import {Notification} from '../../components/ui/Notification/Notification.tsx';
 import {usePasswordVisibility} from '../../hooks/usePasswordVisibility.ts';
 import {useNotification} from '../../hooks/useNotification.ts';
 import {forgotPasswordSchema} from './schema.ts';
-import styles from './Styles.module.css';
+import styles from './styles.module.css';
 import '../../App.css';
 
 export const ForgotPasswordPage = () => {

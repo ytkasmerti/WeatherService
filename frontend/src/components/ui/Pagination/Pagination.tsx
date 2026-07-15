@@ -1,5 +1,5 @@
 import {getPaginationRange} from '../../../utils/pagination.ts';
-import styles from './Styles.module.css';
+import styles from './styles.module.css';
 
 interface PaginationProps {
     currentPage: number;

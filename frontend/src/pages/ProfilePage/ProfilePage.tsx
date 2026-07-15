@@ -5,14 +5,14 @@ import {FaEye, FaEyeSlash} from "react-icons/fa";
 import {Button} from '../../components/ui/Button/Button.tsx';
 import {Input} from '../../components/ui/Input/Input.tsx';
 import {Notification} from '../../components/ui/Notification/Notification.tsx';
-import {userApi} from '../../api/authService.ts';
+import {userApi} from '../../api/userApi.ts';
 import {Switcher} from '../../components/ui/Switcher/Switcher.tsx';
 import {DeleteModal} from '../../components/widgets/DeleteModal/DeleteModal.tsx';
 import {usePasswordVisibility} from '../../hooks/usePasswordVisibility.ts';
 import {useNotification} from '../../hooks/useNotification.ts';
 import {profileSchema} from './schema.ts';
 import {useAuth} from '../../hooks/useAuth';
-import styles from './Styles.module.css';
+import styles from './styles.module.css';
 import '../../App.css';
 
 export const ProfilePage = () => {

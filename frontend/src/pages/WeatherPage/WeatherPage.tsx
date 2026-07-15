@@ -8,7 +8,7 @@ import {FilterPicker} from '../../components/widgets/FilterPicker/FilterPicker.t
 import {menuMapping, type RequestType} from '../../constants/weatherRequests.ts';
 import {fetchWeatherData} from '../../utils/weather.ts';
 import {weatherSchema} from './schema.ts';
-import styles from './Styles.module.css';
+import styles from './styles.module.css';
 import '../../App.css';
 import locationIcon from '../../assets/ui/location.svg';
 import calendarIcon from '../../assets/ui/calendar.svg';
@@ -57,7 +57,7 @@ export const WeatherPage = () => {
     return (
         <div className={styles.container}>
             {error && <Notification message={error} onClose={() => setError(null)}/>}
-            <h1 className={styles.title}>WeatherService</h1>
+            <h1 className={styles.title}>Weather Service</h1>
             {!activeRequest ? (
                 <div className={styles.grid}>
                     {(Object.keys(menuMapping) as RequestType[]).map(type => (

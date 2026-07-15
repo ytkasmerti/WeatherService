@@ -1,4 +1,4 @@
-import styles from './Styles.module.css';
+import styles from './styles.module.css';
 import {useEffect} from "react";
 
 interface NotificationProps {

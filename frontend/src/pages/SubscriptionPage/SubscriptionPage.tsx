@@ -4,10 +4,10 @@ import {Button} from '../../components/ui/Button/Button.tsx';
 import {Input} from '../../components/ui/Input/Input.tsx';
 import {Notification} from '../../components/ui/Notification/Notification.tsx';
 import {Switcher} from '../../components/ui/Switcher/Switcher.tsx';
-import {subscriptionApi} from '../../api/authService.ts';
+import {subscriptionApi} from '../../api/subscriptionApi.ts';
 import {useNotification} from '../../hooks/useNotification.ts';
 import {subscriptionSchema} from './schema.ts';
-import styles from './Styles.module.css';
+import styles from './styles.module.css';
 import '../../App.css';
 
 interface SubscriptionForm {

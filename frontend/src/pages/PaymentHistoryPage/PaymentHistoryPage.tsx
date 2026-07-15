@@ -3,9 +3,9 @@ import {useNavigate} from 'react-router-dom';
 import {Notification} from '../../components/ui/Notification/Notification.tsx';
 import {Pagination} from '../../components/ui/Pagination/Pagination.tsx';
 import {Button} from '../../components/ui/Button/Button.tsx';
-import {paymentApi} from '../../api/authService.ts';
+import {paymentApi} from '../../api/paymentApi.ts';
 import {useNotification} from '../../hooks/useNotification.ts';
-import styles from './Styles.module.css';
+import styles from './styles.module.css';
 import '../../App.css';
 
 export const PaymentHistoryPage = () => {

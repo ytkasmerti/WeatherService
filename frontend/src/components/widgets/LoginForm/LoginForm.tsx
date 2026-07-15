@@ -9,7 +9,7 @@ import {Notification} from '../../ui/Notification/Notification.tsx';
 import {usePasswordVisibility} from '../../../hooks/usePasswordVisibility.ts';
 import {useNotification} from '../../../hooks/useNotification.ts';
 import {useAuth} from '../../../hooks/useAuth';
-import styles from './Styles.module.css';
+import styles from './styles.module.css';
 
 interface LoginFormProps {
     onLoginSuccess: () => void;

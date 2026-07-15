@@ -1,6 +1,6 @@
 import {Dropdown} from '../../ui/Dropdown/Dropdown.tsx';
 import {FILTER_ICONS, WEATHER_FILTERS} from '../../../constants/weatherFilters.ts';
-import styles from './Styles.module.css';
+import styles from './styles.module.css';
 
 interface FilterPickerProps {
     value: string;

@@ -2,14 +2,14 @@ import {useState} from 'react';
 import {useForm, Controller} from 'react-hook-form';
 import {yupResolver} from '@hookform/resolvers/yup';
 import {FaEye, FaEyeSlash} from "react-icons/fa";
-import {authApi} from '../../../api/authService.ts';
+import {authApi} from '../../../api/authApi.ts';
 import {registerSchema} from './schema.ts';
 import {Input} from '../../ui/Input/Input.tsx';
 import {Button} from '../../ui/Button/Button.tsx';
 import {Notification} from '../../ui/Notification/Notification.tsx';
 import {usePasswordVisibility} from '../../../hooks/usePasswordVisibility.ts';
 import {useNotification} from '../../../hooks/useNotification.ts';
-import styles from './Styles.module.css';
+import styles from './styles.module.css';
 
 interface RegisterFormProps {
     onCancel: () => void;

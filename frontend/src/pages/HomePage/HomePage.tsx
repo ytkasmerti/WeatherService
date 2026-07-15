@@ -1,4 +1,4 @@
-import styles from './Styles.module.css';
+import styles from './styles.module.css';
 import '../../App.css';
 
 export const HomePage = () => (

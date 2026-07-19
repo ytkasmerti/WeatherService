@@ -121,7 +121,7 @@ export const ProfilePage = () => {
                 )}
                 <div className={styles.autoRenewalRow}>
                     <p className={styles.textBase}>Автопродление:</p>
-                    <Switcher isOn={profile.autoRenewal} size="large" form="round" onToggle={handleAutoRenewal}/>
+                    <Switcher isOn={profile.autoRenewal} onToggle={handleAutoRenewal}/>
                 </div>
             </div>
 

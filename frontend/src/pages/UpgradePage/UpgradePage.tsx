@@ -35,15 +35,16 @@ export const UpgradePage = () => {
             setIsLoading(true);
             const payment = await paymentApi.createPayment(level);
             const result = await paymentApi.confirmPayment(payment.paymentId);
-            if (result && (result.status === 'CONFIRMED' || result.status === 'SUCCESS')) {
+            if (result && (result.status === 'CONFIRMED')) {
                 setNotify("Оплата прошла успешно! Пожалуйста, перезайдите в аккаунт.");
                 reset();
-                await logout();
-                setTimeout(() => {
+                setTimeout(async () => {
+                    await logout();
                     navigate('/login');
                 }, 2000);
+                return;
             } else {
-                throw new Error(result.message || "Оплата отклонена банком. Попробуйте снова или повторите позднее.");
+                throw new Error(result.message || "Оплата отклонена банком. Попробуйте снова или повторите попытку позднее.");
             }
         } catch (e: any) {
             const errorMsg = e.errors ? e.errors[0] : (e.message || "Ошибка при оплате. Попробуйте позднее.");

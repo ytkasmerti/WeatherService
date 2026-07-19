@@ -11,6 +11,7 @@ import {ProfilePage} from './pages/ProfilePage/ProfilePage.tsx';
 import {PaymentHistoryPage} from './pages/PaymentHistoryPage/PaymentHistoryPage.tsx';
 import {UpgradePage} from './pages/UpgradePage/UpgradePage.tsx';
 import {SubscriptionPage} from './pages/SubscriptionPage/SubscriptionPage.tsx';
+import {ProtectedRoute} from "./components/ProtectedRoute/ProtectedRoute";
 
 export default function App() {
     return (
@@ -19,9 +20,9 @@ export default function App() {
             <Routes>
                 <Route element={<MainLayout/>}>
                     <Route path="/" element={<HomePage/>}/>
-                    <Route path="/weather" element={<WeatherPage/>}/>
-                    <Route path="/profile" element={<ProfilePage/>}/>
-                    <Route path="/subscriptions" element={<SubscriptionPage/>}/>
+                    <Route path="/weather" element={<ProtectedRoute><WeatherPage/></ProtectedRoute>}/>
+                    <Route path="/profile" element={<ProtectedRoute><ProfilePage/></ProtectedRoute>}/>
+                    <Route path="/subscriptions" element={<ProtectedRoute><SubscriptionPage/></ProtectedRoute>}/>
                 </Route>
                 <Route element={<MinimalLayout hideHeader={false}/>}>
                     <Route path="/login" element={<LoginPage/>}/>
@@ -29,8 +30,8 @@ export default function App() {
                     <Route path="/forgot-password" element={<ForgotPasswordPage/>}/>
                 </Route>
                 <Route element={<MinimalLayout hideHeader={true}/>}>
-                    <Route path="/payment-history" element={<PaymentHistoryPage/>}/>
-                    <Route path="/upgrade" element={<UpgradePage/>}/>
+                    <Route path="/payment-history" element={<ProtectedRoute><PaymentHistoryPage/></ProtectedRoute>}/>
+                    <Route path="/upgrade" element={<ProtectedRoute><UpgradePage/></ProtectedRoute>}/>
                 </Route>
             </Routes>
         </BrowserRouter>

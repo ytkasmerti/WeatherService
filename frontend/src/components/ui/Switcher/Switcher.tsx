@@ -4,7 +4,7 @@ import styles from './styles.module.css';
 interface SwitcherProps {
     isOn?: boolean;
     size?: 'small' | 'large';
-    form?: 'round' | 'square';
+    form?: 'round';
     onToggle?: (value: boolean) => void;
 }
 

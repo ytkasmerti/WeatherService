@@ -29,12 +29,6 @@
     color: #333;
 }
 
-.img {
-    width: 20px;
-    height: 20px;
-    margin-right: 8px;
-    flex-shrink: 0;
-}
 
 .rightIconWrapper {
     display: flex;
@@ -57,12 +51,4 @@
 
 .rightIconWrapper button:hover {
     color: #333;
-}
-
-.iconButton {
-    display: flex;
-    padding: 0;
-    border: none;
-    background: none;
-    cursor: pointer;
 }

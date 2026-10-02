@@ -55,6 +55,15 @@ npm run dev
 http://localhost:5173
 ```
 
+### Запуск тестов
+
+Из директории `backend` выполнить команду:
+```bash
+.\mvnw.cmd test
+```
+Тесты используют H2 in-memory, реальный PostgreSQL/Redis не нужен.
+Требуется JDK 21.
+
 ### Тестовый аккаунт
 Для проверки работы системы можно использовать заранее созданный аккаунт.  
 **Email:** weatherservice26@gmail.com  
@@ -192,7 +201,8 @@ docker compose down -v
 - Email-уведомления: JavaMailSender
 - Планировщик задач: Spring Scheduling
 - Работа с API: Rest Client
-- Внешний API: Visual Crossing Weather API
+- Внешний API: Visual Crossing Weather API 
+- Тестирование: JUnit 5, Mockito, Spring Security Test, H2
 
 ### Frontend
 - Фреймворк: React

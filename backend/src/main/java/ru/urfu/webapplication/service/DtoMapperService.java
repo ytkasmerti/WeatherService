@@ -122,7 +122,6 @@ public class DtoMapperService {
 
         return PaymentDto.builder()
                 .paymentId(payment.getPaymentId())
-                .apiKey(payment.getApiKey())
                 .level(payment.getLevel())
                 .amount(payment.getAmount())
                 .status(payment.getStatus())
@@ -159,12 +158,11 @@ public class DtoMapperService {
                 .build();
     }
 
-    public PaymentDto toPaymentDto(Payment payment, String apiKey, String message) {
+    public PaymentDto toPaymentDto(Payment payment, String message) {
         if (payment == null) return null;
 
         return PaymentDto.builder()
                 .paymentId(payment.getPaymentId())
-                .apiKey(apiKey != null ? apiKey : payment.getApiKey())
                 .level(payment.getLevel())
                 .amount(payment.getAmount())
                 .status(payment.getStatus())

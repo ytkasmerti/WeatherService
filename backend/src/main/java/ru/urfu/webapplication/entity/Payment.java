@@ -23,9 +23,6 @@ public class Payment {
     @Column(name = "payment_id", unique = true, nullable = false)
     private String paymentId;
 
-    @Column(name = "api_key", nullable = false)
-    private String apiKey;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;

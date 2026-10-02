@@ -70,15 +70,14 @@ class PaymentServiceTest {
     @Test
     void createPayment_ShouldReturnPendingPayment_WhenValidRequest() {
         when(userRepository.findByApiKey(TEST_KEY)).thenReturn(Optional.of(testUser));
-        when(paymentRepository.findByApiKeyAndStatusAndExpiresAtAfter(
-                eq(TEST_KEY), eq(PaymentStatus.PENDING), any()))
+        when(paymentRepository.findByUserAndStatusAndExpiresAtAfter(
+                eq(testUser), eq(PaymentStatus.PENDING), any()))
                 .thenReturn(Optional.empty());
         when(paymentRepository.save(any(Payment.class))).thenAnswer(i -> i.getArguments()[0]);
 
         PaymentDto expected = PaymentDto.builder()
                 .paymentId(TEST_PAYMENT_ID).level(SubscriptionLevel.BASIC).amount(AMOUNT_BASIC).build();
-        when(mapper.toPaymentDto(any(Payment.class), anyString(), anyString()))
-                .thenReturn(expected);
+        when(mapper.toPaymentDto(any(Payment.class), anyString())).thenReturn(expected);
 
         PaymentDto result = paymentService.createPayment(TEST_KEY, SubscriptionLevel.BASIC, false);
 
@@ -104,11 +103,12 @@ class PaymentServiceTest {
     void createPayment_ShouldThrowException_WhenPendingPaymentExists() {
         Payment pending = new Payment();
         pending.setPaymentId("pending-1");
+        pending.setUser(testUser);
         pending.setExpiresAt(LocalDateTime.now().plusMinutes(10));
 
         when(userRepository.findByApiKey(TEST_KEY)).thenReturn(Optional.of(testUser));
-        when(paymentRepository.findByApiKeyAndStatusAndExpiresAtAfter(
-                eq(TEST_KEY), eq(PaymentStatus.PENDING), any()))
+        when(paymentRepository.findByUserAndStatusAndExpiresAtAfter(
+                eq(testUser), eq(PaymentStatus.PENDING), any()))
                 .thenReturn(Optional.of(pending));
 
         RuntimeException ex = assertThrows(RuntimeException.class,
@@ -131,21 +131,20 @@ class PaymentServiceTest {
     void confirmPayment_ShouldUpdateSubscription_WhenSuccess() {
         Payment payment = new Payment();
         payment.setPaymentId(TEST_PAYMENT_ID);
-        payment.setApiKey(TEST_KEY);
+        payment.setUser(testUser);
         payment.setLevel(SubscriptionLevel.BASIC);
         payment.setAmount(AMOUNT_BASIC);
         payment.setStatus(PaymentStatus.PENDING);
         payment.setExpiresAt(LocalDateTime.now().plusMinutes(10));
 
         when(paymentRepository.findByPaymentId(TEST_PAYMENT_ID)).thenReturn(Optional.of(payment));
-        when(userRepository.findByApiKey(TEST_KEY)).thenReturn(Optional.of(testUser));
         when(apiKeyService.generateApiKey(TEST_EMAIL, SubscriptionLevel.BASIC)).thenReturn("basic-new-key");
         when(apiKeyService.deactivateKey(TEST_KEY)).thenReturn(true);
         when(paymentRepository.save(any(Payment.class))).thenAnswer(i -> i.getArguments()[0]);
 
         PaymentDto expected = PaymentDto.builder()
                 .paymentId(TEST_PAYMENT_ID).apiKey("basic-new-key").status(PaymentStatus.CONFIRMED).build();
-        when(mapper.toPaymentDto(any(Payment.class), nullable(String.class), anyString())).thenReturn(expected);
+        when(mapper.toPaymentDto(any(Payment.class), anyString())).thenReturn(expected);
 
         PaymentService spy = spy(paymentService);
         doReturn(0.5).when(spy).getRandomValue();
@@ -164,19 +163,18 @@ class PaymentServiceTest {
     void confirmPayment_ShouldMarkFailed_WhenUnsuccessful() {
         Payment payment = new Payment();
         payment.setPaymentId(TEST_PAYMENT_ID);
-        payment.setApiKey(TEST_KEY);
+        payment.setUser(testUser);
         payment.setLevel(SubscriptionLevel.BASIC);
         payment.setAmount(AMOUNT_BASIC);
         payment.setStatus(PaymentStatus.PENDING);
         payment.setExpiresAt(LocalDateTime.now().plusMinutes(10));
 
         when(paymentRepository.findByPaymentId(TEST_PAYMENT_ID)).thenReturn(Optional.of(payment));
-        when(userRepository.findByApiKey(TEST_KEY)).thenReturn(Optional.of(testUser));
         when(paymentRepository.save(any(Payment.class))).thenAnswer(i -> i.getArguments()[0]);
 
         PaymentDto expected = PaymentDto.builder()
                 .paymentId(TEST_PAYMENT_ID).status(PaymentStatus.FAILED).build();
-        when(mapper.toPaymentDto(any(Payment.class), nullable(String.class), anyString())).thenReturn(expected);
+        when(mapper.toPaymentDto(any(Payment.class), anyString())).thenReturn(expected);
 
         PaymentService spy = spy(paymentService);
         doReturn(0.9).when(spy).getRandomValue();
@@ -192,7 +190,7 @@ class PaymentServiceTest {
     void confirmPayment_ShouldReturnExpired_WhenExpired() {
         Payment payment = new Payment();
         payment.setPaymentId(TEST_PAYMENT_ID);
-        payment.setApiKey(TEST_KEY);
+        payment.setUser(testUser);
         payment.setStatus(PaymentStatus.PENDING);
         payment.setExpiresAt(LocalDateTime.now().minusMinutes(5));
 
@@ -201,7 +199,7 @@ class PaymentServiceTest {
 
         PaymentDto expected = PaymentDto.builder()
                 .paymentId(TEST_PAYMENT_ID).status(PaymentStatus.EXPIRED).build();
-        when(mapper.toPaymentDto(any(Payment.class), anyString(), anyString())).thenReturn(expected);
+        when(mapper.toPaymentDto(any(Payment.class), anyString())).thenReturn(expected);
 
         PaymentDto result = paymentService.confirmPayment(TEST_PAYMENT_ID, TEST_KEY);
 
@@ -213,6 +211,7 @@ class PaymentServiceTest {
     void confirmPayment_ShouldThrowException_WhenAlreadyFailed() {
         Payment payment = new Payment();
         payment.setPaymentId(TEST_PAYMENT_ID);
+        payment.setUser(testUser);
         payment.setStatus(PaymentStatus.FAILED);
         payment.setExpiresAt(LocalDateTime.now().plusMinutes(10));
 
@@ -227,6 +226,7 @@ class PaymentServiceTest {
     void getPaymentStatus_ShouldReturnPayment() {
         Payment payment = new Payment();
         payment.setPaymentId(TEST_PAYMENT_ID);
+        payment.setUser(testUser);
         payment.setStatus(PaymentStatus.PENDING);
 
         when(paymentRepository.findByPaymentId(TEST_PAYMENT_ID)).thenReturn(Optional.of(payment));

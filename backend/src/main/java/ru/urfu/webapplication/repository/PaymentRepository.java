@@ -15,7 +15,7 @@ import java.util.Optional;
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
     Optional<Payment> findByPaymentId(String paymentId);
 
-    Optional<Payment> findByApiKeyAndStatusAndExpiresAtAfter(String apiKey, PaymentStatus status, LocalDateTime now);
+    Optional<Payment> findByUserAndStatusAndExpiresAtAfter(User user, PaymentStatus status, LocalDateTime now);
 
     Page<Payment> findAllByUserOrderByCreatedAtDesc(User user, Pageable pageable);
 }

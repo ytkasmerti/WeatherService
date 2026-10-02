@@ -58,8 +58,7 @@ public class PaymentService {
         User user = userRepository.findByApiKey(apiKey)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
-        SubscriptionLevel levelUpper = level;
-        int price = getPrice(levelUpper.name());
+        int price = getPrice(level.name());
 
         if (price == 0) {
             throw new RuntimeException("Неверный тариф. Доступны: BASIC, PREMIUM");
@@ -69,11 +68,11 @@ public class PaymentService {
             throw new RuntimeException("Нельзя сменить подписку на более низкий уровень: " + level);
         }
 
-        if (!isAutoRenewal && user.getSubscriptionLevel() == levelUpper) {
-            throw new RuntimeException("У вас уже есть активная подписка " + levelUpper);
+        if (!isAutoRenewal && user.getSubscriptionLevel() == level) {
+            throw new RuntimeException("У вас уже есть активная подписка " + level);
         }
 
-        paymentRepository.findByApiKeyAndStatusAndExpiresAtAfter(apiKey, PaymentStatus.PENDING, LocalDateTime.now())
+        paymentRepository.findByUserAndStatusAndExpiresAtAfter(user, PaymentStatus.PENDING, LocalDateTime.now())
                 .ifPresent(p -> {
                     throw new RuntimeException("У вас уже есть ожидающий платеж. PaymentId: " + p.getPaymentId() +
                             ", истекает: " + p.getExpiresAt());
@@ -83,9 +82,8 @@ public class PaymentService {
 
         Payment payment = new Payment();
         payment.setPaymentId(paymentId);
-        payment.setApiKey(apiKey);
         payment.setUser(user);
-        payment.setLevel(levelUpper);
+        payment.setLevel(level);
         payment.setAmount(price);
         payment.setCreatedAt(LocalDateTime.now());
         payment.setExpiresAt(LocalDateTime.now().plusMinutes(paymentExpireMinutes));
@@ -93,7 +91,7 @@ public class PaymentService {
         paymentRepository.save(payment);
         log.info("Создан платеж {} для {} на сумму {} рублей", paymentId, apiKey, price);
         String message = String.format("Платеж на сумму %d рублей создан. Совершите оплату в течение 15 минут.", payment.getAmount());
-        return mapper.toPaymentDto(payment, apiKey, message);
+        return mapper.toPaymentDto(payment, message);
     }
 
     //Подтверждение платежа
@@ -105,12 +103,12 @@ public class PaymentService {
         if (payment.getExpiresAt() != null && payment.getExpiresAt().isBefore(LocalDateTime.now())) {
             payment.setStatus(PaymentStatus.EXPIRED);
             paymentRepository.save(payment);
-            return mapper.toPaymentDto(payment, apiKey, "Платеж просрочен. Создайте новый платеж и попробуйте снова.");
+            return mapper.toPaymentDto(payment, "Платеж просрочен. Создайте новый платеж и попробуйте снова.");
         }
 
         if (payment.getStatus().equals(PaymentStatus.CONFIRMED)) {
             log.info("Платеж {} уже был подтвержден ранее", paymentId);
-            return mapper.toPaymentDto(payment, apiKey, "Платеж уже был подтвержден");
+            return mapper.toPaymentDto(payment, "Платеж уже был подтвержден");
         }
 
         if (payment.getStatus().equals(PaymentStatus.FAILED)) {
@@ -118,8 +116,10 @@ public class PaymentService {
             throw new RuntimeException("Платеж был отклонен. Создайте новый платеж.");
         }
 
-        User user = userRepository.findByApiKey(payment.getApiKey())
-                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+        User user = payment.getUser();
+        if (user == null) {
+            throw new RuntimeException("Пользователь не найден");
+        }
 
         paymentRepository.save(payment);
 
@@ -131,7 +131,7 @@ public class PaymentService {
             payment.setStatus(PaymentStatus.FAILED);
             paymentRepository.save(payment);
             emailService.sendPaymentFailedEmail(user.getEmail(), payment.getLevel(), payment.getAmount());
-            return mapper.toPaymentDto(payment, apiKey, "Платеж отклонен банком. Попробуйте снова или повторите операцию позднее.");
+            return mapper.toPaymentDto(payment, "Платеж отклонен банком. Попробуйте снова или повторите операцию позднее.");
         }
 
         //Имитация обработки платежа
@@ -158,7 +158,7 @@ public class PaymentService {
         emailService.sendPaymentSuccessEmail(user.getEmail(), payment.getLevel());
         String message = String.format("Оплата успешна! Подписка %s активирована до %s. Пожалуйста, перезайдите в свой аккаунт.",
                 payment.getLevel(), user.getSubscriptionExpiresAt().toString());
-        return mapper.toPaymentDto(payment, newApiKey, message);
+        return mapper.toPaymentDto(payment, message);
     }
 
     //Проверка статуса платежа

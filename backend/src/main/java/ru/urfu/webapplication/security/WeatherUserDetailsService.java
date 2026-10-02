@@ -10,7 +10,7 @@ import ru.urfu.webapplication.repository.UserRepository;
 
 @Service
 @RequiredArgsConstructor
-class WeatherUserDetailsService implements UserDetailsService {
+public class WeatherUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
 

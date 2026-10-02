@@ -48,6 +48,10 @@ public class PaymentService {
         };
     }
 
+    public double getRandomValue() {
+        return Math.random();
+    }
+
     //Создание платежа
     @Transactional
     public PaymentDto createPayment(String apiKey, SubscriptionLevel level, boolean isAutoRenewal) {
@@ -120,7 +124,7 @@ public class PaymentService {
         paymentRepository.save(payment);
 
         //Имитация оплаты
-        double random = Math.random();
+        double random = getRandomValue();
         boolean paymentSuccess = random < successProbability;
         if (!paymentSuccess) {
             log.warn("Платеж {} отклонен", paymentId);

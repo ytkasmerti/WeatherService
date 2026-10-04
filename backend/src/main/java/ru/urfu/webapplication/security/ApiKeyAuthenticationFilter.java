@@ -33,7 +33,8 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
                 path.equals("/auth/login") ||
                 path.equals("/auth/logout") ||
                 path.equals("/auth/forgot-password") ||
-                path.equals("/auth/reset-password")) {
+                path.equals("/auth/reset-password") ||
+                path.startsWith("/actuator")) {
             filterChain.doFilter(request, response);
             return;
         }

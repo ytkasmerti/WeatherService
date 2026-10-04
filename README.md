@@ -64,6 +64,11 @@ http://localhost:5173
 Тесты используют H2 in-memory, реальный PostgreSQL/Redis не нужен.
 Требуется JDK 21.
 
+### CI
+Настроен CI через GitHub Actions. 
+На каждый push и pull request в `main` автоматически запускаются тесты (`mvnw test`). 
+Результаты видны во вкладке **Actions** репозитория.
+
 ### Тестовый аккаунт
 Для проверки работы системы можно использовать заранее созданный аккаунт.  
 **Email:** weatherservice26@gmail.com  
@@ -138,6 +143,10 @@ docker compose down -v
 - Все действия пользователей логируются с уровнем INFO и DEBUG
 - Ошибки запросов к внешнему API логируются с уровнем ERROR
 
+### Мониторинг:
+Spring Boot Actuator: статус приложения и его зависимостей (PostgreSQL, Redis, SMTP), 
+базовые метрики JVM, HTTP-запросов и соединений с БД.
+
 # REST API Эндпоинты
 ### Аутентификация:
 - POST /auth/register?email=&password=&confirmPassword= – регистрация пользователя
@@ -175,6 +184,11 @@ docker compose down -v
 - GET /subscription/subscriptions – список активных подписок
 - GET /subscription/unsubscribe/{subscriptionId} – отписаться от конкретной подписки
 
+### Мониторинг (Actuator):
+- GET /actuator/health – статус приложения и зависимостей
+- GET /actuator/info – информация о приложении
+- GET /actuator/metrics – метрики JVM, HTTP-запросов, БД
+
 # Конфигурируемые параметры в application.properties
 - weather.limits.free – лимит запросов для FREE (по умолчанию 10)
 - weather.limits.basic – лимит запросов для BASIC (по умолчанию 100)
@@ -203,6 +217,8 @@ docker compose down -v
 - Работа с API: Rest Client
 - Внешний API: Visual Crossing Weather API 
 - Тестирование: JUnit 5, Mockito, Spring Security Test, H2
+- Мониторинг: Spring Boot Actuator
+- CI: GitHub Actions
 
 ### Frontend
 - Фреймворк: React

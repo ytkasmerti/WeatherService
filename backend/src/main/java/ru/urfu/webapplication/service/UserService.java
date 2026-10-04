@@ -71,7 +71,7 @@ public class UserService {
         int remainingRequests = maxRequests;
         if (maxRequests != Integer.MAX_VALUE) {
             LocalDateTime twentyFourHoursAgo = LocalDateTime.now().minusHours(24);
-            usedRequests = requestRepository.countRequestsByKeyInLast24Hours(user.getApiKey(), twentyFourHoursAgo);
+            usedRequests = requestRepository.countRequestsByUserInLast24Hours(user, twentyFourHoursAgo);
             remainingRequests = (int) Math.max(0, maxRequests - usedRequests);
         }
 

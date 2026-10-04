@@ -104,7 +104,7 @@ class UserServiceTest {
     void getProfile_ShouldReturnProfileWithLimits_WhenBasicUser() {
         when(userRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(testUser));
         when(apiKeyService.getMaxRequests(SubscriptionLevel.BASIC)).thenReturn(100);
-        when(requestRepository.countRequestsByKeyInLast24Hours(eq(TEST_KEY), any()))
+        when(requestRepository.countRequestsByUserInLast24Hours(eq(testUser), any()))
                 .thenReturn(30L);
 
         Map<String, Object> result = userService.getProfile(TEST_EMAIL);

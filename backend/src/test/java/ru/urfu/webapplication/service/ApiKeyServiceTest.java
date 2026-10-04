@@ -53,7 +53,7 @@ class ApiKeyServiceTest {
     @Test
     void validateAndGetLevel_ShouldReturnLevel_WhenKeyValid() {
         when(userRepository.findByApiKey(TEST_KEY)).thenReturn(Optional.of(testUser));
-        when(requestRepository.countRequestsByKeyInLast24Hours(eq(TEST_KEY), any()))
+        when(requestRepository.countRequestsByUserInLast24Hours(eq(testUser), any()))
                 .thenReturn(5L);
 
         SubscriptionLevel level = apiKeyService.validateAndGetLevel(TEST_KEY);
@@ -75,7 +75,7 @@ class ApiKeyServiceTest {
     @Test
     void validateAndGetLevel_ShouldThrowException_WhenLimitExceeded() {
         when(userRepository.findByApiKey(TEST_KEY)).thenReturn(Optional.of(testUser));
-        when(requestRepository.countRequestsByKeyInLast24Hours(eq(TEST_KEY), any()))
+        when(requestRepository.countRequestsByUserInLast24Hours(eq(testUser), any()))
                 .thenReturn(10L);
 
         RuntimeException ex = assertThrows(RuntimeException.class,
@@ -83,65 +83,22 @@ class ApiKeyServiceTest {
         assertEquals("Превышен лимит запросов на сегодня", ex.getMessage());
     }
 
-    //Проверяет: isValidKey возвращает true для активного
-    @Test
-    void isValidKey_ShouldReturnTrue_WhenActive() {
-        when(userRepository.findByApiKey(TEST_KEY)).thenReturn(Optional.of(testUser));
-
-        assertTrue(apiKeyService.isValidKey(TEST_KEY));
-    }
-
-    //Проверяет: isValidKey возвращает false для неактивного
-    @Test
-    void isValidKey_ShouldReturnFalse_WhenInactive() {
-        testUser.setIsActive(false);
-        when(userRepository.findByApiKey(TEST_KEY)).thenReturn(Optional.of(testUser));
-
-        assertFalse(apiKeyService.isValidKey(TEST_KEY));
-    }
-
-    //Проверяет: isValidKey false для несуществующего
-    @Test
-    void isValidKey_ShouldReturnFalse_WhenNotFound() {
-        when(userRepository.findByApiKey("bad-key")).thenReturn(Optional.empty());
-
-        assertFalse(apiKeyService.isValidKey("bad-key"));
-    }
-
-    //Проверяет: getSubscriptionLevel возвращает уровень
-    @Test
-    void getSubscriptionLevel_ShouldReturnLevel_WhenFound() {
-        when(userRepository.findByApiKey(TEST_KEY)).thenReturn(Optional.of(testUser));
-
-        assertEquals(SubscriptionLevel.FREE, apiKeyService.getSubscriptionLevel(TEST_KEY));
-    }
-
-    //Проверяет: getSubscriptionLevel null если нет
-    @Test
-    void getSubscriptionLevel_ShouldReturnNull_WhenNotFound() {
-        when(userRepository.findByApiKey("bad-key")).thenReturn(Optional.empty());
-
-        assertNull(apiKeyService.getSubscriptionLevel("bad-key"));
-    }
-
     //Проверяет: canMakeRequest true если лимит не превышен
     @Test
     void canMakeRequest_ShouldReturnTrue_WhenUnderLimit() {
-        when(userRepository.findByApiKey(TEST_KEY)).thenReturn(Optional.of(testUser));
-        when(requestRepository.countRequestsByKeyInLast24Hours(eq(TEST_KEY), any()))
+        when(requestRepository.countRequestsByUserInLast24Hours(eq(testUser), any()))
                 .thenReturn(5L);
 
-        assertTrue(apiKeyService.canMakeRequest(TEST_KEY));
+        assertTrue(apiKeyService.canMakeRequest(testUser));
     }
 
     //Проверяет: canMakeRequest false если лимит превышен
     @Test
     void canMakeRequest_ShouldReturnFalse_WhenLimitReached() {
-        when(userRepository.findByApiKey(TEST_KEY)).thenReturn(Optional.of(testUser));
-        when(requestRepository.countRequestsByKeyInLast24Hours(eq(TEST_KEY), any()))
+        when(requestRepository.countRequestsByUserInLast24Hours(eq(testUser), any()))
                 .thenReturn(10L);
 
-        assertFalse(apiKeyService.canMakeRequest(TEST_KEY));
+        assertFalse(apiKeyService.canMakeRequest(testUser));
     }
 
     //Проверяет успешную деактивацию ключа

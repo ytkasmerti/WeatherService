@@ -44,38 +44,33 @@ public class ApiKeyService {
         return prefix + "-" + uniqueId + "-" + Math.abs(email.hashCode());
     }
 
-    public SubscriptionLevel validateAndGetLevel(String apiKey) {
-        if (!isValidKey(apiKey)) {
+    public SubscriptionLevel validateAndGetLevel(User user) {
+        if (!user.getIsActive()) {
             throw new RuntimeException("Неверный API ключ");
         }
-        SubscriptionLevel level = getSubscriptionLevel(apiKey);
-        if (level == null) {
-            throw new RuntimeException("Неверный API ключ");
-        }
-        if (!canMakeRequest(apiKey)) {
+        if (!canMakeRequest(user)) {
             throw new RuntimeException("Превышен лимит запросов на сегодня");
         }
-        return level;
+        return user.getSubscriptionLevel();
     }
 
-    @Transactional
-    public boolean isValidKey(String apiKey) {
-        return userRepository.findByApiKey(apiKey).map(User::getIsActive).orElse(false);
+    public SubscriptionLevel validateAndGetLevel(String apiKey) {
+        return validateAndGetLevel(getUserByApiKey(apiKey));
     }
 
-    public SubscriptionLevel getSubscriptionLevel(String apiKey) {
-        return userRepository.findByApiKey(apiKey).map(User::getSubscriptionLevel).orElse(null);
-    }
-
-    public boolean canMakeRequest(String apiKey) {
-        SubscriptionLevel level = getSubscriptionLevel(apiKey);
+    public boolean canMakeRequest(User user) {
+        SubscriptionLevel level = user.getSubscriptionLevel();
         if (level == null) {
             return false;
         }
-
         LocalDateTime twentyFourHoursAgo = LocalDateTime.now().minusHours(24);
-        long requestCount = requestRepository.countRequestsByKeyInLast24Hours(apiKey, twentyFourHoursAgo);
+        long requestCount = requestRepository.countRequestsByUserInLast24Hours(user, twentyFourHoursAgo);
         return requestCount < getMaxRequests(level);
+    }
+
+    public User getUserByApiKey(String apiKey) {
+        return userRepository.findByApiKey(apiKey)
+                .orElseThrow(() -> new RuntimeException("Неверный API ключ"));
     }
 
     @Transactional

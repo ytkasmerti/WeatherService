@@ -14,6 +14,7 @@ import ru.urfu.webapplication.dto.WeatherResponse;
 import ru.urfu.webapplication.dto.visualcrossingapi.Day;
 import ru.urfu.webapplication.dto.visualcrossingapi.Hour;
 import ru.urfu.webapplication.dto.visualcrossingapi.VisualCrossingResponse;
+import ru.urfu.webapplication.entity.User;
 import ru.urfu.webapplication.entity.WeatherRequest;
 import ru.urfu.webapplication.model.RequestType;
 import ru.urfu.webapplication.model.SubscriptionLevel;
@@ -50,14 +51,14 @@ public class WeatherService {
         this.weatherAlertService = weatherAlertService;
     }
 
-    private void saveRequest(String city, RequestType requestType, String apiKey) {
+    private void saveRequest(String city, RequestType requestType, User user) {
         WeatherRequest request = new WeatherRequest();
         request.setCity(city);
         request.setRequestType(requestType);
         request.setRequestTime(LocalDateTime.now());
-        request.setApiKey(apiKey);
+        request.setUser(user);
         weatherRequestRepository.save(request);
-        log.debug("Сохранён запрос {} для города {}, ключ: {}", requestType, city, apiKey);
+        log.debug("Сохранён запрос {} для города {}, пользователь: {}", requestType, city, user.getEmail());
     }
 
     //Общий метод для получения текущей погоды
@@ -109,24 +110,39 @@ public class WeatherService {
 
     //Текущая погода по городу (доступ free+)
     public WeatherResponse getCurrentWeatherByCity(String city, String apiKey, String lang) {
-        apiKeyService.validateAndGetLevel(apiKey);
+        User user = apiKeyService.getUserByApiKey(apiKey);
+        apiKeyService.validateAndGetLevel(user);
         log.info("Запрос текущей погоды для города {}", city);
-        saveRequest(city, RequestType.CURRENT, apiKey);
+        saveRequest(city, RequestType.CURRENT, user);
         return self.fetchCurrentWeatherCached(city, lang);
     }
 
     //Текущая погода по координатам (доступ free+)
     public WeatherResponse getCurrentWeatherByCoordinates(Double lat, Double lon, String apiKey, String lang) {
-        apiKeyService.validateAndGetLevel(apiKey);
+        User user = apiKeyService.getUserByApiKey(apiKey);
+        apiKeyService.validateAndGetLevel(user);
         String location = lat + "," + lon;
         log.info("Запрос текущей погоды по координатам {}", location);
-        saveRequest(location, RequestType.CURRENT, apiKey);
+        saveRequest(location, RequestType.CURRENT, user);
         return self.fetchCurrentWeatherCached(location, lang);
+    }
+
+    //Прогноз на N дней (доступ basic+)
+    public ForecastResponse getForecast(String city, int days, String apiKey, String lang) {
+        User user = apiKeyService.getUserByApiKey(apiKey);
+        apiKeyService.validateAndGetLevel(user);
+        //Ограничение прогноза 15 днями (максимум API)
+        int validDays = Math.min(days, 15);
+        if (days > 15) {
+            log.warn("Запрошено {} дней, ограничено 15 днями", days);
+        }
+        log.info("Запрос прогноза погоды на {} дней для города {}", validDays, city);
+        saveRequest(city, RequestType.FILTERED_FORECAST, user);
+        return self.fetchForecastCached(city, validDays, lang);
     }
 
     // фильтрация (доступ premium)
     public ForecastResponse getForecastWithFilter(String city, int days, String apiKey, String lang, String filterCondition) {
-        apiKeyService.validateAndGetLevel(apiKey);
         ForecastResponse forecast = getForecast(city, days, apiKey, lang);
         if (filterCondition == null || filterCondition.trim().isEmpty()) {
             log.info("Фильтр не был указан, полный прогноз погоды для города {}", city);
@@ -160,22 +176,10 @@ public class WeatherService {
         return filteredResponse;
     }
 
-    //Прогноз на N дней (доступ basic+)
-    public ForecastResponse getForecast(String city, int days, String apiKey, String lang) {
-        apiKeyService.validateAndGetLevel(apiKey);
-        //Ограничение прогноза 15 днями (максимум API)
-        int validDays = Math.min(days, 15);
-        if (days > 15) {
-            log.warn("Запрошено {} дней, ограничено 15 днями", days);
-        }
-        log.info("Запрос прогноза погоды на {} дней для города {}", validDays, city);
-        saveRequest(city, RequestType.FILTERED_FORECAST, apiKey);
-        return self.fetchForecastCached(city, validDays, lang);
-    }
-
     //Исторические данные за период (доступ до 7 дней назад basic, доступ до 8 месяцев периода - premium)
     public HistoricalResponse getHistoricalData(String city, String startDate, String endDate, String apiKey, String lang) {
-        SubscriptionLevel level = apiKeyService.validateAndGetLevel(apiKey);
+        User user = apiKeyService.getUserByApiKey(apiKey);
+        SubscriptionLevel level = apiKeyService.validateAndGetLevel(user);
         LocalDate requestedDate = LocalDate.parse(startDate);
         LocalDate today = LocalDate.now();
         if (requestedDate.isAfter(today)) {
@@ -195,23 +199,25 @@ public class WeatherService {
             }
         }
         log.info("Запрос истории погоды для города {} с {} по {}", city, startDate, endDate);
-        saveRequest(city, RequestType.HISTORY, apiKey);
+        saveRequest(city, RequestType.HISTORY, user);
         return self.fetchHistoricalCached(city, startDate, endDate, lang);
     }
 
     //Погода в конкретное время (доступ premium)
     public WeatherResponse getWeatherAtTime(String city, String dateTime, String apiKey, String lang) {
-        apiKeyService.validateAndGetLevel(apiKey);
+        User user = apiKeyService.getUserByApiKey(apiKey);
+        apiKeyService.validateAndGetLevel(user);
         log.info("Запрос погоды для города {} на время {}", city, dateTime);
-        saveRequest(city, RequestType.AT_TIME, apiKey);
+        saveRequest(city, RequestType.AT_TIME, user);
         return self.fetchWeatherAtTimeCached(city, dateTime, lang);
     }
 
     //Почасовой прогноз погоды (доступ premium)
     public HourlyForecastResponse getHourlyForecast(String city, String date, String apiKey, String lang) {
-        apiKeyService.validateAndGetLevel(apiKey);
+        User user = apiKeyService.getUserByApiKey(apiKey);
+        apiKeyService.validateAndGetLevel(user);
         log.info("Запрос почасового прогноза для города {} на {}", city, date);
-        saveRequest(city, RequestType.FORECAST, apiKey);
+        saveRequest(city, RequestType.FORECAST, user);
         return self.fetchHourlyCached(city, date, lang);
     }
 

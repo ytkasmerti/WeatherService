@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import ru.urfu.webapplication.model.RequestType;
 
 import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "weather_requests")
 @Data
@@ -25,6 +26,7 @@ public class WeatherRequest {
     private String startDate;
     private String endDate;
     private LocalDateTime requestTime;
-    @Column(name = "api_key")
-    private String apiKey;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 }

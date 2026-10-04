@@ -13,6 +13,7 @@ import ru.urfu.webapplication.dto.WeatherResponse;
 import ru.urfu.webapplication.dto.visualcrossingapi.CurrentConditions;
 import ru.urfu.webapplication.dto.visualcrossingapi.Day;
 import ru.urfu.webapplication.dto.visualcrossingapi.VisualCrossingResponse;
+import ru.urfu.webapplication.entity.User;
 import ru.urfu.webapplication.entity.WeatherRequest;
 import ru.urfu.webapplication.model.SubscriptionLevel;
 import ru.urfu.webapplication.repository.WeatherRequestRepository;
@@ -46,6 +47,7 @@ class WeatherServiceTest {
 
     private VisualCrossingResponse mockApiResponse;
     private WeatherResponse mockWeatherResponse;
+    private User testUser;
 
     @BeforeEach
     void setUp() {
@@ -86,12 +88,21 @@ class WeatherServiceTest {
                 .conditions("Clear")
                 .build();
         ReflectionTestUtils.setField(weatherService, "self", weatherService);
+
+        testUser = new User();
+        testUser.setId(1L);
+        testUser.setEmail(TEST_CITY + "@test.com");
+        testUser.setApiKey(TEST_KEY);
+        testUser.setSubscriptionLevel(SubscriptionLevel.FREE);
+        testUser.setIsActive(true);
+
+        when(apiKeyService.getUserByApiKey(anyString())).thenReturn(testUser);
     }
 
     //Проверяет успешное получение текущей погоды по городу для FREE
     @Test
     void getCurrentWeatherByCity_ShouldReturnWeather_WhenApiSucceeds() {
-        when(apiKeyService.validateAndGetLevel(TEST_KEY)).thenReturn(SubscriptionLevel.FREE);
+        when(apiKeyService.validateAndGetLevel(testUser)).thenReturn(SubscriptionLevel.FREE);
         when(visualCrossingClient.getCurrentWeather(TEST_CITY, TEST_LANG)).thenReturn(mockApiResponse);
         when(mapper.toWeatherResponse(mockApiResponse, TEST_CITY, TEST_LANG)).thenReturn(mockWeatherResponse);
 
@@ -101,19 +112,18 @@ class WeatherServiceTest {
         assertEquals(TEST_CITY, result.getLocation());
         assertEquals(20.0, result.getTemperature());
         verify(weatherRequestRepository, times(1)).save(any(WeatherRequest.class));
-        verify(apiKeyService, times(1)).validateAndGetLevel(TEST_KEY);
+        verify(apiKeyService, times(1)).validateAndGetLevel(testUser);
     }
 
     //Проверяет ошибка при невалидном API ключе
     @Test
     void getCurrentWeatherByCity_ShouldThrowException_WhenApiKeyInvalid() {
-        String apiKey = "invalid-key";
-        when(apiKeyService.validateAndGetLevel(apiKey))
+        when(apiKeyService.getUserByApiKey("invalid_key"))
                 .thenThrow(new RuntimeException("Неверный API ключ"));
 
         RuntimeException ex = assertThrows(RuntimeException.class,
-                () -> weatherService.getCurrentWeatherByCity(TEST_CITY, apiKey, TEST_LANG));
-        assertEquals("Неверный API ключ", ex.getMessage());
+                () -> weatherService.getCurrentWeatherByCity(TEST_CITY, "invalid_key", TEST_LANG));
+        assertTrue(ex.getMessage().contains("Неверный API ключ"));
     }
 
     //Проверяет получение погоды по координатам для FREE
@@ -123,7 +133,7 @@ class WeatherServiceTest {
         Double lon = 37.6173;
         String location = lat + "," + lon;
 
-        when(apiKeyService.validateAndGetLevel(TEST_KEY)).thenReturn(SubscriptionLevel.FREE);
+        when(apiKeyService.validateAndGetLevel(testUser)).thenReturn(SubscriptionLevel.FREE);
         when(visualCrossingClient.getCurrentWeather(location, TEST_LANG)).thenReturn(mockApiResponse);
         when(mapper.toWeatherResponse(mockApiResponse, location, TEST_LANG)).thenReturn(mockWeatherResponse);
 
@@ -145,7 +155,7 @@ class WeatherServiceTest {
         ForecastResponse expected = ForecastResponse.builder()
                 .location(TEST_CITY).daily(List.of(daily)).build();
 
-        when(apiKeyService.validateAndGetLevel(apiKey)).thenReturn(SubscriptionLevel.BASIC);
+        when(apiKeyService.validateAndGetLevel(testUser)).thenReturn(SubscriptionLevel.BASIC);
         when(visualCrossingClient.getForecast(TEST_CITY, days, TEST_LANG)).thenReturn(mockApiResponse);
         when(mapper.toDailyForecast(any(Day.class))).thenReturn(daily);
         when(mapper.toForecastResponse(eq(mockApiResponse), anyList())).thenReturn(expected);
@@ -162,7 +172,7 @@ class WeatherServiceTest {
         int days = 30;
         String apiKey = "basic-test-key";
 
-        when(apiKeyService.validateAndGetLevel(apiKey)).thenReturn(SubscriptionLevel.BASIC);
+        when(apiKeyService.validateAndGetLevel(testUser)).thenReturn(SubscriptionLevel.BASIC);
         when(visualCrossingClient.getForecast(TEST_CITY, 15, TEST_LANG)).thenReturn(mockApiResponse);
         when(mapper.toForecastResponse(any(), anyList())).thenReturn(ForecastResponse.builder().build());
 
@@ -175,7 +185,7 @@ class WeatherServiceTest {
     @Test
     void getHistoricalData_ShouldThrowException_WhenBasicUserRequestsMoreThan7Days() {
         String apiKey = "basic-test-key";
-        when(apiKeyService.validateAndGetLevel(apiKey)).thenReturn(SubscriptionLevel.BASIC);
+        when(apiKeyService.validateAndGetLevel(testUser)).thenReturn(SubscriptionLevel.BASIC);
 
         RuntimeException ex = assertThrows(RuntimeException.class,
                 () -> weatherService.getHistoricalData(TEST_CITY, "2025-01-01", "2025-01-15", apiKey, TEST_LANG));
@@ -186,7 +196,7 @@ class WeatherServiceTest {
     @Test
     void getHistoricalData_ShouldThrowException_WhenBasicUserRequestsOlderThan7Days() {
         String apiKey = "basic-test-key";
-        when(apiKeyService.validateAndGetLevel(apiKey)).thenReturn(SubscriptionLevel.BASIC);
+        when(apiKeyService.validateAndGetLevel(testUser)).thenReturn(SubscriptionLevel.BASIC);
 
         RuntimeException ex = assertThrows(RuntimeException.class,
                 () -> weatherService.getHistoricalData(TEST_CITY, "2020-01-01", "2020-01-05", apiKey, TEST_LANG));
@@ -197,7 +207,7 @@ class WeatherServiceTest {
     @Test
     void getHistoricalData_ShouldThrowException_WhenFutureDateRequested() {
         String apiKey = "premium-test-key";
-        when(apiKeyService.validateAndGetLevel(apiKey)).thenReturn(SubscriptionLevel.PREMIUM);
+        when(apiKeyService.validateAndGetLevel(testUser)).thenReturn(SubscriptionLevel.PREMIUM);
 
         RuntimeException ex = assertThrows(RuntimeException.class,
                 () -> weatherService.getHistoricalData(TEST_CITY, "2030-01-01", "2030-01-05", apiKey, TEST_LANG));
@@ -219,7 +229,7 @@ class WeatherServiceTest {
         ForecastResponse fullForecast = ForecastResponse.builder()
                 .location(TEST_CITY).daily(List.of(rainyDay, clearDay)).build();
 
-        when(apiKeyService.validateAndGetLevel(apiKey)).thenReturn(SubscriptionLevel.PREMIUM);
+        when(apiKeyService.validateAndGetLevel(testUser)).thenReturn(SubscriptionLevel.PREMIUM);
         when(visualCrossingClient.getForecast(TEST_CITY, days, TEST_LANG)).thenReturn(mockApiResponse);
         when(mapper.toDailyForecast(any()))
                 .thenReturn(rainyDay)
@@ -230,7 +240,7 @@ class WeatherServiceTest {
 
         assertNotNull(result);
         assertEquals(1, result.getDaily().size());
-        assertEquals("Rain", result.getDaily().get(0).getConditions());
+        assertEquals("Rain", result.getDaily().getFirst().getConditions());
     }
 
     //Проверяет алерт при превышении порога жары
@@ -245,7 +255,7 @@ class WeatherServiceTest {
         ForecastResponse forecast = ForecastResponse.builder()
                 .location(TEST_CITY).daily(List.of(hotDay)).build();
 
-        when(apiKeyService.validateAndGetLevel("system-test-key")).thenReturn(SubscriptionLevel.PREMIUM);
+        when(apiKeyService.validateAndGetLevel(testUser)).thenReturn(SubscriptionLevel.PREMIUM);
         when(visualCrossingClient.getForecast(TEST_CITY, days, TEST_LANG)).thenReturn(mockApiResponse);
         when(mapper.toDailyForecast(any())).thenReturn(hotDay);
         when(mapper.toForecastResponse(eq(mockApiResponse), anyList())).thenReturn(forecast);

@@ -36,11 +36,11 @@ public class UserService {
             return;
         }
         if (user.getSubscriptionExpiresAt().isBefore(LocalDateTime.now())) {
-            log.info("Подписка пользователя {} истекла. Начало понижения подписки.", user.getEmail());
+            log.info("[payments] Подписка пользователя {} истекла. Начало понижения подписки.", user.getEmail());
             SubscriptionLevel oldLevel = user.getSubscriptionLevel();
             SubscriptionLevel newLevel = SubscriptionLevel.FREE;
             subscriptionService.unsubscribeAll(user.getEmail());
-            log.info("Удалены все подписки на уведомления для пользователя {}", user.getEmail());
+            log.info("[payments] Удалены все подписки на уведомления для пользователя {}", user.getEmail());
             //обновление ключа
             String newApiKey = apiKeyService.generateApiKey(user.getEmail(), newLevel);
             apiKeyService.deactivateKey(apiKey);
@@ -51,7 +51,7 @@ public class UserService {
             user.setIsActive(true);
             userRepository.save(user);
 
-            log.info("Подписка пользователя {} понижена с {} до FREE. Новый ключ: {}", user.getEmail(), oldLevel, newApiKey);
+            log.info("[payments] Подписка пользователя {} понижена с {} до FREE. Новый ключ: {}", user.getEmail(), oldLevel, newApiKey);
             emailService.sendSubscriptionExpiredEmail(user.getEmail(), oldLevel);
         }
     }
@@ -59,7 +59,7 @@ public class UserService {
     @Transactional
     public void updateUser(User user) {
         userRepository.save(user);
-        log.info("Пользователь {} обновлён", user.getEmail());
+        log.info("[auth] Пользователь {} обновлён", user.getEmail());
     }
 
     //Получение профиля
@@ -89,7 +89,7 @@ public class UserService {
         limits.put("remainingToday", remainingRequests == Integer.MAX_VALUE ? "Неограничено" : remainingRequests);
         profile.put("limits", limits);
 
-        log.info("Пользователь {} получил информацию о своем профиле", user.getEmail());
+        log.info("[auth] Пользователь {} получил информацию о своем профиле", user.getEmail());
         return profile;
     }
 
@@ -101,7 +101,7 @@ public class UserService {
         user.setAutoRenewal(enabled);
         updateUser(user);
 
-        log.info("Пользователь {} изменил автопродление подписки на {}", email, enabled);
+        log.info("[auth] Пользователь {} изменил автопродление подписки на {}", email, enabled);
         return Map.of(
                 "success", true,
                 "autoRenewal", enabled,
@@ -130,7 +130,7 @@ public class UserService {
         cookie.setMaxAge(0);
         response.addCookie(cookie);
 
-        log.info("Пользователь {} удалил аккаунт", email);
+        log.info("[auth] Пользователь {} удалил аккаунт", email);
         return Map.of(
                 "success", "true",
                 "message", "Аккаунт успешно удалён"
@@ -140,7 +140,7 @@ public class UserService {
     //Смена пароля
     @Transactional
     public Map<String, String> changePassword(String email, String oldPassword, String newPassword) {
-        log.info("Попытка смены пароля для пользователя {}", email);
+        log.info("[auth] Попытка смены пароля для пользователя {}", email);
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
         if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
@@ -149,7 +149,7 @@ public class UserService {
 
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
-        log.info("Пароль для пользователя {} был изменен", email);
+        log.info("[auth] Пароль для пользователя {} был изменен", email);
         emailService.sendPasswordChangedEmail(email);
         return Map.of(
                 "message", "Пароль успешно изменён",

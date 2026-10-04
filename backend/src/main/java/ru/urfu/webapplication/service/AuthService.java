@@ -72,15 +72,15 @@ public class AuthService {
         response.put("apiKey", apiKey);
         response.put("subscriptionLevel", level.name());
         response.put("message", "Регистрация прошла успешно!");
-        log.info("Новый пользователь успешно зарегистрирован: {} с FREE планом", email);
+        log.info("[auth] Новый пользователь успешно зарегистрирован: {} с FREE планом", email);
         return response;
     }
 
     public Map<String, Object> login(String email, String password, HttpServletResponse response) {
-        log.info("Попытка входа пользователя {}", email);
+        log.info("[auth] Попытка входа пользователя {}", email);
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> {
-                    log.error("Пользователь не найден: {}", email);
+                    log.error("[auth] Пользователь не найден: {}", email);
                     return new RuntimeException("Неверный email или пароль");
                 });
 
@@ -88,7 +88,7 @@ public class AuthService {
             throw new RuntimeException("Неверный email или пароль");
         }
 
-        log.info("Успешный вход пользователя {}", email);
+        log.info("[auth] Успешный вход пользователя {}", email);
         String apiKey = user.getApiKey();
         ResponseCookie cookie = ResponseCookie.from("apiKey", apiKey)
                 .httpOnly(true)
@@ -134,7 +134,7 @@ public class AuthService {
 
     @Transactional
     public Map<String, String> forgotPassword(String email) {
-        log.info("Запрос на сброс и восстановление пароля для пользователя {}", email);
+        log.info("[auth] Запрос на сброс и восстановление пароля для пользователя {}", email);
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Пользователь с таким email не найден"));
 
@@ -148,7 +148,7 @@ public class AuthService {
         resetCodeEntity.setExpiresAt(LocalDateTime.now().plusMinutes(resetCodeExpireMinutes));
         passwordResetCodeRepository.save(resetCodeEntity);
 
-        log.info("Сгенерирован код сброса пароля для пользователя {}", email);
+        log.info("[auth] Сгенерирован код сброса пароля для пользователя {}", email);
         emailService.sendPasswordResetCode(email, resetCode);
 
         return Map.of(
@@ -159,7 +159,7 @@ public class AuthService {
 
     @Transactional
     public Map<String, String> resetPassword(String email, String code, String newPassword) {
-        log.info("Попытка сброса пароля для пользователя {}", email);
+        log.info("[auth] Попытка сброса пароля для пользователя {}", email);
 
         boolean isValid = passwordResetCodeRepository
                 .findByEmailAndCodeAndExpiresAtAfter(email, code, LocalDateTime.now())
@@ -175,7 +175,7 @@ public class AuthService {
         userRepository.save(user);
         passwordResetCodeRepository.deleteByEmail(email);
 
-        log.info("Пароль для пользователя {} был сброшен и восстановлен", email);
+        log.info("[auth] Пароль для пользователя {} был сброшен и восстановлен", email);
         emailService.sendPasswordChangedEmail(email);
 
         return Map.of(

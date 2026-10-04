@@ -30,13 +30,13 @@ public class WeatherSubscriptionService {
         try {
             visualCrossingClient.getCurrentWeather(city, "ru");
         } catch (Exception e) {
-            log.error("Попытка подписки на несуществующий город: {}", city);
+            log.error("[subscriptions] Попытка подписки на несуществующий город: {}", city);
             throw new RuntimeException("Город '" + city + "' не найден. Проверьте правильность написания.");
         }
         User user = userRepository.findByApiKey(apiKey)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
         if (subscriptionRepository.existsByUserAndCity(user, city)) {
-            log.warn("Пользователь {} уже подписан на город {}", user.getEmail(), city);
+            log.warn("[subscriptions] Пользователь {} уже подписан на город {}", user.getEmail(), city);
             List<UserSubscription> existing = subscriptionRepository.findByUser(user);
             for (UserSubscription sub : existing) {
                 if (sub.getCity().equals(city)) {
@@ -67,7 +67,7 @@ public class WeatherSubscriptionService {
         subscription.setNotifyWind(notifyWind);
         subscription.setNotifyPrecipitation(notifyPrecipitation);
         subscriptionRepository.save(subscription);
-        log.info("Пользователь {} подписался на уведомления о погоде в городе {}", user.getEmail(), city);
+        log.info("[subscriptions] Пользователь {} подписался на уведомления о погоде в городе {}", user.getEmail(), city);
     }
 
     //Отписаться по айди подписки
@@ -78,7 +78,7 @@ public class WeatherSubscriptionService {
         UserSubscription subscription = subscriptionRepository.findByIdAndUser(subscriptionId, user)
                 .orElseThrow(() -> new RuntimeException("Подписка не найдена"));
         subscriptionRepository.delete(subscription);
-        log.info("Пользователь {} отписался от уведомлений подписки {}", email, subscriptionId);
+        log.info("[subscriptions] Пользователь {} отписался от уведомлений подписки {}", email, subscriptionId);
     }
 
     //Отписаться от всех подписок
@@ -87,7 +87,7 @@ public class WeatherSubscriptionService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
         subscriptionRepository.deleteByUser(user);
-        log.info("Пользователь {} отписался от всех уведомлений", email);
+        log.info("[subscriptions] Пользователь {} отписался от всех уведомлений", email);
     }
 
     //Получить все подписки пользователя

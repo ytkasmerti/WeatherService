@@ -30,7 +30,7 @@ public class WeatherScheduler {
     //Каждый день в 08:00
     @Scheduled(cron = "0 0 8 * * *")
     public void sendDailyWeatherAlerts() {
-        log.info("Запуск ежедневной рассылки погодных уведомлений");
+        log.info("[scheduler] Запуск ежедневной рассылки погодных уведомлений");
         List<UserSubscription> subscriptions = weatherSubscriptionService.getAllSubscriptions();
         for (UserSubscription sub : subscriptions) {
             String userEmail = sub.getUser().getEmail();
@@ -56,25 +56,25 @@ public class WeatherScheduler {
     //Проверка просроченных подписок каждый час
     @Scheduled(cron = "0 0 * * * *")
     public void processExpiredSubscriptions() {
-        log.info("Запуск обработки просроченных подписок");
+        log.info("[scheduler] Запуск обработки просроченных подписок");
 
         LocalDateTime now = LocalDateTime.now();
 
         List<User> expiredUsers = userRepository.findBySubscriptionExpiresAtBefore(now);
-        log.info("Просроченных пользователей: {}", expiredUsers.size());
+        log.info("[scheduler] Просроченных пользователей: {}", expiredUsers.size());
         for (User user : expiredUsers) {
             if (user.getSubscriptionLevel() != SubscriptionLevel.FREE) {
                 if (Boolean.TRUE.equals(user.getAutoRenewal())) {
-                    log.info("Автопродление включено у пользователя {}", user.getEmail());
+                    log.info("[scheduler] Автопродление включено у пользователя {}", user.getEmail());
                     try {
                         paymentService.processAutoRenewal(user.getEmail());
-                        log.info("Автопродление для пользователя {} удалось", user.getEmail());
+                        log.info("[scheduler] Автопродление для пользователя {} удалось", user.getEmail());
                     } catch (Exception e) {
-                        log.error("Автопродление для пользователя {} не удалось: {}", user.getEmail(), e.getMessage());
+                        log.error("[scheduler] Автопродление для пользователя {} не удалось: {}", user.getEmail(), e.getMessage());
                         userService.subscriptionReduction(user.getApiKey());
                     }
                 } else {
-                    log.info("Автопродление выключено для пользователя {}, понижаем до FREE", user.getEmail());
+                    log.info("[scheduler] Автопродление выключено для пользователя {}, понижаем до FREE", user.getEmail());
                     userService.subscriptionReduction(user.getApiKey());
                 }
             }
@@ -85,7 +85,7 @@ public class WeatherScheduler {
     //Уведомление о скором истечении подписки (за 3 дня)
     @Scheduled(cron = "0 0 12 * * *") // Каждый день в 12:00
     public void notifyExpiringSoon() {
-        log.info("Запуск проверки подписок, истекающих через 3 дня");
+        log.info("[scheduler] Запуск проверки подписок, истекающих через 3 дня");
 
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime in3Days = now.plusDays(3);
@@ -96,7 +96,7 @@ public class WeatherScheduler {
         for (User user : users) {
             if (user.getSubscriptionLevel() != SubscriptionLevel.FREE) {
                 long daysUntilExpiry = java.time.temporal.ChronoUnit.DAYS.between(now, user.getSubscriptionExpiresAt());
-                log.info("Подписка пользователя {} истекает через {} дней", user.getEmail(), daysUntilExpiry);
+                log.info("[scheduler] Подписка пользователя {} истекает через {} дней", user.getEmail(), daysUntilExpiry);
 
                 emailService.sendSubscriptionExpiringSoonEmail(
                         user.getEmail(),

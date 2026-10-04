@@ -62,9 +62,9 @@ public class EmailService {
             helper.setSubject(subject);
             helper.setText(text);
             mailSender.send(message);
-            log.info("Письмо регистрации отправлено на {}", toEmail);
+            log.info("[email] Письмо регистрации отправлено на {}", toEmail);
         } catch (MessagingException e) {
-            log.error("Ошибка при отправке письма регистрации: {}", e.getMessage());
+            log.error("[email] Ошибка при отправке письма регистрации: {}", e.getMessage());
             throw new RuntimeException("Не удалось отправить письмо на " + toEmail, e);
         }
     }
@@ -82,9 +82,9 @@ public class EmailService {
             helper.setSubject(subject);
             helper.setText(text);
             mailSender.send(message);
-            log.info("Письмо об успешной оплате отправлено на {}", toEmail);
+            log.info("[email] Письмо об успешной оплате отправлено на {}", toEmail);
         } catch (MessagingException e) {
-            log.error("Ошибка при отправке письма об успешной оплате: {}", e.getMessage());
+            log.error("[email] Ошибка при отправке письма об успешной оплате: {}", e.getMessage());
             throw new RuntimeException("Не удалось отправить письмо об успешной оплате на " + toEmail, e);
         }
     }
@@ -104,9 +104,9 @@ public class EmailService {
             helper.setSubject(subject);
             helper.setText(text);
             mailSender.send(message);
-            log.info("Письмо об отказе в оплате отправлено на {}", toEmail);
+            log.info("[email] Письмо об отказе в оплате отправлено на {}", toEmail);
         } catch (MessagingException e) {
-            log.error("Ошибка при отправке письма об отказе в оплате: {}", e.getMessage());
+            log.error("[email] Ошибка при отправке письма об отказе в оплате: {}", e.getMessage());
         }
     }
 
@@ -124,9 +124,9 @@ public class EmailService {
             helper.setSubject(subject);
             helper.setText(text);
             mailSender.send(message);
-            log.info("Погодное уведомление отправлено на {}", toEmail);
+            log.info("[email] Погодное уведомление отправлено на {}", toEmail);
         } catch (MessagingException e) {
-            log.error("Ошибка при отправке погодного уведомления: {}", e.getMessage());
+            log.error("[email] Ошибка при отправке погодного уведомления: {}", e.getMessage());
         }
     }
 
@@ -151,9 +151,9 @@ public class EmailService {
             helper.setSubject(subject);
             helper.setText(text);
             mailSender.send(message);
-            log.info("Уведомление о скором истечении подписки отправлено на {}", toEmail);
+            log.info("[email] Уведомление о скором истечении подписки отправлено на {}", toEmail);
         } catch (MessagingException e) {
-            log.error("Ошибка при отправке уведомления о скором истечении: {}", e.getMessage());
+            log.error("[email] Ошибка при отправке уведомления о скором истечении: {}", e.getMessage());
         }
     }
 
@@ -171,9 +171,9 @@ public class EmailService {
             helper.setSubject(subject);
             helper.setText(text);
             mailSender.send(message);
-            log.info("Письмо об истечении подписки отправлено на {}", toEmail);
+            log.info("[email] Письмо об истечении подписки отправлено на {}", toEmail);
         } catch (MessagingException e) {
-            log.error("Ошибка при отправке письма об истечении подписки: {}", e.getMessage());
+            log.error("[email] Ошибка при отправке письма об истечении подписки: {}", e.getMessage());
         }
     }
 
@@ -193,9 +193,9 @@ public class EmailService {
             helper.setSubject(subject);
             helper.setText(text);
             mailSender.send(message);
-            log.info("Уведомление об автопродлении отправлено на {}", toEmail);
+            log.info("[email] Уведомление об автопродлении отправлено на {}", toEmail);
         } catch (MessagingException e) {
-            log.error("Ошибка при отправке уведомления об автопродлении: {}", e.getMessage());
+            log.error("[email] Ошибка при отправке уведомления об автопродлении: {}", e.getMessage());
         }
     }
 
@@ -214,9 +214,9 @@ public class EmailService {
             helper.setSubject(subject);
             helper.setText(text);
             mailSender.send(message);
-            log.info("Письмо об удалении аккаунта отправлено на {}", toEmail);
+            log.info("[email] Письмо об удалении аккаунта отправлено на {}", toEmail);
         } catch (MessagingException e) {
-            log.error("Ошибка при отправке письма об удалении аккаунта: {}", e.getMessage());
+            log.error("[email] Ошибка при отправке письма об удалении аккаунта: {}", e.getMessage());
         }
     }
 
@@ -235,9 +235,9 @@ public class EmailService {
             helper.setSubject(subject);
             helper.setText(text);
             mailSender.send(message);
-            log.info("Код восстановления пароля отправлен на {}", toEmail);
+            log.info("[email] Код восстановления пароля отправлен на {}", toEmail);
         } catch (MessagingException e) {
-            log.error("Ошибка при отправке кода восстановления: {}", e.getMessage());
+            log.error("[email] Ошибка при отправке кода восстановления: {}", e.getMessage());
             throw new RuntimeException("Не удалось отправить код на " + toEmail, e);
         }
     }
@@ -256,9 +256,9 @@ public class EmailService {
             helper.setSubject(subject);
             helper.setText(text);
             mailSender.send(message);
-            log.info("Уведомление о смене пароля отправлено на {}", toEmail);
+            log.info("[email] Уведомление о смене пароля отправлено на {}", toEmail);
         } catch (MessagingException e) {
-            log.error("Ошибка при отправке уведомления о смене пароля: {}", e.getMessage());
+            log.error("[email] Ошибка при отправке уведомления о смене пароля: {}", e.getMessage());
         }
     }
 }

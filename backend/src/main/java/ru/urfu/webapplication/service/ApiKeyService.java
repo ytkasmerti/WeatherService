@@ -79,7 +79,7 @@ public class ApiKeyService {
                 .map(key -> {
                     key.setIsActive(false);
                     userRepository.save(key);
-                    log.info("API key deactivated: {}", apiKey);
+                    log.info("[auth] API ключ деактивирован: {}", apiKey);
                     return true;
                 })
                 .orElse(false);

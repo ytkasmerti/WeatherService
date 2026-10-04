@@ -89,7 +89,7 @@ public class PaymentService {
         payment.setExpiresAt(LocalDateTime.now().plusMinutes(paymentExpireMinutes));
         payment.setStatus(PaymentStatus.PENDING);
         paymentRepository.save(payment);
-        log.info("Создан платеж {} для {} на сумму {} рублей", paymentId, apiKey, price);
+        log.info("[payments] Создан платеж {} для {} на сумму {} рублей", paymentId, apiKey, price);
         String message = String.format("Платеж на сумму %d рублей создан. Совершите оплату в течение 15 минут.", payment.getAmount());
         return mapper.toPaymentDto(payment, message);
     }
@@ -107,12 +107,12 @@ public class PaymentService {
         }
 
         if (payment.getStatus().equals(PaymentStatus.CONFIRMED)) {
-            log.info("Платеж {} уже был подтвержден ранее", paymentId);
+            log.info("[payments] Платеж {} уже был подтвержден ранее", paymentId);
             return mapper.toPaymentDto(payment, "Платеж уже был подтвержден");
         }
 
         if (payment.getStatus().equals(PaymentStatus.FAILED)) {
-            log.info("Платеж {} уже был отклонен ранее", paymentId);
+            log.info("[payments] Платеж {} уже был отклонен ранее", paymentId);
             throw new RuntimeException("Платеж был отклонен. Создайте новый платеж.");
         }
 
@@ -127,7 +127,7 @@ public class PaymentService {
         double random = getRandomValue();
         boolean paymentSuccess = random < successProbability;
         if (!paymentSuccess) {
-            log.warn("Платеж {} отклонен", paymentId);
+            log.warn("[payments] Платеж {} отклонен", paymentId);
             payment.setStatus(PaymentStatus.FAILED);
             paymentRepository.save(payment);
             emailService.sendPaymentFailedEmail(user.getEmail(), payment.getLevel(), payment.getAmount());
@@ -140,7 +140,7 @@ public class PaymentService {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-        log.info("Платеж {} подтвержден", paymentId);
+        log.info("[payments] Платеж {} подтвержден", paymentId);
         payment.setStatus(PaymentStatus.CONFIRMED);
         payment.setConfirmedAt(LocalDateTime.now());
         paymentRepository.save(payment);
@@ -163,7 +163,7 @@ public class PaymentService {
 
     //Проверка статуса платежа
     public PaymentDto getPaymentStatus(String paymentId) {
-        log.info("Получение статуса платежа {}", paymentId);
+        log.info("[payments] Получение статуса платежа {}", paymentId);
         Payment payment = paymentRepository.findByPaymentId(paymentId)
                 .orElseThrow(() -> new RuntimeException("Платёж не найден"));
         return mapper.toPaymentDto(payment);
@@ -171,7 +171,7 @@ public class PaymentService {
 
     //Получить историю платежей по email
     public PaymentHistoryDto getPaymentHistoryByEmail(String email, int page, int size) {
-        log.info("Пользователь {} запросил историю своих платежей, страница {}, размер {}", email, page, size);
+        log.info("[payments] Пользователь {} запросил историю своих платежей, страница {}, размер {}", email, page, size);
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Пользователь с email " + email + " не найден"));
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
@@ -185,7 +185,7 @@ public class PaymentService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
         SubscriptionLevel level = user.getSubscriptionLevel();
-        log.info("Начало автопродления для {}", email);
+        log.info("[payments] Начало автопродления для {}", email);
 
         PaymentDto payment = createPayment(user.getApiKey(), level, true);
         confirmPayment(payment.getPaymentId(), user.getApiKey());
@@ -194,10 +194,10 @@ public class PaymentService {
                 .orElseThrow(() -> new RuntimeException("Платеж не найден"));
         PaymentDto confirmResult = confirmPayment(payment.getPaymentId(), user.getApiKey());
         if (paymentEntity.getStatus() == PaymentStatus.FAILED || paymentEntity.getStatus() == PaymentStatus.EXPIRED) {
-            log.error("Автоплатеж для пользователя {} не прошел: {}", email, confirmResult.getMessage());
+            log.error("[payments] Автоплатеж для пользователя {} не прошел: {}", email, confirmResult.getMessage());
             throw new RuntimeException("Платеж не прошел");
         }
         emailService.sendAutoRenewalSuccessEmail(user.getEmail(), level, user.getSubscriptionExpiresAt());
-        log.info("Автопродление для {} успешно", email);
+        log.info("[payments] Автопродление для {} успешно", email);
     }
 }

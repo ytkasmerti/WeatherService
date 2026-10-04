@@ -65,12 +65,12 @@ public class CookieAuthenticationFilter extends OncePerRequestFilter {
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            log.debug("Успешная аутентификация через cookie для: {}", userDetails.getUsername());
+            log.debug("[security] Успешная аутентификация через cookie для: {}", userDetails.getUsername());
 
             filterChain.doFilter(request, response);
 
         } catch (Exception e) {
-            log.error("Ошибка аутентификации через cookie: {}", e.getMessage());
+            log.error("[security] Ошибка аутентификации через cookie: {}", e.getMessage());
             filterChain.doFilter(request, response);
         }
     }

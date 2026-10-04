@@ -60,12 +60,12 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            log.debug("Успешная аутентификация для: {}", userDetails.getUsername());
+            log.debug("[security] Успешная аутентификация для: {}", userDetails.getUsername());
 
             filterChain.doFilter(request, response);
 
         } catch (Exception e) {
-            log.error("Ошибка аутентификации: {}", e.getMessage());
+            log.error("[security] Ошибка аутентификации: {}", e.getMessage());
             sendError(response, "Неверный API ключ");
         }
     }

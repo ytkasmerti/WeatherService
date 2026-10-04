@@ -18,7 +18,7 @@ public class VisualCrossingClient {
     }
     //Текущая погода
     public VisualCrossingResponse getCurrentWeather(String location, String lang) {
-        log.info("Вызов Visual Crossing API для текущей погоды для города {}", location);
+        log.info("[weather] Вызов Visual Crossing API для текущей погоды для города {}", location);
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/{location}")
@@ -33,7 +33,7 @@ public class VisualCrossingClient {
     }
     //Прогноз на N дней (максимум 15 - ограничение API)
     public VisualCrossingResponse getForecast(String location, int days, String lang) {
-        log.info("Вызов Visual Crossing API для прогноза на {} дней для города {}", days, location);
+        log.info("[weather] Вызов Visual Crossing API для прогноза на {} дней для города {}", days, location);
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/{location}")
@@ -49,7 +49,7 @@ public class VisualCrossingClient {
     }
     //Исторические данные
     public VisualCrossingResponse getHistoricalData(String location, String startDate, String endDate, String lang) {
-        log.info("Вызов Visual Crossing API для исторических данных для {} с {} по {}", location, startDate, endDate);
+        log.info("[weather] Вызов Visual Crossing API для исторических данных для {} с {} по {}", location, startDate, endDate);
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/{location}/{startDate}/{endDate}")
@@ -64,7 +64,7 @@ public class VisualCrossingClient {
     }
     //Погода в конкретное время
     public VisualCrossingResponse getWeatherAtTime(String location, String dateTime, String lang) {
-        log.info("Вызов Visual Crossing API для погоды в конкретное время для {} в {}", location, dateTime);
+        log.info("[weather] Вызов Visual Crossing API для погоды в конкретное время для {} в {}", location, dateTime);
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/{location}/{dateTime}")
@@ -79,7 +79,7 @@ public class VisualCrossingClient {
     }
     //Почасовой прогноз погоды
     public VisualCrossingResponse getHourlyForecast(String location, String date, String lang) {
-        log.info("Вызов Visual Crossing API для почасового прогноза для {} в день {}", location, date);
+        log.info("[weather] Вызов Visual Crossing API для почасового прогноза для {} в день {}", location, date);
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/{location}/{date}")

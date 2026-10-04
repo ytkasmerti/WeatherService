@@ -31,7 +31,7 @@ public class DtoMapperService {
     }
 
     public WeatherResponse toWeatherResponse(VisualCrossingResponse response, String location, String lang) {
-        log.debug("Маппинг текущей погоды для {}", location);
+        log.debug("[mapper] Маппинг текущей погоды для {}", location);
         return new WeatherResponse(
                 response.getResolvedAddress(),
                 response.getCurrentConditions().getTemp(),

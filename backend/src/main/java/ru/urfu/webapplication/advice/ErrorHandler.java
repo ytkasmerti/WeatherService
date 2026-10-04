@@ -18,7 +18,7 @@ import java.util.Map;
 public class ErrorHandler {
     @ExceptionHandler(WebClientResponseException.class)
     public ResponseEntity<Map<String, Object>> handleApiError(WebClientResponseException e) {
-        log.error("Ошибка при вызове внешнего API: {} {}", e.getStatusCode(), e.getMessage());
+        log.error("[advice] Ошибка при вызове внешнего API: {} {}", e.getStatusCode(), e.getMessage());
         Map<String, Object> error = new HashMap<>();
 
         if (e.getStatusCode().value() == 400) {
@@ -35,7 +35,7 @@ public class ErrorHandler {
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, String>> handleRuntimeException(RuntimeException e) {
-        log.error("Ошибка выполнения: {}", e.getMessage());
+        log.error("[advice] Ошибка выполнения: {}", e.getMessage());
         Map<String, String> error = new HashMap<>();
         error.put("error", "Ошибка выполнения запроса");
         error.put("message", e.getMessage());
@@ -44,7 +44,7 @@ public class ErrorHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleException(Exception e) {
-        log.error("Непредвиденная ошибка: {}", e.getMessage());
+        log.error("[advice] Непредвиденная ошибка: {}", e.getMessage());
         Map<String, String> error = new HashMap<>();
         error.put("error", "Внутренняя ошибка сервера");
         error.put("message", "Попробуйте позже");
@@ -53,7 +53,7 @@ public class ErrorHandler {
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<Map<String, String>> handleValidationError(ConstraintViolationException e) {
-        log.error("Ошибка валидации: {}", e.getMessage());
+        log.error("[advice] Ошибка валидации: {}", e.getMessage());
         Map<String, String> error = new HashMap<>();
         error.put("error", "Ошибка валидации параметров");
         error.put("message", e.getConstraintViolations().iterator().next().getMessage());
@@ -62,7 +62,7 @@ public class ErrorHandler {
 
     @ExceptionHandler(HandlerMethodValidationException.class)
     public ResponseEntity<Map<String, String>> handleHandlerMethodValidationException(HandlerMethodValidationException e) {
-        log.error("Ошибка валидации параметров: {}", e.getMessage());
+        log.error("[advice] Ошибка валидации параметров: {}", e.getMessage());
         Map<String, String> error = new HashMap<>();
         error.put("error", "Ошибка валидации параметров");
 
@@ -79,7 +79,7 @@ public class ErrorHandler {
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<Map<String, Object>> handleAccessDenied(AccessDeniedException e) {
-        log.error("Доступ запрещён: {}", e.getMessage());
+        log.error("[advice] Доступ запрещён: {}", e.getMessage());
         Map<String, Object> error = new HashMap<>();
         error.put("error", "Недостаточно прав");
         error.put("message", "Ваш тариф не позволяет использовать эту функцию. Повысьте уровень подписки");

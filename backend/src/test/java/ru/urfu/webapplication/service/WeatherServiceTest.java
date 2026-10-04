@@ -85,6 +85,7 @@ class WeatherServiceTest {
                 .pressure(1013.0)
                 .conditions("Clear")
                 .build();
+        ReflectionTestUtils.setField(weatherService, "self", weatherService);
     }
 
     //Проверяет успешное получение текущей погоды по городу для FREE

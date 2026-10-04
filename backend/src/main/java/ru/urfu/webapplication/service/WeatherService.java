@@ -1,7 +1,10 @@
 package ru.urfu.webapplication.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import ru.urfu.webapplication.client.VisualCrossingClient;
 import ru.urfu.webapplication.dto.ForecastResponse;
@@ -33,6 +36,9 @@ public class WeatherService {
     private final WeatherAlertService weatherAlertService;
     @Value("${systemApiKey}")
     private String apiKey;
+    @Lazy
+    @Autowired
+    private WeatherService self;
 
     public WeatherService(VisualCrossingClient visualCrossingClient,
                           ApiKeyService apiKeyService,
@@ -106,7 +112,7 @@ public class WeatherService {
         apiKeyService.validateAndGetLevel(apiKey);
         log.info("Запрос текущей погоды для города {}", city);
         saveRequest(city, RequestType.CURRENT, apiKey);
-        return fetchWeatherFromApi(city, lang);
+        return self.fetchCurrentWeatherCached(city, lang);
     }
 
     //Текущая погода по координатам (доступ free+)
@@ -115,7 +121,7 @@ public class WeatherService {
         String location = lat + "," + lon;
         log.info("Запрос текущей погоды по координатам {}", location);
         saveRequest(location, RequestType.CURRENT, apiKey);
-        return fetchWeatherFromApi(location, lang);
+        return self.fetchCurrentWeatherCached(location, lang);
     }
 
     // фильтрация (доступ premium)
@@ -163,18 +169,8 @@ public class WeatherService {
             log.warn("Запрошено {} дней, ограничено 15 днями", days);
         }
         log.info("Запрос прогноза погоды на {} дней для города {}", validDays, city);
-        VisualCrossingResponse response = visualCrossingClient.getForecast(city, validDays, lang);
-        List<ForecastResponse.DailyForecast> dailyList = new ArrayList<>();
-        if (response.getDays() != null) {
-            int limit = Math.min(days, response.getDays().size());
-            for (int i = 0; i < limit; i++) {
-                Day day = response.getDays().get(i);
-                dailyList.add(mapper.toDailyForecast(day));
-            }
-            log.info("Возвращено {} дней прогноза", dailyList.size());
-        }
         saveRequest(city, RequestType.FILTERED_FORECAST, apiKey);
-        return mapper.toForecastResponse(response, dailyList);
+        return self.fetchForecastCached(city, validDays, lang);
     }
 
     //Исторические данные за период (доступ до 7 дней назад basic, доступ до 8 месяцев периода - premium)
@@ -199,6 +195,52 @@ public class WeatherService {
             }
         }
         log.info("Запрос истории погоды для города {} с {} по {}", city, startDate, endDate);
+        saveRequest(city, RequestType.HISTORY, apiKey);
+        return self.fetchHistoricalCached(city, startDate, endDate, lang);
+    }
+
+    //Погода в конкретное время (доступ premium)
+    public WeatherResponse getWeatherAtTime(String city, String dateTime, String apiKey, String lang) {
+        apiKeyService.validateAndGetLevel(apiKey);
+        log.info("Запрос погоды для города {} на время {}", city, dateTime);
+        saveRequest(city, RequestType.AT_TIME, apiKey);
+        return self.fetchWeatherAtTimeCached(city, dateTime, lang);
+    }
+
+    //Почасовой прогноз погоды (доступ premium)
+    public HourlyForecastResponse getHourlyForecast(String city, String date, String apiKey, String lang) {
+        apiKeyService.validateAndGetLevel(apiKey);
+        log.info("Запрос почасового прогноза для города {} на {}", city, date);
+        saveRequest(city, RequestType.FORECAST, apiKey);
+        return self.fetchHourlyCached(city, date, lang);
+    }
+
+    @Cacheable(value = "weather-current", key = "#location + '_' + #lang")
+    public WeatherResponse fetchCurrentWeatherCached(String location, String lang) {
+        log.info("Кэш не сработал: текущая погода для {} ({})", location, lang);
+        return fetchWeatherFromApi(location, lang);
+    }
+
+    @Cacheable(value = "weather-forecast", key = "#city + '_' + #days + '_' + #lang")
+    public ForecastResponse fetchForecastCached(String city, int days, String lang) {
+        log.info("Кэш не сработал: прогноз для {} на {} дней ({})", city, days, lang);
+        VisualCrossingResponse response = visualCrossingClient.getForecast(city, days, lang);
+        List<ForecastResponse.DailyForecast> dailyList = new ArrayList<>();
+        if (response.getDays() != null) {
+            int limit = Math.min(days, response.getDays().size());
+            for (int i = 0; i < limit; i++) {
+                Day day = response.getDays().get(i);
+                dailyList.add(mapper.toDailyForecast(day));
+            }
+        }
+        return mapper.toForecastResponse(response, dailyList);
+    }
+
+    //Кэшированные вызовы внешнего API
+
+    @Cacheable(value = "weather-history", key = "#city + '_' + #startDate + '_' + #endDate + '_' + #lang")
+    public HistoricalResponse fetchHistoricalCached(String city, String startDate, String endDate, String lang) {
+        log.info("Кэш не сработал: история погоды для {} с {} по {} ({})", city, startDate, endDate, lang);
         VisualCrossingResponse response = visualCrossingClient.getHistoricalData(city, startDate, endDate, lang);
         List<HistoricalResponse.DailyHistory> historyList = new ArrayList<>();
         if (response.getDays() != null) {
@@ -206,23 +248,19 @@ public class WeatherService {
                 historyList.add(mapper.toDailyHistory(day));
             }
         }
-        saveRequest(city, RequestType.HISTORY, apiKey);
         return mapper.toHistoricalResponse(response, startDate, endDate, historyList);
     }
 
-    //Погода в конкретное время (доступ premium)
-    public WeatherResponse getWeatherAtTime(String city, String dateTime, String apiKey, String lang) {
-        apiKeyService.validateAndGetLevel(apiKey);
-        log.info("Запрос погоды для города {} на время {}", city, dateTime);
+    @Cacheable(value = "weather-at-time", key = "#city + '_' + #dateTime + '_' + #lang")
+    public WeatherResponse fetchWeatherAtTimeCached(String city, String dateTime, String lang) {
+        log.info("Кэш не сработал: погода на конкретное время для {} на {} ({})", city, dateTime, lang);
         VisualCrossingResponse response = visualCrossingClient.getWeatherAtTime(city, dateTime, lang);
-        saveRequest(city, RequestType.AT_TIME, apiKey);
         return mapper.toWeatherResponse(response, city, dateTime);
     }
 
-    //Почасовой прогноз погоды (доступ premium)
-    public HourlyForecastResponse getHourlyForecast(String city, String date, String apiKey, String lang) {
-        apiKeyService.validateAndGetLevel(apiKey);
-        log.info("Запрос почасового прогноза для города {} на {}", city, date);
+    @Cacheable(value = "weather-hourly", key = "#city + '_' + #date + '_' + #lang")
+    public HourlyForecastResponse fetchHourlyCached(String city, String date, String lang) {
+        log.info("Кэш не сработал: почасовой прогноз для {} на {} ({})", city, date, lang);
         VisualCrossingResponse response = visualCrossingClient.getHourlyForecast(city, date, lang);
         List<HourlyForecastResponse.HourlyData> hourlyList = new ArrayList<>();
         if (response.getDays() != null && !response.getDays().isEmpty()) {
@@ -233,7 +271,6 @@ public class WeatherService {
                 }
             }
         }
-        saveRequest(city, RequestType.FORECAST, apiKey);
         return mapper.toHourlyForecastResponse(response, date, hourlyList);
     }
 }

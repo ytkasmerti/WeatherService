@@ -10,7 +10,10 @@ import ru.urfu.webapplication.entity.User;
 import ru.urfu.webapplication.entity.UserSubscription;
 import ru.urfu.webapplication.model.SubscriptionLevel;
 import ru.urfu.webapplication.repository.UserRepository;
-import ru.urfu.webapplication.service.*;
+import ru.urfu.webapplication.service.EmailService;
+import ru.urfu.webapplication.service.PaymentService;
+import ru.urfu.webapplication.service.WeatherService;
+import ru.urfu.webapplication.service.WeatherSubscriptionService;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,8 +32,6 @@ class WeatherSchedulerTest {
     private EmailService emailService;
     @Mock
     private UserRepository userRepository;
-    @Mock
-    private UserService userService;
     @Mock
     private PaymentService paymentService;
 
@@ -94,7 +95,7 @@ class WeatherSchedulerTest {
 
         scheduler.processExpiredSubscriptions();
 
-        verify(userService, times(1)).subscriptionReduction("free-key");
+        verify(paymentService, times(1)).subscriptionReduction("free-key");
         verify(paymentService, never()).processAutoRenewal(anyString());
     }
 
@@ -109,7 +110,7 @@ class WeatherSchedulerTest {
         scheduler.processExpiredSubscriptions();
 
         verify(paymentService, times(1)).processAutoRenewal("test@example.com");
-        verify(userService, never()).subscriptionReduction(anyString());
+        verify(paymentService, never()).subscriptionReduction(anyString());
     }
 
     //Проверяет понижение подписки при ошибке автопродления
@@ -122,7 +123,7 @@ class WeatherSchedulerTest {
 
         scheduler.processExpiredSubscriptions();
 
-        verify(userService, times(1)).subscriptionReduction("free-key");
+        verify(paymentService, times(1)).subscriptionReduction("free-key");
     }
 
     //Проверяет отправку уведомления о скором истечении подписки

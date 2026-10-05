@@ -18,7 +18,8 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -39,8 +40,6 @@ class UserServiceTest {
     @Mock
     private WeatherRequestRepository requestRepository;
     @Mock
-    private WeatherSubscriptionService subscriptionService;
-    @Mock
     private HttpServletResponse response;
 
     @InjectMocks
@@ -58,45 +57,6 @@ class UserServiceTest {
         testUser.setSubscriptionLevel(SubscriptionLevel.BASIC);
         testUser.setIsActive(true);
         testUser.setSubscriptionExpiresAt(LocalDateTime.now().minusDays(1));
-    }
-
-    //Проверяет понижение подписки при истечении
-    @Test
-    void subscriptionReduction_ShouldDowngradeToFree_WhenExpired() {
-        when(userRepository.findByApiKey(TEST_KEY)).thenReturn(Optional.of(testUser));
-        when(apiKeyService.generateApiKey(TEST_EMAIL, SubscriptionLevel.FREE)).thenReturn("free-new-key");
-        when(apiKeyService.deactivateKey(TEST_KEY)).thenReturn(true);
-
-        userService.subscriptionReduction(TEST_KEY);
-
-        assertEquals(SubscriptionLevel.FREE, testUser.getSubscriptionLevel());
-        assertEquals("free-new-key", testUser.getApiKey());
-        assertNull(testUser.getSubscriptionExpiresAt());
-        verify(subscriptionService, times(1)).unsubscribeAll(TEST_EMAIL);
-        verify(emailService, times(1)).sendSubscriptionExpiredEmail(TEST_EMAIL, SubscriptionLevel.BASIC);
-    }
-
-    //Проверяет: не понижает если подписка ещё активна
-    @Test
-    void subscriptionReduction_ShouldNotDowngrade_WhenNotExpired() {
-        testUser.setSubscriptionExpiresAt(LocalDateTime.now().plusDays(5));
-        when(userRepository.findByApiKey(TEST_KEY)).thenReturn(Optional.of(testUser));
-
-        userService.subscriptionReduction(TEST_KEY);
-
-        assertEquals(SubscriptionLevel.BASIC, testUser.getSubscriptionLevel());
-        verify(subscriptionService, never()).unsubscribeAll(anyString());
-    }
-
-    //Проверяет: не понижает если expiry == null
-    @Test
-    void subscriptionReduction_ShouldReturn_WhenExpiryNull() {
-        testUser.setSubscriptionExpiresAt(null);
-        when(userRepository.findByApiKey(TEST_KEY)).thenReturn(Optional.of(testUser));
-
-        userService.subscriptionReduction(TEST_KEY);
-
-        verify(userRepository, never()).save(any());
     }
 
     //Проверяет профиль с лимитами для BASIC

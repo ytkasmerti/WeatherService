@@ -24,7 +24,6 @@ public class WeatherScheduler {
     private final WeatherService weatherService;
     private final EmailService emailService;
     private final UserRepository userRepository;
-    private final UserService userService;
     private final PaymentService paymentService;
 
     //Каждый день в 08:00
@@ -71,11 +70,11 @@ public class WeatherScheduler {
                         log.info("[scheduler] Автопродление для пользователя {} удалось", user.getEmail());
                     } catch (Exception e) {
                         log.error("[scheduler] Автопродление для пользователя {} не удалось: {}", user.getEmail(), e.getMessage());
-                        userService.subscriptionReduction(user.getApiKey());
+                        paymentService.subscriptionReduction(user.getApiKey());
                     }
                 } else {
                     log.info("[scheduler] Автопродление выключено для пользователя {}, понижаем до FREE", user.getEmail());
-                    userService.subscriptionReduction(user.getApiKey());
+                    paymentService.subscriptionReduction(user.getApiKey());
                 }
             }
         }

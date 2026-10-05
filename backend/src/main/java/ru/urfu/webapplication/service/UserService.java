@@ -8,7 +8,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.urfu.webapplication.entity.User;
-import ru.urfu.webapplication.model.SubscriptionLevel;
 import ru.urfu.webapplication.repository.UserRepository;
 import ru.urfu.webapplication.repository.WeatherRequestRepository;
 
@@ -26,35 +25,6 @@ public class UserService {
     private final EmailService emailService;
     private final ApiKeyService apiKeyService;
     private final WeatherRequestRepository requestRepository;
-    private final WeatherSubscriptionService subscriptionService;
-
-    //Понижение подписки при истечении срока
-    @Transactional
-    public void subscriptionReduction(String apiKey) {
-        User user = userRepository.findByApiKey(apiKey).orElseThrow(() -> new RuntimeException("Пользователь не найден"));
-        if (user.getSubscriptionExpiresAt() == null) {
-            return;
-        }
-        if (user.getSubscriptionExpiresAt().isBefore(LocalDateTime.now())) {
-            log.info("[payments] Подписка пользователя {} истекла. Начало понижения подписки.", user.getEmail());
-            SubscriptionLevel oldLevel = user.getSubscriptionLevel();
-            SubscriptionLevel newLevel = SubscriptionLevel.FREE;
-            subscriptionService.unsubscribeAll(user.getEmail());
-            log.info("[payments] Удалены все подписки на уведомления для пользователя {}", user.getEmail());
-            //обновление ключа
-            String newApiKey = apiKeyService.generateApiKey(user.getEmail(), newLevel);
-            apiKeyService.deactivateKey(apiKey);
-            //обновление пользователя
-            user.setApiKey(newApiKey);
-            user.setSubscriptionLevel(newLevel);
-            user.setSubscriptionExpiresAt(null);
-            user.setIsActive(true);
-            userRepository.save(user);
-
-            log.info("[payments] Подписка пользователя {} понижена с {} до FREE. Новый ключ: {}", user.getEmail(), oldLevel, newApiKey);
-            emailService.sendSubscriptionExpiredEmail(user.getEmail(), oldLevel);
-        }
-    }
 
     @Transactional
     public void updateUser(User user) {

@@ -45,6 +45,8 @@ class PaymentServiceTest {
     private EmailService emailService;
     @Mock
     private DtoMapperService mapper;
+    @Mock
+    private WeatherSubscriptionService subscriptionService;
 
     @InjectMocks
     private PaymentService paymentService;
@@ -268,5 +270,49 @@ class PaymentServiceTest {
 
         assertThrows(RuntimeException.class,
                 () -> paymentService.getPaymentHistoryByEmail("nobody@example.com", 0, 20));
+    }
+
+    //Проверяет понижение подписки при истечении
+    @Test
+    void subscriptionReduction_ShouldDowngradeToFree_WhenExpired() {
+        testUser.setSubscriptionLevel(SubscriptionLevel.BASIC);
+        testUser.setSubscriptionExpiresAt(LocalDateTime.now().minusDays(1));
+
+        when(userRepository.findByApiKey(TEST_KEY)).thenReturn(Optional.of(testUser));
+        when(apiKeyService.generateApiKey(TEST_EMAIL, SubscriptionLevel.FREE)).thenReturn("free-new-key");
+        when(apiKeyService.deactivateKey(TEST_KEY)).thenReturn(true);
+
+        paymentService.subscriptionReduction(TEST_KEY);
+
+        assertEquals(SubscriptionLevel.FREE, testUser.getSubscriptionLevel());
+        assertEquals("free-new-key", testUser.getApiKey());
+        assertNull(testUser.getSubscriptionExpiresAt());
+        verify(subscriptionService, times(1)).unsubscribeAll(TEST_EMAIL);
+        verify(emailService, times(1)).sendSubscriptionExpiredEmail(TEST_EMAIL, SubscriptionLevel.BASIC);
+    }
+
+    //Проверяет: не понижает если подписка ещё активна
+    @Test
+    void subscriptionReduction_ShouldNotDowngrade_WhenNotExpired() {
+        testUser.setSubscriptionLevel(SubscriptionLevel.BASIC);
+        testUser.setSubscriptionExpiresAt(LocalDateTime.now().plusDays(5));
+        when(userRepository.findByApiKey(TEST_KEY)).thenReturn(Optional.of(testUser));
+
+        paymentService.subscriptionReduction(TEST_KEY);
+
+        assertEquals(SubscriptionLevel.BASIC, testUser.getSubscriptionLevel());
+        verify(subscriptionService, never()).unsubscribeAll(anyString());
+    }
+
+    //Проверяет: не понижает если expiry == null
+    @Test
+    void subscriptionReduction_ShouldReturn_WhenExpiryNull() {
+        testUser.setSubscriptionLevel(SubscriptionLevel.BASIC);
+        testUser.setSubscriptionExpiresAt(null);
+        when(userRepository.findByApiKey(TEST_KEY)).thenReturn(Optional.of(testUser));
+
+        paymentService.subscriptionReduction(TEST_KEY);
+
+        verify(userRepository, never()).save(any());
     }
 }

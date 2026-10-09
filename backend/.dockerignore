@@ -1,0 +1,9 @@
+.git/
+.gitignore
+HELP.md
+*.md
+.idea/
+*.iml
+target/
+frontend/
+node_modules/

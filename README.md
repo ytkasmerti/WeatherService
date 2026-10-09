@@ -24,36 +24,25 @@
 
 # Запуск проекта
 ### Требования
-Для запуска должны быть установлены:
-- Docker Desktop
-- Node.js (для запуска frontend)
+Для запуска должен быть установлен Docker Desktop.
 
-### Запуск backend
+### Запуск
 Из корневой директории проекта выполнить команду:
 ```bash
 docker compose up --build
 ```
+Фронтенд раздаётся через nginx и проксирует запросы `/api/*` на backend по внутренней сети Docker.
 
-После запуска докер автоматически создает и настраивает:
+После запуска докер автоматически собирает и запускает:
 - PostgreSQL: база данных с автоматической миграцией схемы и предустановленными тестовыми данными.
 - Redis: система кэширования для оптимизации запросов.
 - Backend (Spring Boot): основной API-сервис, автоматически подключающийся к БД и Redis.
+- Frontend (React): собранный Vite.
 
-После запуска backend будет доступен по адресу:
-```
-http://localhost:8080
-```
-
-### Запуск frontend
-Из директории `frontend` выполнить команду:
-```bash
-npm run dev
-```
-
-После запуска frontend будет доступен по адресу:
-```
-http://localhost:5173
-```
+### После запуска
+- Frontend: http://localhost:5173
+- Backend: http://localhost:8080
+- Actuator health: http://localhost:8080/actuator/health
 
 ### Запуск тестов
 
@@ -226,6 +215,8 @@ Spring Boot Actuator: статус приложения и его зависим
 - Стилизация: CSS Modules
 - Маршрутизация: React Router
 - Работа с API: Fetch API
+- Сборка: Vite
+- Раздача: nginx (в Docker)
 
 ## Лицензия 
 Проект разработан в учебных целях.
@@ -233,8 +224,3 @@ Spring Boot Actuator: статус приложения и его зависим
 ## Авторы:   
 GitHub: https://github.com/ytkasmerti  
 GitHub: https://github.com/dariaabrosimovaa
-
-
-
-
-

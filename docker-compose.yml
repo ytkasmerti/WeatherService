@@ -3,7 +3,7 @@ version: "3.9"
 services:
   postgres:
     image: postgres:16
-    container_name: weather-postgres
+    container_name: weatherservice-postgres
     restart: always
     environment:
       POSTGRES_DB: weatherapp
@@ -16,14 +16,15 @@ services:
 
   redis:
     image: redis:7
-    container_name: weather-redis
+    container_name: weatherservice-redis
     restart: always
     ports:
       - "6379:6379"
 
   backend:
     build: ./backend
-    container_name: weather-backend
+    image: weatherservice-backend:1.0
+    container_name: weatherservice-backend
     restart: always
     depends_on:
       - postgres
@@ -33,6 +34,15 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: docker
 
+  frontend:
+    build: ./frontend
+    image: weatherservice-frontend:1.0
+    container_name: weatherservice-frontend
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "5173:80"
 
 volumes:
   postgres_data:

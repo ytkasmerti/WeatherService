@@ -1,11 +1,20 @@
-FROM eclipse-temurin:21-jdk
-
+FROM maven:3.9-eclipse-temurin-21-alpine AS builder
 WORKDIR /app
 
-COPY . .
+COPY pom.xml .
+RUN mvn -B dependency:go-offline
 
-RUN ./mvnw clean package -DskipTests
+COPY src ./src
+RUN mvn -B clean package -DskipTests
+
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+
+RUN addgroup -S app && adduser -S app -G app
+
+COPY --from=builder --chown=app:app /app/target/*.jar app.jar
+
+USER app
 
 EXPOSE 8080
-
-ENTRYPOINT ["java","-jar","target/WeatherService-0.0.1-SNAPSHOT.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]

@@ -26,7 +26,7 @@ public class DtoMapperService {
             case PaymentStatus.PENDING -> "Платёж ожидает подтверждения";
             case PaymentStatus.CONFIRMED -> "Платёж подтверждён";
             case PaymentStatus.FAILED -> "Платёж отклонён";
-            case PaymentStatus.EXPIRED-> "Платёж просрочен";
+            case PaymentStatus.EXPIRED -> "Платёж просрочен";
         };
     }
 

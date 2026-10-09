@@ -16,6 +16,7 @@ public class VisualCrossingClient {
     public VisualCrossingClient(WebClient webClient) {
         this.webClient = webClient;
     }
+
     //Текущая погода
     public VisualCrossingResponse getCurrentWeather(String location, String lang) {
         log.info("[weather] Вызов Visual Crossing API для текущей погоды для города {}", location);
@@ -31,6 +32,7 @@ public class VisualCrossingClient {
                 .bodyToMono(VisualCrossingResponse.class)
                 .block();
     }
+
     //Прогноз на N дней (максимум 15 - ограничение API)
     public VisualCrossingResponse getForecast(String location, int days, String lang) {
         log.info("[weather] Вызов Visual Crossing API для прогноза на {} дней для города {}", days, location);
@@ -47,6 +49,7 @@ public class VisualCrossingClient {
                 .bodyToMono(VisualCrossingResponse.class)
                 .block();
     }
+
     //Исторические данные
     public VisualCrossingResponse getHistoricalData(String location, String startDate, String endDate, String lang) {
         log.info("[weather] Вызов Visual Crossing API для исторических данных для {} с {} по {}", location, startDate, endDate);
@@ -62,6 +65,7 @@ public class VisualCrossingClient {
                 .bodyToMono(VisualCrossingResponse.class)
                 .block();
     }
+
     //Погода в конкретное время
     public VisualCrossingResponse getWeatherAtTime(String location, String dateTime, String lang) {
         log.info("[weather] Вызов Visual Crossing API для погоды в конкретное время для {} в {}", location, dateTime);
@@ -77,6 +81,7 @@ public class VisualCrossingClient {
                 .bodyToMono(VisualCrossingResponse.class)
                 .block();
     }
+
     //Почасовой прогноз погоды
     public VisualCrossingResponse getHourlyForecast(String location, String date, String lang) {
         log.info("[weather] Вызов Visual Crossing API для почасового прогноза для {} в день {}", location, date);

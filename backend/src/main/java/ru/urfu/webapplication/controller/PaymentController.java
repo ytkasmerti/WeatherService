@@ -61,7 +61,7 @@ public class PaymentController {
     //Получить историю платежей
     @GetMapping("/history")
     public PaymentHistoryDto getPaymentHistory(@RequestParam(required = false) String apiKey,
-                                               @RequestParam (defaultValue = "0") @Min(0) int page,
+                                               @RequestParam(defaultValue = "0") @Min(0) int page,
                                                @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
         String validApiKey = getApiKeyFromRequestOrAuth(apiKey);
         String email = apiKeyService.getEmailByApiKey(validApiKey);

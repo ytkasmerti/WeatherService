@@ -1,5 +1,8 @@
 package ru.urfu.webapplication.model;
 
+import lombok.Getter;
+
+@Getter
 public enum SubscriptionLevel {
     FREE(0),
     BASIC(1),
@@ -11,7 +14,4 @@ public enum SubscriptionLevel {
         this.priority = priority;
     }
 
-    public int getPriority() {
-        return priority;
-    }
 }

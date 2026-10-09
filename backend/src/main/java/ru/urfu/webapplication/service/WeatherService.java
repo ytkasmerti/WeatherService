@@ -221,13 +221,13 @@ public class WeatherService {
         return self.fetchHourlyCached(city, date, lang);
     }
 
-    @Cacheable(value = "weather-current", key = "#location + '_' + #lang")
+    @Cacheable(value = "weather-current", key = "#location.trim().toLowerCase() + '_' + #lang")
     public WeatherResponse fetchCurrentWeatherCached(String location, String lang) {
         log.info("[weather] Кэш не сработал: текущая погода для {} ({})", location, lang);
         return fetchWeatherFromApi(location, lang);
     }
 
-    @Cacheable(value = "weather-forecast", key = "#city + '_' + #days + '_' + #lang")
+    @Cacheable(value = "weather-forecast", key = "#city.trim().toLowerCase() + '_' + #days + '_' + #lang")
     public ForecastResponse fetchForecastCached(String city, int days, String lang) {
         log.info("[weather] Кэш не сработал: прогноз для {} на {} дней ({})", city, days, lang);
         VisualCrossingResponse response = visualCrossingClient.getForecast(city, days, lang);
@@ -244,7 +244,7 @@ public class WeatherService {
 
     //Кэшированные вызовы внешнего API
 
-    @Cacheable(value = "weather-history", key = "#city + '_' + #startDate + '_' + #endDate + '_' + #lang")
+    @Cacheable(value = "weather-history", key = "#city.trim().toLowerCase() + '_' + #startDate + '_' + #endDate + '_' + #lang")
     public HistoricalResponse fetchHistoricalCached(String city, String startDate, String endDate, String lang) {
         log.info("[weather] Кэш не сработал: история погоды для {} с {} по {} ({})", city, startDate, endDate, lang);
         VisualCrossingResponse response = visualCrossingClient.getHistoricalData(city, startDate, endDate, lang);
@@ -257,14 +257,14 @@ public class WeatherService {
         return mapper.toHistoricalResponse(response, startDate, endDate, historyList);
     }
 
-    @Cacheable(value = "weather-at-time", key = "#city + '_' + #dateTime + '_' + #lang")
+    @Cacheable(value = "weather-at-time", key = "#city.trim().toLowerCase() + '_' + #dateTime + '_' + #lang")
     public WeatherResponse fetchWeatherAtTimeCached(String city, String dateTime, String lang) {
         log.info("[weather] Кэш не сработал: погода на конкретное время для {} на {} ({})", city, dateTime, lang);
         VisualCrossingResponse response = visualCrossingClient.getWeatherAtTime(city, dateTime, lang);
         return mapper.toWeatherResponse(response, city, dateTime);
     }
 
-    @Cacheable(value = "weather-hourly", key = "#city + '_' + #date + '_' + #lang")
+    @Cacheable(value = "weather-hourly", key = "#city.trim().toLowerCase() + '_' + #date + '_' + #lang")
     public HourlyForecastResponse fetchHourlyCached(String city, String date, String lang) {
         log.info("[weather] Кэш не сработал: почасовой прогноз для {} на {} ({})", city, date, lang);
         VisualCrossingResponse response = visualCrossingClient.getHourlyForecast(city, date, lang);

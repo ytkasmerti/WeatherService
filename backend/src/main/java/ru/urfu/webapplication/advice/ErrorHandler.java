@@ -2,6 +2,7 @@ package ru.urfu.webapplication.advice;
 
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -84,5 +85,13 @@ public class ErrorHandler {
         error.put("error", "Недостаточно прав");
         error.put("message", "Ваш тариф не позволяет использовать эту функцию. Повысьте уровень подписки");
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, String>> handleDataIntegrity(DataIntegrityViolationException e) {
+        return ResponseEntity.badRequest().body(Map.of(
+                "error", "Не удалось удалить аккаунт",
+                "message", "Попробуйте позже или обратитесь в поддержку"
+        ));
     }
 }

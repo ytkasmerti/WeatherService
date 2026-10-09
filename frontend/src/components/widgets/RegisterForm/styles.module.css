@@ -24,7 +24,7 @@
 
 .actions {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
     gap: 15px;
     margin-top: 10px;
 }
@@ -40,4 +40,12 @@
 
 .iconButton:hover {
     color: #333;
+}
+
+.backBtnWrapper {
+    align-self: flex-end;
+}
+
+.backBtnWrapper button {
+    width: auto;
 }

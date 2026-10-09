@@ -57,7 +57,9 @@ export const WeatherPage = () => {
     return (
         <div className={styles.container}>
             {error && <Notification message={error} onClose={() => setError(null)}/>}
-            <h1 className={styles.title}>Weather Service</h1>
+            <h1 className={styles.title}>
+                {activeRequest ? menuMapping[activeRequest].title : 'Weather Service'}
+            </h1>
             {!activeRequest ? (
                 <div className={styles.grid}>
                     {(Object.keys(menuMapping) as RequestType[]).map(type => (

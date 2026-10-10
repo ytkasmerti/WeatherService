@@ -44,8 +44,13 @@ docker compose up --build
 - Backend: http://localhost:8080
 - Actuator health: http://localhost:8080/actuator/health
 
-### Запуск тестов
+### Особенности Docker-конфигурации
+- Каждый сервис работает в отдельном контейнере, данные PostgreSQL сохраняются между запусками (volume `postgres_data`).
+- Бэкенд и фронтенд запускаются не от root.
+- Порты PostgreSQL (5432) и Redis (6379) наружу не открыты. Подключиться к БД можно командой:
+  `docker compose exec postgres psql -U postgres -d weatherapp`
 
+### Запуск тестов
 Из директории `backend` выполнить команду:
 ```bash
 .\mvnw.cmd test
@@ -131,6 +136,8 @@ docker compose down -v
 ### Логирование:
 - Все действия пользователей логируются с уровнем INFO и DEBUG
 - Ошибки запросов к внешнему API логируются с уровнем ERROR
+- Каждое сообщение начинается с названия модуля в квадратных скобках ([auth], [weather], [scheduler], [security], [advice], [mapper])
+- Логи пишутся в stdout контейнеров: `docker compose logs -f backend`
 
 ### Мониторинг:
 Spring Boot Actuator: статус приложения и его зависимостей (PostgreSQL, Redis, SMTP), 
@@ -216,7 +223,8 @@ Spring Boot Actuator: статус приложения и его зависим
 - Маршрутизация: React Router
 - Работа с API: Fetch API
 - Сборка: Vite
-- Раздача: nginx (в Docker)
+- Раздача: nginx (nginx-unprivileged, в Docker)
+- Контейнеризация: Docker, Docker Compose (multi-stage сборка)
 
 ## Лицензия 
 Проект разработан в учебных целях.

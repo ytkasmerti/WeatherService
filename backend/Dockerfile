@@ -1,11 +1,11 @@
 FROM maven:3.9-eclipse-temurin-21-alpine AS builder
-WORKDIR /app
+WORKDIR /build
 
 COPY pom.xml .
 RUN mvn -B dependency:go-offline
 
 COPY src ./src
-RUN mvn -B clean package -DskipTests && cp target/*.jar app.jar
+RUN mvn -B clean package -DskipTests && cp target/*.jar weatherservice.jar
 
 RUN jlink \
       --add-modules java.base,java.logging,java.xml,java.naming,java.sql,java.management,java.instrument,java.desktop,java.security.jgss,java.security.sasl,java.net.http,java.prefs,java.rmi,jdk.unsupported,jdk.crypto.ec,jdk.management,jdk.naming.dns,jdk.zipfs,jdk.localedata \
@@ -17,12 +17,12 @@ FROM alpine:3.20
 ENV JAVA_HOME=/opt/java-minimal
 ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
-RUN addgroup -S app && adduser -S app -G app
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
-WORKDIR /app
+WORKDIR /weatherservice
 COPY --from=builder /opt/java-minimal /opt/java-minimal
-COPY --from=builder --chown=app:app /app/app.jar app.jar
+COPY --from=builder --chown=appuser:appgroup /build/weatherservice.jar weatherservice.jar
 
-USER app
+USER appuser
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-jar", "weatherservice.jar"]

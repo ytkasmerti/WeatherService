@@ -1,4 +1,4 @@
-const BASE_URL = '/api';
+const BASE_URL = import.meta.env.VITE_API_URL ?? '/api';
 
 export const fetchWithCreds = async (url: string, options: RequestInit = {}) => {
     const response = await fetch(url, {

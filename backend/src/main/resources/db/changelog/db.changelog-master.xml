@@ -441,7 +441,7 @@
                                subscription_expires_at)
             VALUES (37, 'weatherservice26@gmail.com', '$2a$10$V6f0MHXcJsieJ0JqRntTbOauEyuyeFhawH0uRpBr2DP2kVD/urj/e',
                     'premium-b27efd2c-1468544522', 'PREMIUM', '2026-05-08 12:47:01.226663', true, false,
-                    '2026-08-08 14:46:00.163367') ON CONFLICT (id) DO NOTHING;
+                    '2030-01-01 00:00:00') ON CONFLICT (id) DO NOTHING;
         </sql>
         <sql>
             INSERT INTO payments (id, payment_id, api_key, level, amount, created_at, confirmed_at, expires_at, status,
@@ -500,6 +500,10 @@
                     '2026-07-08 14:45:59.1235', NULL, '2026-07-08 15:00:59.1235', 'CONFIRMED',
                     37) ON CONFLICT (id) DO NOTHING;
         </sql>
+        <sql>
+            SELECT setval(pg_get_serial_sequence('users', 'id'), (SELECT MAX(id) FROM users));
+            SELECT setval(pg_get_serial_sequence('payments', 'id'), (SELECT MAX(id) FROM payments));
+        </sql>
     </changeSet>
 
     <!--
@@ -531,7 +535,8 @@
         </addColumn>
 
         <sql>
-            DELETE FROM weather_requests
+            DELETE
+            FROM weather_requests
             WHERE api_key IS NULL
                OR api_key NOT IN (SELECT api_key FROM users WHERE api_key IS NOT NULL);
         </sql>

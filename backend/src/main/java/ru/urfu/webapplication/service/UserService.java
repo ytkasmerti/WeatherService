@@ -11,6 +11,7 @@ import ru.urfu.webapplication.entity.User;
 import ru.urfu.webapplication.repository.UserRepository;
 import ru.urfu.webapplication.repository.WeatherRequestRepository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,13 +38,8 @@ public class UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
         int maxRequests = apiKeyService.getMaxRequests(user.getSubscriptionLevel());
-        long usedRequests = 0;
-        int remainingRequests = maxRequests;
-        if (maxRequests != Integer.MAX_VALUE) {
-            LocalDateTime twentyFourHoursAgo = LocalDateTime.now().minusHours(24);
-            usedRequests = requestRepository.countRequestsByUserInLast24Hours(user, twentyFourHoursAgo);
-            remainingRequests = (int) Math.max(0, maxRequests - usedRequests);
-        }
+        long usedRequests = requestRepository.countRequestsByUserInLast24Hours(user, LocalDate.now().atStartOfDay());
+        int remainingRequests = maxRequests == Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) Math.max(0, maxRequests - usedRequests);
 
         Map<String, Object> profile = new HashMap<>();
         profile.put("email", user.getEmail());

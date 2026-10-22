@@ -31,7 +31,7 @@ export const RegisterForm = ({onCancel, onSuccess}: RegisterFormProps) => {
         try {
             await authApi.register(data.email, data.password, data.confirm);
             setNotify("Регистрация успешна!");
-            setTimeout(onSuccess, 2000);
+            setTimeout(onSuccess, 1500);
         } catch (e: any) {
             setNotify(e.message || "Ошибка регистрации");
         } finally {
